@@ -1,0 +1,56 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
+  "productName": "nexious-ai",
+  "version": "0.1.0",
+  "identifier": "com.nexiousai.factory",
+  "build": {
+    "beforeBuildCommand": "npm run build",
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
+  },
+  "bundle": {
+    "active": true,
+    "targets": "deb",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "category": "Business",
+    "copyright": "Nexious AI",
+    "longDescription": "Nexious AI — Adii's Private Desktop Factory for building client deliverables",
+    "shortDescription": "Private AI Business Factory",
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
+    }
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "security": {
+      "csp": null
+    },
+    "windows": [
+      {
+        "fullscreen": false,
+        "height": 900,
+        "minHeight": 700,
+        "minWidth": 1200,
+        "resizable": true,
+        "title": "Nexious AI — Private Desktop Factory",
+        "width": 1440,
+        "center": true,
+        "theme": "Dark"
+      }
+    ]
+  },
+  "plugins": {
+    "sql": {
+      "preload": ["sqlite:nexious.db"]
+    }
+  }
+}

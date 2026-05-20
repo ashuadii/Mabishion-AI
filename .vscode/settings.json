@@ -1,0 +1,5 @@
+{
+    "telemetry.editStats.details.enabled": true,
+    "simpleBrowser.focusLockIndicator.enabled": false,
+    "javascript.autoClosingTags": false
+}
