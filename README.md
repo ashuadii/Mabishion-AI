@@ -1,13 +1,68 @@
-&lt;p align="center"&gt;
-  &lt;img src="assets/nex-banner.png" alt="Nexious AI Studio Banner" width="100%"&gt;
-&lt;/p&gt;
+<p align="center">
+  <img src="assets/nex-banner.png" alt="Nexious AI Studio Banner" width="100%">
+</p>
 
-&lt;h1 align="center"&gt;Nexious AI Studio v4.0&lt;/h1&gt;
+<h1 align="center">Nexious AI Studio v4.0</h1>
 
-&lt;p align="center"&gt;
-  &lt;strong&gt;The First Fully Autonomous AI Agency Operating System&lt;/strong&gt;&lt;br&gt;
+<p align="center">
+  <strong>The First Fully Autonomous AI Agency Operating System</strong><br>
   Built for Digital Marketing Agencies, Freelancers, and AI-Native Service Businesses.
-&lt;/p&gt;
+</p>
+
+---
+
+## 🎯 Vision
+
+**Nexious AI Studio** was born from a single belief: *A solo operator should be able to run a full-service digital agency without hiring a team.*
+
+In 2025, digital marketing agencies spend 60-70% of revenue on payroll, project management overhead, and coordination chaos. **Nexious eliminates that.** It is not just a CRM, not just a project tracker, and not just an AI chatbot. It is a **complete operating system** where 22 specialized AI workers handle everything from lead generation to website delivery — under one local-first, privacy-focused desktop application.
+
+**Why it was built:**
+- To remove dependency on 10+ SaaS subscriptions (Zapier, Notion, HubSpot, Figma, Canva, Buffer, etc.)
+- To keep client data **local and encrypted** (SQLite + Tauri), not on someone else's cloud
+- To let a single person execute like a 20-person agency
+- To prove that **open-weight models + API orchestration** can outperform expensive enterprise stacks
+
+---
+
+## 🚀 What Makes It Different
+
+| Traditional Stack | Nexious AI Studio |
+|-------------------|-------------------|
+| 10+ SaaS tools ($500+/mo) | **One desktop app (FREE)** |
+| 5-10 employees | **22 AI Workers** |
+| Cloud data risk | **Local SQLite + Tauri binary** |
+| Manual copy-paste between apps | **Autonomous pipeline: Lead → Project → Delivery** |
+| Generic AI (ChatGPT web) | **Specialized workers with memory + context** |
+
+---
+
+## ✨ Core Features
+
+### 🏢 Digital Marketing Command Center
+- **Lead CRM** with pipeline stages, budget tracking (₹ support), and approval workflows
+- **Campaign Tracker** for multi-channel marketing execution
+- **Social Scheduler** with auto-content generation
+- **SEO & Research** engine with SERP + deep research APIs
+- **Finance Dashboard** with proposal → invoice → payment tracking
+
+### 🤖 22 Autonomous AI Workers
+Every worker is a specialized LLM agent with:
+- **Role-specific system prompts**
+- **SQLite memory** (context persists across sessions)
+- **Approval gates** (critical actions need human sign-off)
+- **Fallback chains** (Gemini → Groq → OpenRouter)
+
+### 🖥️ Native Desktop App
+- **Tauri v2** — Rust backend, React frontend
+- **Cross-platform**: Linux `.deb`/`.AppImage`, Windows `.msi`, macOS `.dmg`
+- **Lightweight** — <100MB install, runs on 8GB RAM laptops
+- **Offline-first** — SQLite runs locally; only LLM calls need internet
+
+---
+
+## 🏗️ Architecture
+
 
 ---
 
