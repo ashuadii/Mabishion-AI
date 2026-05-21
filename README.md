@@ -62,27 +62,28 @@ Every worker is a specialized LLM agent with:
 ---
 
 ## 🏗️ Architecture
-┌─────────────────────────────────────────────-┐
-│           Tauri Desktop App                  │
+
+┌─────────────────────────────────────────────┐
+│           Tauri Desktop App                 │
 │  (React 18 + Tailwind + Vite + Glassmorphism)│
-├─────────────────────────────────────────────-┤
-│              Bridge Layer                    │
+├─────────────────────────────────────────────┤
+│              Bridge Layer                     │
 │     (Rust ↔ JavaScript via Tauri Commands)   │
-├─────────────────────────────────────────────-┤
-│              Mickii Core                     │
-│  • Intent Router  • Decision Engine          │
-│  • Workflow Engine • Response Engine         │
-├─────────────────────────────────────────────-┤
-│              22 AI Workers                   │
-│  LeadGen → Writer → ImageGen → WebsiteBuilder│
-│  SEO → Social → Ads → Finance → Legal        │
-├─────────────────────────────────────────────-┤
-│              Cortex Engine                   │
+├─────────────────────────────────────────────┤
+│              Mickii Core                      │
+│  • Intent Router  • Decision Engine           │
+│  • Workflow Engine • Response Engine          │
+├─────────────────────────────────────────────┤
+│              22 AI Workers                    │
+│  LeadGen → Writer → ImageGen → WebsiteBuilder │
+│  SEO → Social → Ads → Finance → Legal         │
+├─────────────────────────────────────────────┤
+│              Cortex Engine                  │
 │  LLM Router: Gemini → Groq → OpenRouter      │
-├─────────────────────────────────────────────-┤
-│              SQLite Database                 │
-│  30+ Tables • 44KB • Backup/Restore          │
-└─────────────────────────────────────────────-┘
+├─────────────────────────────────────────────┤
+│              SQLite Database                │
+│  30+ Tables • 44KB • Backup/Restore         │
+└─────────────────────────────────────────────┘
 
 ✨ Core Features
 🏢 Digital Marketing Command Center
