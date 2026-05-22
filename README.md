@@ -1,56 +1,122 @@
 <p align="center">
   <img src="assets/nex-banner.png" alt="Nexious AI Studio Banner" width="100%">
 </p>
-Nexious AI Studio v4.0
 
-    The First Fully Autonomous AI Agency Operating System
-    Built for Digital Marketing Agencies, Freelancers, and AI-Native Service Businesses.
+<h1 align="center">Nexious AI Studio v4.0</h1>
 
-🎯 Vision
-Nexious AI Studio was born from a single belief: A solo operator should be able to run a full-service digital agency without hiring a team.
-In 2025, digital marketing agencies spend 60-70% of revenue on payroll, project management overhead, and coordination chaos. Nexious eliminates that. It is not just a CRM, not just a project tracker, and not just an AI chatbot. It is a complete operating system where 22 specialized AI workers handle everything from lead generation to website delivery — under one local-first, privacy-focused desktop application.
-Why it was built:
+<p align="center">
+  <strong>The First Fully Autonomous AI Agency Operating System</strong><br>
+  Built for Digital Marketing Agencies, Freelancers, and AI-Native Service Businesses.
+</p>
 
-    To remove dependency on 10+ SaaS subscriptions (Zapier, Notion, HubSpot, Figma, Canva, Buffer, etc.)
-    To keep client data local and encrypted (SQLite + Tauri), not on someone else's cloud
-    To let a single person execute like a 20-person agency
-    To prove that open-weight models + API orchestration can outperform expensive enterprise stacks
+---
 
-🚀 What Makes It Different
-Table
-Traditional Stack	Nexious AI Studio
-10+ SaaS tools ($500+/mo)	One desktop app (FREE)
-5-10 employees	22 AI Workers
-Cloud data risk	Local SQLite + Tauri binary
-Manual copy-paste between apps	Autonomous pipeline: Lead → Project → Delivery
-Generic AI (ChatGPT web)	Specialized workers with memory + context
-✨ Core Features
-🏢 Digital Marketing Command Center
+## 🎯 Vision
 
-    Lead CRM with pipeline stages, budget tracking (₹ support), and approval workflows
-    Campaign Tracker for multi-channel marketing execution
-    Social Scheduler with auto-content generation
-    SEO & Research engine with SERP + deep research APIs
-    Finance Dashboard with proposal → invoice → payment tracking
+**Nexious AI Studio** was born from a single belief: *A solo operator should be able to run a full-service digital agency without hiring a team.*
 
-🤖 22 Autonomous AI Workers
+In 2025, digital marketing agencies spend 60-70% of revenue on payroll, project management overhead, and coordination chaos. **Nexious eliminates that.** It is not just a CRM, not just a project tracker, and not just an AI chatbot. It is a **complete operating system** where 22 specialized AI workers handle everything from lead generation to website delivery — under one local-first, privacy-focused desktop application.
+
+**Why it was built:**
+- To remove dependency on 10+ SaaS subscriptions (Zapier, Notion, HubSpot, Figma, Canva, Buffer, etc.)
+- To keep client data **local and encrypted** (SQLite + Tauri), not on someone else's cloud
+- To let a single person execute like a 20-person agency
+- To prove that **open-weight models + API orchestration** can outperform expensive enterprise stacks
+
+---
+
+## 🚀 What Makes It Different
+
+| Traditional Stack | Nexious AI Studio |
+|-------------------|-------------------|
+| 10+ SaaS tools ($500+/mo) | **One desktop app (FREE)** |
+| 5-10 employees | **22 AI Workers** |
+| Cloud data risk | **Local SQLite + Tauri binary** |
+| Manual copy-paste between apps | **Autonomous pipeline: Lead → Project → Delivery** |
+| Generic AI (ChatGPT web) | **Specialized workers with memory + context** |
+
+---
+
+## ✨ Core Features
+
+### 🏢 Digital Marketing Command Center
+- **Lead CRM** with pipeline stages, budget tracking (₹ support), and approval workflows
+- **Campaign Tracker** for multi-channel marketing execution
+- **Social Scheduler** with auto-content generation
+- **SEO & Research** engine with SERP + deep research APIs
+- **Finance Dashboard** with proposal → invoice → payment tracking
+
+### 🤖 22 Autonomous AI Workers
 Every worker is a specialized LLM agent with:
+- **Role-specific system prompts**
+- **SQLite memory** (context persists across sessions)
+- **Approval gates** (critical actions need human sign-off)
+- **Fallback chains** (Gemini → Groq → OpenRouter)
 
-    Role-specific system prompts
-    SQLite memory (context persists across sessions)
-    Approval gates (critical actions need human sign-off)
-    Fallback chains (Gemini → Groq → OpenRouter)
+### 🖥️ Native Desktop App
+- **Tauri v2** — Rust backend, React frontend
+- **Cross-platform**: Linux `.deb`/`.AppImage`, Windows `.msi`, macOS `.dmg`
+- **Lightweight** — <100MB install, runs on 8GB RAM laptops
+- **Offline-first** — SQLite runs locally; only LLM calls need internet
 
-🖥️ Native Desktop App
+---
 
-    Tauri v2 — Rust backend, React frontend
-    Cross-platform: Linux .deb/.AppImage, Windows .msi, macOS .dmg
-    Lightweight — <100MB install, runs on 8GB RAM laptops
-    Offline-first — SQLite runs locally; only LLM calls need internet
+## 🏗️ Architecture
 
-🏗️ Architecture
-plain
-Copy
+
+---
+
+## 🎯 Vision
+
+**Nexious AI Studio** was born from a single belief: *A solo operator should be able to run a full-service digital agency without hiring a team.*
+
+In 2025, digital marketing agencies spend 60-70% of revenue on payroll, project management overhead, and coordination chaos. **Nexious eliminates that.** It is not just a CRM, not just a project tracker, and not just an AI chatbot. It is a **complete operating system** where 22 specialized AI workers handle everything from lead generation to website delivery — under one local-first, privacy-focused desktop application.
+
+**Why it was built:**
+- To remove dependency on 10+ SaaS subscriptions (Zapier, Notion, HubSpot, Figma, Canva, Buffer, etc.)
+- To keep client data **local and encrypted** (SQLite + Tauri), not on someone else's cloud
+- To let a single person execute like a 20-person agency
+- To prove that **open-weight models + API orchestration** can outperform expensive enterprise stacks
+
+---
+
+## 🚀 What Makes It Different
+
+| Traditional Stack | Nexious AI Studio |
+|-------------------|-------------------|
+| 10+ SaaS tools ($500+/mo) | **One desktop app (FREE)** |
+| 5-10 employees | **22 AI Workers** |
+| Cloud data risk | **Local SQLite + Tauri binary** |
+| Manual copy-paste between apps | **Autonomous pipeline: Lead → Project → Delivery** |
+| Generic AI (ChatGPT web) | **Specialized workers with memory + context** |
+
+---
+
+## ✨ Core Features
+
+### 🏢 Digital Marketing Command Center
+- **Lead CRM** with pipeline stages, budget tracking (₹ support), and approval workflows
+- **Campaign Tracker** for multi-channel marketing execution
+- **Social Scheduler** with auto-content generation
+- **SEO & Research** engine with SERP + deep research APIs
+- **Finance Dashboard** with proposal → invoice → payment tracking
+
+### 🤖 22 Autonomous AI Workers
+Every worker is a specialized LLM agent with:
+- **Role-specific system prompts**
+- **SQLite memory** (context persists across sessions)
+- **Approval gates** (critical actions need human sign-off)
+- **Fallback chains** (Gemini → Groq → OpenRouter)
+
+### 🖥️ Native Desktop App
+- **Tauri v2** — Rust backend, React frontend
+- **Cross-platform**: Linux `.deb`/`.AppImage`, Windows `.msi`, macOS `.dmg`
+- **Lightweight** — &lt;100MB install, runs on 8GB RAM laptops
+- **Offline-first** — SQLite runs locally; only LLM calls need internet
+
+---
+
+## 🏗️ Architecture
 
 ┌─────────────────────────────────────────────┐
 │           Tauri Desktop App                 │
@@ -74,66 +140,86 @@ Copy
 │  30+ Tables • 44KB • Backup/Restore         │
 └─────────────────────────────────────────────┘
 
-📋 22 AI Workers Detail
-Table
-#	Worker	Role	Digital Marketing Relevance
-1	leadGenWorker	Ad copy, headlines, lead magnets	🔥 Core — generates FB/Google ad copy
-2	leadManagerWorker	Lead scoring & CRM updates	🔥 Core — manages pipeline
-3	writerWorker	Blogs, emails, landing pages, WhatsApp copy	🔥 Core — all content generation
-4	imageGenWorker	AI image generation (Pollinations.AI → SDXL)	🔥 Core — creatives, banners, social posts
-5	websiteBuilderWorker	Full website code (HTML/CSS/JS)	🔥 Core — client delivery
-6	socialSchedulerWorker	Social media calendar & posting	🔥 Core — automation
-7	selfPromoWorker	Social media posts for agency brand	🔥 Core — agency marketing
-8	servicePromoWorker	Service descriptions & marketing copy	🔥 Core — package sales
-9	showcaserWorker	Portfolio & case study generation	🔥 Core — social proof
-10	documentorWorker	User manuals, API docs, SOPs	Support — client handoff
-11	proposalMakerWorker	Client proposals & contracts	Support — sales docs
-12	blueprintMakerWorker	Technical architecture docs	Support — project planning
-13	businessAnalystWorker	Requirements & gap analysis	Support — discovery
-14	clientIntakeWorker	Onboarding forms & welcome kits	Support — client experience
-15	developerWorker	Code generation & debugging	Support — custom dev
-16	packagerWorker	ZIP bundling & delivery prep	Support — final delivery
-17	paymentHandlerWorker	Invoice & payment tracking	Support — finance
-18	complianceWorker	T&C, privacy policy, legal checks	Support — risk management
-19	notificationWorker	Alerts, emails, WhatsApp alerts	Support — communication
-20	approvalEngine	Human-in-the-loop gates	Governance — nothing ships without sign-off
-21	llmManagerWorker	API key rotation & fallback	Infrastructure — keeps AI running
-22	mcpHubWorker	External tool integration	Infrastructure — connects to 3rd party APIs
-🖥️ Screens (17 Active)
-Table
-Screen	Purpose
-DashboardScreen	Agency overview, KPIs, quick actions
-LeadsScreen	Full CRM — table, form, pipeline, detail drawer
-ProjectsScreen	Project management with worker assignment
-ApprovalCenterScreen	Human approval queue for critical actions
-SalesMarketingHubScreen	Campaigns, ads, promotions unified view
-FinanceScreen	Proposals, invoices, payments, P&L
-ReportsScreen	Analytics, worker performance, revenue
-ResearchScreen	SERP, deep web, competitor analysis
-AutomationsScreen	Workflow builder, cron jobs, triggers
-SkillLibraryScreen	Worker registry, skill cards, status
-SettingsScreen	LLM keys, theme, database backup/restore
-WebsiteBuilderScreen	Visual site builder (Phase 4)
-ClientPortalScreen	Client-facing project view
-SEOConsoleScreen	Rank tracking, audit, keyword research
-ContentStudioScreen	Blog, email, social content calendar
-AdManagerScreen	Meta/Google ad campaign manager
-WhatsAppHubScreen	W Business API integration, broadcasts
-🛠️ Tech Stack
-Table
-Layer	Technology
-Frontend	React 18, Tailwind CSS, Vite, Framer Motion
-Backend	Tauri v2 (Rust), SQLite via tauri-plugin-sql
-AI Engine	Cortex.js — Multi-provider router
-LLM Providers	Google Gemini, Groq (Llama3), OpenRouter
-Image Gen	Pollinations.AI (free) → Hugging Face SDXL
-Build Tool	Vite + Rollup
-Package	Tauri Bundler → .deb, .msi, .dmg, .AppImage
-⚡ Installation
-Linux (Ubuntu/Debian)
-bash
-Copy
+✨ Core Features
+🏢 Digital Marketing Command Center
 
+    Lead CRM with pipeline stages, budget tracking (₹ support), and approval workflows
+    Campaign Tracker for multi-channel marketing execution
+    Social Scheduler with auto-content generation
+    SEO & Research engine with SERP + deep research APIs
+    Finance Dashboard with proposal → invoice → payment tracking
+
+## 📋 22 AI Workers Detail
+
+| # | Worker | Role | Digital Marketing Relevance |
+|---|--------|------|----------------------------|
+| 1 | **leadGenWorker** | Ad copy, headlines, lead magnets | 🔥 Core — generates FB/Google ad copy |
+| 2 | **leadManagerWorker** | Lead scoring & CRM updates | 🔥 Core — manages pipeline |
+| 3 | **writerWorker** | Blogs, emails, landing pages, WhatsApp copy | 🔥 Core — all content generation |
+| 4 | **imageGenWorker** | AI image generation (Pollinations.AI → SDXL) | 🔥 Core — creatives, banners, social posts |
+| 5 | **websiteBuilderWorker** | Full website code (HTML/CSS/JS) | 🔥 Core — client delivery |
+| 6 | **socialSchedulerWorker** | Social media calendar & posting | 🔥 Core — automation |
+| 7 | **selfPromoWorker** | Social media posts for agency brand | 🔥 Core — agency marketing |
+| 8 | **servicePromoWorker** | Service descriptions & marketing copy | 🔥 Core — package sales |
+| 9 | **showcaserWorker** | Portfolio & case study generation | 🔥 Core — social proof |
+| 10 | **documentorWorker** | User manuals, API docs, SOPs | Support — client handoff |
+| 11 | **proposalMakerWorker** | Client proposals & contracts | Support — sales docs |
+| 12 | **blueprintMakerWorker** | Technical architecture docs | Support — project planning |
+| 13 | **businessAnalystWorker** | Requirements & gap analysis | Support — discovery |
+| 14 | **clientIntakeWorker** | Onboarding forms & welcome kits | Support — client experience |
+| 15 | **developerWorker** | Code generation & debugging | Support — custom dev |
+| 16 | **packagerWorker** | ZIP bundling & delivery prep | Support — final delivery |
+| 17 | **paymentHandlerWorker** | Invoice & payment tracking | Support — finance |
+| 18 | **complianceWorker** | T&C, privacy policy, legal checks | Support — risk management |
+| 19 | **notificationWorker** | Alerts, emails, WhatsApp alerts | Support — communication |
+| 20 | **approvalEngine** | Human-in-the-loop gates | Governance — nothing ships without sign-off |
+| 21 | **llmManagerWorker** | API key rotation & fallback | Infrastructure — keeps AI running |
+| 22 | **mcpHubWorker** | External tool integration | Infrastructure — connects to 3rd party APIs |
+
+---
+
+## 🖥️ Screens (17 Active)
+
+| Screen | Purpose |
+|--------|---------|
+| **DashboardScreen** | Agency overview, KPIs, quick actions |
+| **LeadsScreen** | Full CRM — table, form, pipeline, detail drawer |
+| **ProjectsScreen** | Project management with worker assignment |
+| **ApprovalCenterScreen** | Human approval queue for critical actions |
+| **SalesMarketingHubScreen** | Campaigns, ads, promotions unified view |
+| **FinanceScreen** | Proposals, invoices, payments, P&L |
+| **ReportsScreen** | Analytics, worker performance, revenue |
+| **ResearchScreen** | SERP, deep web, competitor analysis |
+| **AutomationsScreen** | Workflow builder, cron jobs, triggers |
+| **SkillLibraryScreen** | Worker registry, skill cards, status |
+| **SettingsScreen** | LLM keys, theme, database backup/restore |
+| **WebsiteBuilderScreen** | Visual site builder (Phase 4) |
+| **ClientPortalScreen** | Client-facing project view |
+| **SEOConsoleScreen** | Rank tracking, audit, keyword research |
+| **ContentStudioScreen** | Blog, email, social content calendar |
+| **AdManagerScreen** | Meta/Google ad campaign manager |
+| **WhatsAppHubScreen** | W Business API integration, broadcasts |
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | React 18, Tailwind CSS, Vite, Framer Motion |
+| **Backend** | Tauri v2 (Rust), SQLite via `tauri-plugin-sql` |
+| **AI Engine** | Cortex.js — Multi-provider router |
+| **LLM Providers** | Google Gemini, Groq (Llama3), OpenRouter |
+| **Image Gen** | Pollinations.AI (free) → Hugging Face SDXL |
+| **Build Tool** | Vite + Rollup |
+| **Package** | Tauri Bundler → `.deb`, `.msi`, `.dmg`, `.AppImage` |
+
+---
+
+## ⚡ Installation
+
+### Linux (Ubuntu/Debian)
+```bash
 sudo dpkg -i nexious-ai_0.1.0_amd64.deb
 # Or portable:
 chmod +x nexious-ai_0.1.0_amd64.AppImage
