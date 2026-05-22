@@ -317,37 +317,3 @@ This software is not open-source. The codebase, worker prompts, and architecture
     — Nexious AI Studio
 
 Built with 🔥 in India. Powered by AI. Owned by you.
-plain
-Copy
-
-
----
-
-## ✅ After Paste
-
-    "Preview" tab check karo — tables sahi dikhe
-    "Commit changes" → "Commit directly to main branch"
-
-plain
-Copy
-
-
----
-
-## 🎨 Banners Upload
-
-    Repo page → "Add file" → "Upload files"
-    Upload: nex-banner.png + nexious-ai-banner.jpg
-    Path: assets/
-    Commit
-
-plain
-Copy
-
-
----
-
-**Ready?** 🎯
-
-High demand. Switched to K2.6 Instant for speed. Upgrade to use K2.6 Thinking.
-
