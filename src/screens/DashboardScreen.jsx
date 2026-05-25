@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useMickiiAgent } from '../hooks/useMickiiAgent.js';
 import { useMickiiEar } from '../hooks/useMickiiEar.js';
 import { initDb, getProjects, getLeads, getSkills, getTotalRevenue, getPendingApprovals, approveAction, rejectAction } from '../data/db.js';
 import { listen } from '@tauri-apps/api/event';
+import { runWorker } from '../engine/workers/index.js';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
 import AppShell from '../components/AppShell';
@@ -65,9 +66,11 @@ export default function DashboardScreen({ onNavigate }) {
 
   const [chatInput, setChatInput] = useState('');
 
-  const { isListening, startListening, stopListening } = useMickiiEar((transcript) => {
+  const handleTranscript = useCallback((transcript) => {
     setChatInput(transcript);
-  });
+  }, []);
+
+  const { isListening, startListening, stopListening } = useMickiiEar(handleTranscript);
 
   const fetchApprovals = async () => {
     try {
@@ -110,8 +113,21 @@ export default function DashboardScreen({ onNavigate }) {
       fetchApprovals();
     }).then(u => { unlisten = u; });
 
+    let unlistenSkill;
+    listen('trigger_skill', async (event) => {
+      console.log('[UI] Received trigger_skill event:', event.payload);
+      const { skillId, context } = event.payload;
+      try {
+        await runWorker(skillId, `Execute standard task for ${skillId}`, context);
+        alert(`Worker ${skillId} completed successfully!`);
+      } catch (err) {
+        alert(`Worker ${skillId} failed: ${err.message}`);
+      }
+    }).then(u => { unlistenSkill = u; });
+
     return () => {
       if (unlisten) unlisten();
+      if (unlistenSkill) unlistenSkill();
     };
   }, []);
 

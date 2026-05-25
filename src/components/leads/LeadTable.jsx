@@ -5,32 +5,26 @@ import Button from '../Button';
 import { C, glassStyle } from '../consts';
 
 export default function LeadTable({ leads, onSelectLead, onBulkDelete, onBulkStatusChange }) {
-  const [search, setSearch] = useState('');
-  const [filterSource, setFilterSource] = useState('All');
-  const [filterStatus, setFilterStatus] = useState('All');
+  const [search, setSearch]               = useState('');
+  const [filterSource, setFilterSource]   = useState('All');
+  const [filterStatus, setFilterStatus]   = useState('All');
   const [filterScoreMin, setFilterScoreMin] = useState(0);
-  const [sortBy, setSortBy] = useState('score'); // score, name, budget, status
-  const [sortOrder, setSortOrder] = useState('desc'); // asc, desc
+  const [sortBy, setSortBy]               = useState('score');
+  const [sortOrder, setSortOrder]         = useState('desc');
   const [selectedLeadIds, setSelectedLeadIds] = useState([]);
 
-  // Checkbox selection helpers
+  // ─── Checkbox helpers ───────────────────────────────────────────────────────
   const handleSelectAll = (e, filteredLeads) => {
-    if (e.target.checked) {
-      setSelectedLeadIds(filteredLeads.map(l => l.id));
-    } else {
-      setSelectedLeadIds([]);
-    }
+    setSelectedLeadIds(e.target.checked ? filteredLeads.map(l => l.id) : []);
   };
 
   const handleSelectRow = (e, id) => {
-    if (e.target.checked) {
-      setSelectedLeadIds(prev => [...prev, id]);
-    } else {
-      setSelectedLeadIds(prev => prev.filter(item => item !== id));
-    }
+    setSelectedLeadIds(prev =>
+      e.target.checked ? [...prev, id] : prev.filter(item => item !== id)
+    );
   };
 
-  // Sort helper
+  // ─── Sort helper ────────────────────────────────────────────────────────────
   const handleSort = (field) => {
     if (sortBy === field) {
       setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
@@ -40,27 +34,40 @@ export default function LeadTable({ leads, onSelectLead, onBulkDelete, onBulkSta
     }
   };
 
-  // Status styling
+  // ─── Status badge ───────────────────────────────────────────────────────────
   const getStatusBadge = (status) => {
     const tones = {
-      'New': 'info',
-      'Contacted': 'warning',
-      'Qualified': 'success',
+      'New':           'info',
+      'Contacted':     'warning',
+      'Qualified':     'success',
       'Proposal Sent': 'violet',
-      'Negotiating': 'gold',
-      'Won': 'success',
-      'Lost': 'danger'
+      'Negotiating':   'gold',
+      'Won':           'success',
+      'Lost':          'danger'
     };
-    return <Badge tone={tones[status] || 'info'}>{status}</Badge>;
+    return <Badge tone={tones[status] || 'info'}>{status || 'New'}</Badge>;
   };
 
-  // Filter & sort application
+  // ─── Score color helper ──────────────────────────────────────────────────────
+  const scoreColor = (score) => {
+    const s = Number(score) || 0;
+    if (s >= 70) return 'text-emerald-400';
+    if (s >= 40) return 'text-amber-400';
+    return 'text-blue-400';
+  };
+
+  // ─── FIX #1 — Filter uses CORRECT field names from SQLite schema ─────────────
+  // Fields in DB: id, name, email, phone, source, status, score, budget, notes, created_at
   const filtered = leads.filter(lead => {
-    const matchesSearch = lead.name.toLowerCase().includes(search.toLowerCase()) || 
-                          (lead.email || '').toLowerCase().includes(search.toLowerCase());
-    const matchesSource = filterSource === 'All' || lead.source === filterSource;
-    const matchesStatus = filterStatus === 'All' || lead.status === filterStatus;
-    const matchesScore = (lead.score || 0) >= Number(filterScoreMin);
+    const searchLower = search.toLowerCase();
+    const matchesSearch =
+      (lead.name  || '').toLowerCase().includes(searchLower) ||
+      (lead.email || '').toLowerCase().includes(searchLower) ||
+      (lead.phone || '').toLowerCase().includes(searchLower);
+
+    const matchesSource = filterSource === 'All' || (lead.source || '') === filterSource;
+    const matchesStatus = filterStatus === 'All' || (lead.status || 'New') === filterStatus;
+    const matchesScore  = (Number(lead.score) || 0) >= Number(filterScoreMin);
 
     return matchesSearch && matchesSource && matchesStatus && matchesScore;
   });
@@ -78,32 +85,31 @@ export default function LeadTable({ leads, onSelectLead, onBulkDelete, onBulkSta
     }
 
     if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
-    if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+    if (valA > valB) return sortOrder === 'asc' ?  1 : -1;
     return 0;
   });
 
-  // Export CSV helper
+  // ─── CSV export ─────────────────────────────────────────────────────────────
   const handleExportCSV = () => {
     if (sorted.length === 0) return;
-    const headers = ['Name', 'Email', 'Phone', 'Source', 'Status', 'Score', 'Budget', 'Created At'];
+    const headers = ['Name', 'Email', 'Phone', 'Source', 'Status', 'AI Score', 'Budget', 'Created At'];
     const rows = sorted.map(l => [
-      l.name,
-      l.email || '',
-      l.phone || '',
-      l.source,
-      l.status || 'New',
-      l.score || 0,
-      l.budget || '',
-      l.created_at || ''
+      l.name        || '',
+      l.email       || '',
+      l.phone       || '',
+      l.source      || '',
+      l.status      || 'New',
+      l.score       || 0,
+      l.budget      || 'Flexible',
+      l.created_at  || ''
     ]);
 
-    const csvContent = "data:text/csv;charset=utf-8," 
+    const csvContent = 'data:text/csv;charset=utf-8,'
       + [headers.join(','), ...rows.map(e => e.map(val => `"${val}"`).join(','))].join('\n');
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Nexious_Leads_Report_${Date.now()}.csv`);
+
+    const link = document.createElement('a');
+    link.setAttribute('href', encodeURI(csvContent));
+    link.setAttribute('download', `Nexious_Leads_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -111,14 +117,14 @@ export default function LeadTable({ leads, onSelectLead, onBulkDelete, onBulkSta
 
   return (
     <div className="space-y-4">
-      {/* Filters Toolbar */}
+      {/* ── Filters Toolbar ─────────────────────────────────────────────────── */}
       <div className="p-4 rounded-3xl grid grid-cols-1 md:grid-cols-4 gap-3 bg-white/5 border border-white/10">
         <div>
           <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Search Leads</label>
           <input
             type="text"
-            placeholder="Search name, email..."
-            className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-white/10 text-white outline-none text-xs"
+            placeholder="Name, email, phone..."
+            className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-white/10 text-white outline-none text-xs focus:border-violet-500 transition-all"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -127,7 +133,7 @@ export default function LeadTable({ leads, onSelectLead, onBulkDelete, onBulkSta
         <div>
           <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Filter Source</label>
           <select
-            className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-white/10 text-white outline-none text-xs"
+            className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-white/10 text-white outline-none text-xs focus:border-violet-500 transition-all"
             value={filterSource}
             onChange={(e) => setFilterSource(e.target.value)}
           >
@@ -138,13 +144,14 @@ export default function LeadTable({ leads, onSelectLead, onBulkDelete, onBulkSta
             <option value="Referral">Referral</option>
             <option value="LinkedIn">LinkedIn</option>
             <option value="Cold Outreach">Cold Outreach</option>
+            <option value="WhatsApp">WhatsApp</option>
           </select>
         </div>
 
         <div>
           <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Filter Status</label>
           <select
-            className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-white/10 text-white outline-none text-xs"
+            className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-white/10 text-white outline-none text-xs focus:border-violet-500 transition-all"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
           >
@@ -160,7 +167,9 @@ export default function LeadTable({ leads, onSelectLead, onBulkDelete, onBulkSta
         </div>
 
         <div>
-          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Min Score ({filterScoreMin})</label>
+          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+            Min Score ({filterScoreMin}%)
+          </label>
           <input
             type="range"
             min="0"
@@ -172,7 +181,7 @@ export default function LeadTable({ leads, onSelectLead, onBulkDelete, onBulkSta
         </div>
       </div>
 
-      {/* Bulk actions block */}
+      {/* ── Bulk Actions Bar ─────────────────────────────────────────────────── */}
       {selectedLeadIds.length > 0 && (
         <div className="p-3 bg-violet-500/10 border border-violet-500/25 rounded-2xl flex items-center justify-between animate-in slide-in-from-top-2 text-xs">
           <span className="text-violet-300 font-bold">
@@ -212,7 +221,7 @@ export default function LeadTable({ leads, onSelectLead, onBulkDelete, onBulkSta
         </div>
       )}
 
-      {/* Table Container */}
+      {/* ── Table ────────────────────────────────────────────────────────────── */}
       <div className="rounded-3xl border border-white/10 overflow-hidden" style={glassStyle({ strong: false })}>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
@@ -226,6 +235,7 @@ export default function LeadTable({ leads, onSelectLead, onBulkDelete, onBulkSta
                     className="accent-violet-500 rounded"
                   />
                 </th>
+                {/* FIX #1 — Column headers clearly mapped */}
                 <th className="p-4 cursor-pointer hover:text-white" onClick={() => handleSort('name')}>
                   Lead Details {sortBy === 'name' && (sortOrder === 'asc' ? '▲' : '▼')}
                 </th>
@@ -250,10 +260,11 @@ export default function LeadTable({ leads, onSelectLead, onBulkDelete, onBulkSta
             </thead>
             <tbody className="divide-y divide-white/5">
               {sorted.map(lead => (
-                <tr 
-                  key={lead.id} 
+                <tr
+                  key={lead.id}
                   className="hover:bg-white/5 transition-all cursor-pointer group"
                 >
+                  {/* Checkbox */}
                   <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
@@ -262,29 +273,53 @@ export default function LeadTable({ leads, onSelectLead, onBulkDelete, onBulkSta
                       className="accent-violet-500 rounded"
                     />
                   </td>
+
+                  {/* FIX #1 — Lead Details: name + email + phone all from correct DB fields */}
                   <td className="p-4" onClick={() => onSelectLead(lead)}>
-                    <div className="font-black text-white group-hover:text-violet-400 transition-colors">{lead.name}</div>
-                    <div className="text-[10px] text-slate-400">{lead.email} · {lead.phone || 'No phone'}</div>
+                    <div className="font-black text-white group-hover:text-violet-400 transition-colors">
+                      {lead.name}
+                    </div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">
+                      {lead.email || '—'}
+                    </div>
+                    <div className="text-[10px] text-slate-500">
+                      {lead.phone || 'No phone'}
+                    </div>
                   </td>
+
+                  {/* FIX #1 — Source: from lead.source field */}
                   <td className="p-4" onClick={() => onSelectLead(lead)}>
-                    <Badge tone="info">{lead.source}</Badge>
+                    <Badge tone="info">{lead.source || 'Manual'}</Badge>
                   </td>
+
+                  {/* FIX #1 — Status: from lead.status field */}
                   <td className="p-4" onClick={() => onSelectLead(lead)}>
                     {getStatusBadge(lead.status || 'New')}
                   </td>
+
+                  {/* FIX #1 — AI Score: from lead.score field */}
                   <td className="p-4 font-black" onClick={() => onSelectLead(lead)}>
-                    <span className={lead.score >= 70 ? 'text-emerald-400' : lead.score >= 40 ? 'text-amber-400' : 'text-blue-400'}>
-                      {lead.score || 0}%
+                    <span className={scoreColor(lead.score)}>
+                      {Number(lead.score) || 0}%
                     </span>
                   </td>
+
+                  {/* FIX #1 — Budget: from lead.budget field */}
                   <td className="p-4 font-mono font-bold text-slate-300" onClick={() => onSelectLead(lead)}>
                     {lead.budget || 'Flexible'}
                   </td>
+
+                  {/* Action arrow */}
                   <td className="p-4 text-right" onClick={() => onSelectLead(lead)}>
-                    <Icon name="arrow_forward_ios" size={12} className="text-slate-500 group-hover:translate-x-1 group-hover:text-violet-400 transition-all inline-block" />
+                    <Icon
+                      name="arrow_forward_ios"
+                      size={12}
+                      className="text-slate-500 group-hover:translate-x-1 group-hover:text-violet-400 transition-all inline-block"
+                    />
                   </td>
                 </tr>
               ))}
+
               {sorted.length === 0 && (
                 <tr>
                   <td colSpan={7} className="p-8 text-center text-slate-500 italic">

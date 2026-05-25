@@ -286,7 +286,7 @@ Philosophy: Build once, own forever. No SaaS rent. No vendor lock-in. Your data,
 Table
 Phase	Feature	Status
 ✅ v4.0	22 Workers, SQLite, Tauri, CRM	COMPLETE
-🔄 v4.1	Visual Workflow Editor (React Flow)	In Progress
+✅ v4.1	Visual Workflow Editor (React Flow)	COMPLETE
 ⏳ v4.2	WhatsApp Business API Integration	Pending Meta verification
 ⏳ v4.3	Stripe Live + Invoice Automation	Pending
 ⏳ v4.4	CPanel/FTP Auto-Deploy Tool	Pending

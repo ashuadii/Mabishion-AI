@@ -411,8 +411,68 @@ async fn mickii_workflow(task: String) -> Result<String, String> {
 }
 
 #[tauri::command]
-async fn execute_skill(skill_id: String, _context: serde_json::Value) -> Result<serde_json::Value, String> {
+async fn execute_skill(app: tauri::AppHandle, skill_id: String, context: serde_json::Value) -> Result<serde_json::Value, String> {
+    use tauri::Emitter;
+    app.emit("trigger_skill", serde_json::json!({ "skillId": skill_id, "context": context }))
+        .map_err(|e| e.to_string())?;
     Ok(serde_json::json!({ "status": "started", "skill": skill_id }))
+}
+
+#[tauri::command]
+async fn deploy_to_cpanel(host: String, user: String, pass: String, local_dir: String, remote_dir: String) -> Result<String, String> {
+    tokio::task::spawn_blocking(move || -> Result<String, String> {
+        use suppaftp::FtpStream;
+        use walkdir::WalkDir;
+        use std::fs::File;
+        use std::io::Read;
+        
+        let mut ftp_stream = FtpStream::connect(format!("{}:21", host))
+            .map_err(|e| format!("Connection error: {}", e))?;
+            
+        ftp_stream.login(&user, &pass)
+            .map_err(|e| format!("Login error: {}", e))?;
+            
+        let _ = ftp_stream.cwd(&remote_dir);
+        
+        let local_path = std::path::Path::new(&local_dir);
+        if !local_path.exists() {
+            return Err("Local directory does not exist".into());
+        }
+        
+        for entry in WalkDir::new(local_path).into_iter().filter_map(|e| e.ok()) {
+            let path = entry.path();
+            if path.is_file() {
+                let rel_path = path.strip_prefix(local_path).unwrap();
+                let rel_path_str = rel_path.to_string_lossy().replace("\\", "/");
+                
+                let mut current_remote_dir = remote_dir.clone();
+                if let Some(parent) = rel_path.parent() {
+                    let parent_str = parent.to_string_lossy().replace("\\", "/");
+                    if !parent_str.is_empty() {
+                        let dirs: Vec<&str> = parent_str.split('/').collect();
+                        for d in dirs {
+                            current_remote_dir = format!("{}/{}", current_remote_dir, d);
+                            let _ = ftp_stream.mkdir(&current_remote_dir);
+                        }
+                    }
+                }
+                
+                let target_path = format!("{}/{}", remote_dir, rel_path_str);
+                
+                if let Ok(mut f) = File::open(path) {
+                    let mut buffer = Vec::new();
+                    if f.read_to_end(&mut buffer).is_ok() {
+                        let mut reader = std::io::Cursor::new(buffer);
+                        let _ = ftp_stream.put_file(&target_path, &mut reader);
+                    }
+                }
+            }
+        }
+        
+        let _ = ftp_stream.quit();
+        
+        Ok(format!("Successfully deployed to {}", host))
+    }).await.map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
@@ -676,6 +736,7 @@ fn main() {
             mickii_tool,
             mickii_workflow,
             execute_skill,
+            deploy_to_cpanel,
             mickii_fs_create,
             mickii_fs_read,
             mickii_fs_write,

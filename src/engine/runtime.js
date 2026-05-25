@@ -90,6 +90,18 @@ export const SystemTools = [
       },
       required: ['query']
     }
+  },
+  {
+    name: 'mickii_cpanel_deploy',
+    description: 'Deploy a local directory to a C-Panel via FTP.',
+    parameters: {
+      type: 'object',
+      properties: {
+        localDir: { type: 'string' },
+        remoteDir: { type: 'string' }
+      },
+      required: ['localDir', 'remoteDir']
+    }
   }
 ];
 
@@ -185,6 +197,46 @@ export class AgentRuntime {
         ).join('\n\n');
       }
       return raw;
+    }
+
+    if (toolName === 'mickii_cpanel_deploy') {
+      const host = await this.getCachedKey('cpanel_host', '');
+      const user = await this.getCachedKey('cpanel_user', '');
+      const pass = await this.getCachedKey('cpanel_pass', '');
+      
+      if (!host || !user || !pass) {
+        throw new Error('C-Panel credentials (host, user, pass) are missing in settings.');
+      }
+      
+      console.log(`[Runtime] Pushing mickii_cpanel_deploy to approvals queue for: ${args.localDir}`);
+      const preview = `DEPLOY TO C-PANEL\n\nLocal Dir: ${args.localDir}\nRemote Dir: ${args.remoteDir}\nHost: ${host}`;
+      const approvalId = await addApproval(preview, 'C-Panel Deployment', '{}', 'Packager Worker', 'Critical');
+      await emit('approval_requested', { approvalId, path: args.localDir });
+      
+      await new Promise((resolve, reject) => {
+        let unlisten;
+        const timeout = setTimeout(() => {
+          if (unlisten) unlisten();
+          reject(new Error('Approval timeout.'));
+        }, 60000);
+        
+        listen('approval_granted', (event) => {
+          const { approvalId: receivedId, decision } = event.payload;
+          if (receivedId === approvalId) {
+            clearTimeout(timeout);
+            if (decision === 'Approved') resolve(true);
+            else reject(new Error('User rejected deployment.'));
+            if (unlisten) unlisten();
+          }
+        }).then(u => { unlisten = u; });
+      });
+
+      console.log('[Runtime] Deployment approved, triggering Rust FTP client...');
+      return await invoke('deploy_to_cpanel', { 
+        host, user, pass, 
+        localDir: args.localDir, 
+        remoteDir: args.remoteDir 
+      });
     }
 
     throw new Error(`Unknown tool: ${toolName}`);
