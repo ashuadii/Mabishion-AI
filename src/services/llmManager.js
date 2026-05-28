@@ -1,4 +1,5 @@
 import { getSetting, logLlmUsage } from '../data/db';
+import { logLLMProvider } from '../engine/utils/runtimeHealth.js';
 
 /**
  * Validates and checks standard API key setups
@@ -243,6 +244,7 @@ export async function executeLlmWithFallback(prompt, systemInstruction = '') {
       }
 
       console.log(`[LLM Fallback] Attempting ${step.provider}...`);
+      logLLMProvider(step.provider);
       const startTime = Date.now();
       const result = await step.runner(apiKey, prompt, systemInstruction);
       const duration = Date.now() - startTime;

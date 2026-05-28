@@ -1,4 +1,5 @@
 import { getDb } from '../../data/db.js';
+import { logWorkerStart, logWorkerEnd, logWorkerFail, logApprovalWait } from '../utils/runtimeHealth.js';
 
 // Safe SQLite string value sanitization helper
 export const sanitizeSqlValue = (val) => {
@@ -42,6 +43,9 @@ export class BaseWorker {
     const cleanParams = params && typeof params === 'object' ? params : {};
     const activeProvider = cleanParams.provider_used || 'Gemini';
 
+    // Log worker start to runtime health monitor
+    logWorkerStart(this.name);
+
     // 2. Proactively initialize/migrate worker_logs table with duration and provider metrics
     await db.execute(`
       CREATE TABLE IF NOT EXISTS worker_logs (
@@ -68,6 +72,7 @@ export class BaseWorker {
       // If worker requires approval, transition status state to waiting_approval before triggering execution
       if (this.requiresApproval) {
         this.status = 'waiting_approval';
+        logApprovalWait(this.name);
         await db.execute(
           `UPDATE worker_logs SET status = $1 WHERE id = $2`,
           ['waiting_approval', logId]
@@ -79,6 +84,9 @@ export class BaseWorker {
 
       const durationMs = Date.now() - startTime;
       this.status = 'completed';
+
+      // Log completion to runtime health monitor
+      logWorkerEnd(this.name, durationMs);
 
       // Log success (State: completed)
       await db.execute(
@@ -101,6 +109,9 @@ export class BaseWorker {
       const durationMs = Date.now() - startTime;
       console.error(`[BaseWorker Error in ${this.name}]`, error);
       this.status = 'failed';
+
+      // Log failure to runtime health monitor
+      logWorkerFail(this.name, error);
 
       // Log failure (State: failed)
       await db.execute(

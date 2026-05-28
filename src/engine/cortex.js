@@ -7,6 +7,7 @@ import { AgentRuntime, SystemTools } from './runtime.js';
 import { invoke } from '@tauri-apps/api/core';
 import { getSetting, getAllSettings, addProjectMemory, getProjectMemory } from '../data/db.js';
 import { appDataDir } from '@tauri-apps/api/path';
+import { logLLMProvider, logMemoryPrune } from './utils/runtimeHealth.js';
 
 const MAX_ITERATIONS = 12;
 
@@ -18,6 +19,7 @@ const MAX_ITERATIONS = 12;
 const pruneContextString = (str, limit = 800) => {
   if (typeof str !== 'string') return '';
   if (str.length <= limit) return str;
+  logMemoryPrune(1);
   return str.substring(0, limit) + '... [Context pruned safely to prevent token-limit overflow]';
 };
 
@@ -129,6 +131,7 @@ export class LLMProvider {
         }
 
         console.log(`[Cortex] Trying ${provider.name}...`);
+        logLLMProvider(provider.name);
         const payload = provider.buildPayload(openaiMessages);
 
         let data;
