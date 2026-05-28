@@ -14,6 +14,13 @@ const MAX_ITERATIONS = 12;
 /* LLM Provider (OpenRouter — OpenAI Compatible)                               */
 /* -------------------------------------------------------------------------- */
 
+// Helper utility for lightweight context memory protection
+const pruneContextString = (str, limit = 800) => {
+  if (typeof str !== 'string') return '';
+  if (str.length <= limit) return str;
+  return str.substring(0, limit) + '... [Context pruned safely to prevent token-limit overflow]';
+};
+
 export class LLMProvider {
   constructor(cfg = {}) {
     this.primaryProvider = cfg.primaryProvider || 'gemini'; // gemini, groq, openrouter
@@ -117,7 +124,7 @@ export class LLMProvider {
       try {
         const { url, key } = await provider.url();
         if (!key || key.startsWith('PASTE_YOUR') || key.length < 10) {
-          console.warn(`[Cortex] Skipping ${provider.name} — no valid key`);
+          console.warn(`[Cortex] Skipping ${provider.name} — no valid key configured.`);
           continue;
         }
 
@@ -125,33 +132,43 @@ export class LLMProvider {
         const payload = provider.buildPayload(openaiMessages);
 
         let data;
-        if (provider.name === 'Gemini') {
-          data = await invoke('gemini_proxy', { payload, apiKey: key, baseUrl: url });
-        } else {
-          data = await invoke('llm_proxy', { payload, apiKey: key, baseUrl: url, extraHeaders: provider.name === 'OpenRouter' ? { 'HTTP-Referer': 'http://localhost', 'X-Title': 'Mabishion-Mickii' } : {} });
-        }
+        let retries = 0;
+        const maxRetries = provider.name === 'Gemini' ? 1 : 0; // Retry Gemini safely once
 
-        if (data && data.error) {
-          const errStr = JSON.stringify(data.error).toLowerCase();
-          if (errStr.includes('429') || errStr.includes('rate limit')) {
-            console.warn(`[Cortex] ${provider.name} rate limited, trying next...`);
-            lastError = new Error(`${provider.name} rate limited`);
-            continue;
+        while (retries <= maxRetries) {
+          try {
+            if (provider.name === 'Gemini') {
+              data = await invoke('gemini_proxy', { payload, apiKey: key, baseUrl: url });
+            } else {
+              data = await invoke('llm_proxy', { payload, apiKey: key, baseUrl: url, extraHeaders: provider.name === 'OpenRouter' ? { 'HTTP-Referer': 'http://localhost', 'X-Title': 'Mabishion-Mickii' } : {} });
+            }
+
+            if (data && data.error) {
+              throw new Error(typeof data.error === 'string' ? data.error : JSON.stringify(data.error));
+            }
+            break; // Success! Break retry loop
+          } catch (retryErr) {
+            retries++;
+            if (retries > maxRetries) {
+              throw retryErr; // Out of retries, escalate to fallback handler
+            }
+            console.warn(`[Cortex Alert] ${provider.name} attempt failed, retrying safely once in 1.5s... Error:`, retryErr.message || retryErr);
+            await new Promise(r => setTimeout(r, 1500));
           }
-          throw new Error(`${provider.name} API Error: ${JSON.stringify(data.error)}`);
         }
 
         const result = provider.parseResponse(data);
-        console.log(`[Cortex] ${provider.name} success!`);
+        console.log(`[Cortex] ${provider.name} completed successfully!`);
         return result;
 
       } catch (err) {
-        console.warn(`[Cortex] ${provider.name} failed:`, err.message || err);
-        lastError = err;
+        const readableMsg = err.message || String(err);
+        console.warn(`[Cortex Alert] ${provider.name} pipeline execution failed:`, readableMsg);
+        lastError = new Error(`${provider.name} failure (${readableMsg})`);
       }
     }
 
-    throw new Error(`All LLM providers failed. Last error: ${lastError?.message || lastError}`);
+    throw new Error(`All LLM providers failed. Fallback pipeline exhausted. Last error details: ${lastError?.message || lastError}`);
   }
 }
 
@@ -186,7 +203,8 @@ export class Cortex {
       try {
         const mems = await getProjectMemory(this.projectId, 5);
         if (mems && mems.length > 0) {
-          const memStr = mems.map(m => `- ${m.observation}`).join('\n');
+          // Safeguard: Prune observations text to keep memory payload under token limit
+          const memStr = mems.map(m => `- ${pruneContextString(m.observation)}`).join('\n');
           this.systemPrompt += `\n\n### PROJECT MEMORY (Last 5 Observations):\n${memStr}`;
         }
       } catch (err) { console.error('[Cortex] Failed to load project memory', err); }
