@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/schema.json",
-  "productName": "mabishion-ai",
+  "productName": "Mabishion AI",
   "version": "0.1.0",
   "identifier": "com.mabishion.factory",
   "build": {
