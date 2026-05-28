@@ -66,6 +66,12 @@ export default function DashboardScreen({ onNavigate }) {
   const [planContext, setPlanContext] = useState('');
   const [planUrl, setPlanUrl] = useState('');
   
+  // Quick Design Config Modal States
+  const [isDesignModalOpen, setIsDesignModalOpen] = useState(false);
+  const [designPreset, setDesignPreset] = useState('glassmorphism');
+  const [designPages, setDesignPages] = useState('Home, Services, About, Contact');
+  const [designNotes, setDesignNotes] = useState('');
+  
   // Mickii Autonomous Engine
   const { messages, send, status, isProcessing } = useMickiiAgent({
     model: 'llama-3.3-70b-versatile'
@@ -177,8 +183,58 @@ export default function DashboardScreen({ onNavigate }) {
   const handleSkillClick = (skillId) => {
     if (skillId === 'skill-plan') {
       setIsPlanModalOpen(true);
+    } else if (skillId === 'skill-design') {
+      setIsDesignModalOpen(true);
     } else {
       runSkill(skillId);
+    }
+  };
+
+  const handleGenerateDesign = async () => {
+    setIsDesignModalOpen(false);
+    
+    // Resolve design parameters based on selected preset
+    let designPrefs = 'Premium dark glassmorphism theme, glowing backdrop filters, smooth margins, neon accents';
+    let colorScheme = '#6366F1 primary indigo, #0F172A background, #F8FAFC text, transparent glass panels';
+    
+    if (designPreset === 'corporate') {
+      designPrefs = 'Professional clean minimalist corporate theme, sleek cards, sharp corners, pristine layout';
+      colorScheme = '#1E40AF primary blue, #FFFFFF background, #0F172A text, clean white surface';
+    } else if (designPreset === 'wellness') {
+      designPrefs = 'Calming clean eco/wellness theme, organic round borders, elegant minimal spacing';
+      colorScheme = '#0D9488 primary teal, #F0FDFA background, #115E59 text, pristine white cards';
+    } else if (designPreset === 'cyberpunk') {
+      designPrefs = 'High contrast cyberpunk tech aesthetic, bold glowing borders, neon green highlights';
+      colorScheme = '#10B981 primary neon green, #090D16 background, #ECFDF5 text, slate borders';
+    } else if (designPreset === 'dark_mode') {
+      designPrefs = 'Minimalist premium dark mode theme, thin gold borders, flat clean card grids';
+      colorScheme = '#D97706 primary gold, #0A0F1D background, #F3F4F6 text, slate-900 surface';
+    }
+    
+    if (designNotes.trim()) {
+      designPrefs += `, Client custom notes: ${designNotes.trim()}`;
+    }
+
+    const pagesArray = designPages.split(',').map(p => p.trim()).filter(Boolean);
+
+    setSkillRunning('skill-design');
+    try {
+      const result = await invoke('execute_skill', { 
+        skillId: 'skill-design', 
+        context: { 
+          user: 'Adii',
+          pages: pagesArray,
+          design_prefs: designPrefs,
+          color_scheme: colorScheme
+        }
+      });
+      alert(`Design Tool successfully executed!\nStatus: ${result.status || 'Success'}\nWebsite Builder is now designing your layout with "${designPreset}" preset in the background!`);
+    } catch (e) {
+      alert(`Error running Design Tool: ${e}`);
+    } finally {
+      setSkillRunning(null);
+      // Reset design inputs
+      setDesignNotes('');
     }
   };
 
@@ -515,6 +571,98 @@ Reference URL or notes: ${planUrl || 'None'}
                 className="bg-amber-600/30 hover:bg-amber-600 border border-amber-500/40"
               >
                 Generate Real-Time Plan
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Design Config Modal Overlay */}
+      {isDesignModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-xl p-6 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden text-left"
+               style={{ backgroundColor: '#0c0f17e0', ...glassStyle({ strong: true, glow: 'emerald' }) }}>
+            <div className="absolute top-0 right-0 w-44 h-44 bg-emerald-500/5 rounded-full blur-3xl" />
+            
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🎨</span>
+                <h3 className="text-lg font-black text-white">Setup Quick Design Execution</h3>
+              </div>
+              <button onClick={() => setIsDesignModalOpen(false)} className="text-gray-400 hover:text-white transition-colors">
+                <Icon name="close" size={20} />
+              </button>
+            </div>
+
+            <p className="text-xs text-gray-400 mb-5 leading-relaxed">
+              Select a curated visual design preset, customize required pages/sub-pages, and let Mickii's Website Builder write premium frontend code instantly.
+            </p>
+
+            <div className="space-y-4">
+              {/* Visual Theme Presets Grid */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-1">Visual Theme Preset (Choose a look)</label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                  {[
+                    { id: 'corporate', icon: 'business', name: 'Sleek Corporate', desc: 'Clean white, blue accents' },
+                    { id: 'glassmorphism', icon: 'auto_awesome', name: 'Premium Glass', desc: 'Dark mode, indigo glow' },
+                    { id: 'wellness', icon: 'eco', name: 'Clean Wellness', desc: 'Soft teal, teal accents' },
+                    { id: 'cyberpunk', icon: 'terminal', name: 'Cyberpunk Tech', desc: 'Charcoal, neon green' },
+                    { id: 'dark_mode', icon: 'dark_mode', name: 'Classic Dark', desc: 'Slate-900, gold accents' },
+                  ].map(theme => (
+                    <button
+                      key={theme.id}
+                      type="button"
+                      onClick={() => setDesignPreset(theme.id)}
+                      className={`p-3 rounded-xl text-left border transition-all ${
+                        designPreset === theme.id 
+                          ? 'border-emerald-500/70 bg-emerald-500/10 shadow-lg shadow-emerald-950/20' 
+                          : 'border-white/5 bg-white/[0.02] hover:bg-white/5'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5 mb-1 text-white">
+                        <span className="material-icons text-sm text-emerald-400">{theme.icon}</span>
+                        <span className="text-[10px] font-bold">{theme.name}</span>
+                      </div>
+                      <span className="text-[9px] text-gray-500 block leading-tight">{theme.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Pages to Generate */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Required Website Pages (Comma-separated)</label>
+                <input 
+                  type="text"
+                  value={designPages}
+                  onChange={(e) => setDesignPages(e.target.value)}
+                  placeholder="e.g., Home, Services, About, Contact"
+                  className="px-3.5 py-2.5 text-xs text-white bg-slate-950/80 border border-white/10 rounded-xl focus:outline-none focus:border-emerald-500 w-full placeholder-gray-600"
+                />
+              </div>
+
+              {/* Custom Design Notes textarea */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Custom Brand Notes / HEX Colors (Optional)</label>
+                <textarea 
+                  rows={3}
+                  value={designNotes}
+                  onChange={(e) => setDesignNotes(e.target.value)}
+                  placeholder="e.g. Please use my client's brand color #ea580c, add an testimonials slider carousel section, and link course buttons to checkout."
+                  className="px-3.5 py-2.5 text-xs text-white bg-slate-950/80 border border-white/10 rounded-xl focus:outline-none focus:border-emerald-500 w-full resize-none placeholder-gray-600"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <Button variant="soft" onClick={() => setIsDesignModalOpen(false)}>Cancel</Button>
+              <Button 
+                variant="glow"
+                onClick={handleGenerateDesign}
+                className="bg-emerald-600/30 hover:bg-emerald-600 border border-emerald-500/40"
+              >
+                Generate Design Layout
               </Button>
             </div>
           </div>
