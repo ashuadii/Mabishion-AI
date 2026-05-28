@@ -67,6 +67,8 @@ export default function DashboardScreen({ onNavigate }) {
   const [planUrl, setPlanUrl] = useState('');
   const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
   const [isDomainDropdownOpen, setIsDomainDropdownOpen] = useState(false);
+  const [customPlanType, setCustomPlanType] = useState('');
+  const [attachedFiles, setAttachedFiles] = useState([]);
   
   // Quick Design Config Modal States
   const [isDesignModalOpen, setIsDesignModalOpen] = useState(false);
@@ -251,16 +253,65 @@ export default function DashboardScreen({ onNavigate }) {
     }
   };
 
+  const handleFileChange = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    const newFiles = await Promise.all(
+      files.map(async (file) => {
+        let textContent = null;
+        const extension = file.name.split('.').pop().toLowerCase();
+        const readableExtensions = ['txt', 'md', 'json', 'csv', 'yaml', 'yml', 'js', 'jsx', 'ts', 'tsx', 'html', 'css'];
+        
+        if (readableExtensions.includes(extension)) {
+          textContent = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (event) => resolve(event.target.result);
+            reader.onerror = () => resolve(null);
+            reader.readAsText(file);
+          });
+        }
+
+        return {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          extension,
+          textContent,
+        };
+      })
+    );
+
+    setAttachedFiles((prev) => [...prev, ...newFiles]);
+  };
+
+  const handleRemoveFile = (index) => {
+    setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleGeneratePlan = async () => {
     setIsPlanModalOpen(false);
     
     // Construct rich context prompt based on user's selected dropdowns and input ideas!
-    const customRequirements = `
-Type of Build: ${planType}
+    const activePlanType = planType === 'Other' ? `Other (${customPlanType || 'Custom'})` : planType;
+    let customRequirements = `
+Type of Build: ${activePlanType}
 Business Domain: ${planDomain}
 Custom Ideas & Blueprint context: ${planContext || 'Standard planning request'}
 Reference URL or notes: ${planUrl || 'None'}
     `.trim();
+
+    if (attachedFiles.length > 0) {
+      customRequirements += `\n\n=== ATTACHED REFERENCE FILES ===`;
+      attachedFiles.forEach(file => {
+        customRequirements += `\nFile Name: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+        if (file.textContent) {
+          customRequirements += `\nContent:\n${file.textContent}\n---`;
+        } else {
+          customRequirements += `\n[Format: ${file.type || 'Binary asset'} - referenced for execution]`;
+        }
+      });
+    }
 
     setSkillRunning('skill-plan');
     try {
@@ -271,7 +322,7 @@ Reference URL or notes: ${planUrl || 'None'}
           requirements_override: customRequirements 
         }
       });
-      alert(`Plan Tool successfully executed!\nStatus: ${result.status || 'Success'}\nBlueprint Maker is now planning your ${planType} for ${planDomain} in the background!`);
+      alert(`Plan Tool successfully executed!\nStatus: ${result.status || 'Success'}\nBlueprint Maker is now planning your ${activePlanType} for ${planDomain} in the background!`);
     } catch (e) {
       alert(`Error running Plan Tool: ${e}`);
     } finally {
@@ -279,6 +330,8 @@ Reference URL or notes: ${planUrl || 'None'}
       // Reset plan inputs
       setPlanContext('');
       setPlanUrl('');
+      setCustomPlanType('');
+      setAttachedFiles([]);
     }
   };
 
@@ -519,7 +572,7 @@ Reference URL or notes: ${planUrl || 'None'}
             <div className="space-y-4">
               {/* Type of Build Dropdown */}
               <div className="flex flex-col gap-1.5 relative">
-                <label className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Type of Build (Kya banwana hai)</label>
+                <label className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Type of Build (What do you want to build)</label>
                 <button
                   type="button"
                   onClick={() => {
@@ -534,7 +587,8 @@ Reference URL or notes: ${planUrl || 'None'}
                     planType === 'Mobile App' ? 'Mobile Application (iOS/Android)' :
                     planType === 'SaaS Dashboard' ? 'SaaS Product / Web App' :
                     planType === 'Automation Engine' ? 'Automation Workflow / Script' :
-                    planType === 'Custom CRM / Software' ? 'Custom CRM / Internal Software' : planType
+                    planType === 'Custom CRM / Software' ? 'Custom CRM / Internal Software' :
+                    planType === 'Other' ? 'Other (Custom Build)' : planType
                   }</span>
                   <span className={`text-[10px] text-gray-400 transition-transform duration-300 ${isTypeDropdownOpen ? 'rotate-180 text-amber-400' : ''}`}>▼</span>
                 </button>
@@ -545,7 +599,8 @@ Reference URL or notes: ${planUrl || 'None'}
                       { value: 'Mobile App', label: 'Mobile Application (iOS/Android)' },
                       { value: 'SaaS Dashboard', label: 'SaaS Product / Web App' },
                       { value: 'Automation Engine', label: 'Automation Workflow / Script' },
-                      { value: 'Custom CRM / Software', label: 'Custom CRM / Internal Software' }
+                      { value: 'Custom CRM / Software', label: 'Custom CRM / Internal Software' },
+                      { value: 'Other', label: 'Other (Custom Build)' }
                     ].map((opt) => (
                       <button
                         key={opt.value}
@@ -567,6 +622,21 @@ Reference URL or notes: ${planUrl || 'None'}
                   </div>
                 )}
               </div>
+
+              {/* Specify Custom Build Type (Rendered only when 'Other' is selected) */}
+              {planType === 'Other' && (
+                <div className="flex flex-col gap-1.5 animate-in slide-in-from-top-2 duration-200">
+                  <label className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Specify Custom Build Type</label>
+                  <input 
+                    type="text"
+                    value={customPlanType}
+                    onChange={(e) => setCustomPlanType(e.target.value)}
+                    placeholder="e.g. AI-Powered Chatbot, IoT Monitoring Console, Custom CRM Extension"
+                    className="px-3.5 py-2.5 text-xs text-white bg-slate-950/80 border border-white/10 rounded-xl focus:outline-none focus:border-amber-500 w-full placeholder-gray-600"
+                    style={{ border: '1px solid rgba(255, 255, 255, 0.08)' }}
+                  />
+                </div>
+              )}
 
               {/* Business Domain Dropdown */}
               <div className="flex flex-col gap-1.5 relative">
@@ -633,6 +703,80 @@ Reference URL or notes: ${planUrl || 'None'}
                   placeholder="Paste your context idea, rules, or core features here... e.g. I want to build a platform where users upload property details and AI writes ads."
                   className="px-3.5 py-2.5 text-xs text-white bg-slate-950/80 border border-white/10 rounded-xl focus:outline-none focus:border-amber-500 w-full resize-none placeholder-gray-600"
                 />
+              </div>
+
+              {/* File Attachment Widget */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-black text-amber-400 uppercase tracking-widest">
+                  Reference Attachments (Media, Pic, Video, Docs, PDF, XLS, PPT)
+                </label>
+                <div 
+                  onClick={() => document.getElementById('plan-files').click()}
+                  className="group px-4 py-3 rounded-xl border border-dashed border-white/10 hover:border-amber-500/50 bg-white/[0.01] hover:bg-amber-500/[0.02] flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-300"
+                >
+                  <span className="text-lg group-hover:scale-110 transition-transform duration-300">📎</span>
+                  <span className="text-[10px] text-gray-400 font-bold group-hover:text-amber-400 transition-colors">
+                    Click to attach multiple files
+                  </span>
+                  <span className="text-[8px] text-gray-600 block">
+                    Supports images, docs, sheets, PDFs, slides, and scripts
+                  </span>
+                </div>
+                <input 
+                  type="file" 
+                  id="plan-files" 
+                  multiple 
+                  className="hidden" 
+                  onChange={handleFileChange} 
+                />
+
+                {attachedFiles.length > 0 && (
+                  <div className="mt-2 max-h-32 overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
+                    {attachedFiles.map((file, idx) => {
+                      let badgeColor = 'bg-slate-800 text-slate-300 border-slate-700/50';
+                      let formatText = file.extension.toUpperCase();
+                      if (['pdf'].includes(file.extension)) {
+                        badgeColor = 'bg-red-500/10 text-red-400 border-red-500/20';
+                      } else if (['doc', 'docx'].includes(file.extension)) {
+                        badgeColor = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+                      } else if (['xls', 'xlsx', 'csv'].includes(file.extension)) {
+                        badgeColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+                      } else if (['ppt', 'pptx'].includes(file.extension)) {
+                        badgeColor = 'bg-orange-500/10 text-orange-400 border-orange-500/20';
+                      } else if (['png', 'jpg', 'jpeg', 'gif', 'svg'].includes(file.extension)) {
+                        badgeColor = 'bg-pink-500/10 text-pink-400 border-pink-500/20';
+                      } else if (['mp4', 'mov', 'avi', 'mkv'].includes(file.extension)) {
+                        badgeColor = 'bg-violet-500/10 text-violet-400 border-violet-500/20';
+                      }
+
+                      return (
+                        <div 
+                          key={idx} 
+                          className="flex items-center justify-between p-2 rounded-xl bg-white/[0.02] border border-white/5 text-[10px]"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className={`px-1.5 py-0.5 rounded text-[8px] font-black border uppercase tracking-wider ${badgeColor}`}>
+                              {formatText}
+                            </span>
+                            <span className="text-gray-300 truncate font-mono max-w-[200px]" title={file.name}>
+                              {file.name}
+                            </span>
+                            <span className="text-gray-600 text-[8px]">
+                              ({(file.size / 1024).toFixed(1)} KB)
+                            </span>
+                          </div>
+                          <button 
+                            type="button" 
+                            onClick={(e) => { e.stopPropagation(); handleRemoveFile(idx); }}
+                            className="text-gray-500 hover:text-red-400 transition-colors p-1"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Reference URL or Notes */}
