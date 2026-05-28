@@ -68,6 +68,7 @@ export default function DashboardScreen({ onNavigate }) {
   const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
   const [isDomainDropdownOpen, setIsDomainDropdownOpen] = useState(false);
   const [otherPlanType, setOtherPlanType] = useState('');
+  const [otherPlanDomain, setOtherPlanDomain] = useState('');
   const [attachedFile, setAttachedFile] = useState(null);
   
   // Quick Design Config Modal States
@@ -285,11 +286,12 @@ export default function DashboardScreen({ onNavigate }) {
     
     // Resolve dynamic plan type including potential custom "Other" type
     const resolvedPlanType = planType === 'Other' ? (otherPlanType || 'Custom Project') : planType;
+    const resolvedPlanDomain = planDomain === 'Other' ? (otherPlanDomain || 'Custom Domain') : planDomain;
 
     // Construct rich context prompt based on user's selected dropdowns and input ideas!
     let customRequirements = `
 Type of Build: ${resolvedPlanType}
-Business Domain: ${planDomain}
+Business Domain: ${resolvedPlanDomain}
 Custom Ideas & Blueprint context: ${planContext || 'Standard planning request'}
 Reference URL or notes: ${planUrl || 'None'}
     `.trim();
@@ -307,7 +309,7 @@ Reference URL or notes: ${planUrl || 'None'}
           requirements_override: customRequirements 
         }
       });
-      alert(`Plan Tool successfully executed!\nStatus: ${result.status || 'Success'}\nBlueprint Maker is now planning your ${resolvedPlanType} for ${planDomain} in the background!`);
+      alert(`Plan Tool successfully executed!\nStatus: ${result.status || 'Success'}\nBlueprint Maker is now planning your ${resolvedPlanType} for ${resolvedPlanDomain} in the background!`);
     } catch (e) {
       alert(`Error running Plan Tool: ${e}`);
     } finally {
@@ -316,6 +318,7 @@ Reference URL or notes: ${planUrl || 'None'}
       setPlanContext('');
       setPlanUrl('');
       setOtherPlanType('');
+      setOtherPlanDomain('');
       setAttachedFile(null);
     }
   };
@@ -535,7 +538,7 @@ Reference URL or notes: ${planUrl || 'None'}
 
       {/* Plan Tool Configuration Modal */}
       {isPlanModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-md p-4 overflow-y-auto pt-10 pb-32 animate-in fade-in duration-300">
           <div className="w-full max-w-lg p-6 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden text-left"
                style={{ backgroundColor: '#0c0f17e0', ...glassStyle({ strong: true, glow: 'gold' }) }}>
             <div className="absolute top-0 right-0 w-44 h-44 bg-yellow-500/5 rounded-full blur-3xl" />
@@ -642,7 +645,8 @@ Reference URL or notes: ${planUrl || 'None'}
                     planDomain === 'Finance / Fintech' ? 'Finance / Fintech / Crypto' :
                     planDomain === 'Healthcare / Biotech' ? 'Healthcare / Biotech / Medical' :
                     planDomain === 'Education / EdTech' ? 'Education / E-Learning' :
-                    planDomain === 'AI & SaaS' ? 'AI Platform & SaaS product' : planDomain
+                    planDomain === 'AI & SaaS' ? 'AI Platform & SaaS product' :
+                    planDomain === 'Other' ? 'Other (Custom domain / field)' : planDomain
                   }</span>
                   <span className={`text-[10px] text-gray-400 transition-transform duration-300 ${isDomainDropdownOpen ? 'rotate-180 text-amber-400' : ''}`}>▼</span>
                 </button>
@@ -655,7 +659,8 @@ Reference URL or notes: ${planUrl || 'None'}
                       { value: 'Finance / Fintech', label: 'Finance / Fintech / Crypto' },
                       { value: 'Healthcare / Biotech', label: 'Healthcare / Biotech / Medical' },
                       { value: 'Education / EdTech', label: 'Education / E-Learning' },
-                      { value: 'AI & SaaS', label: 'AI Platform & SaaS product' }
+                      { value: 'AI & SaaS', label: 'AI Platform & SaaS product' },
+                      { value: 'Other', label: 'Other (Custom domain / field)' }
                     ].map((opt) => (
                       <button
                         key={opt.value}
@@ -677,6 +682,21 @@ Reference URL or notes: ${planUrl || 'None'}
                   </div>
                 )}
               </div>
+
+              {/* Other Specify Domain Custom Input - Shows ONLY when "Other" is selected */}
+              {planDomain === 'Other' && (
+                <div className="flex flex-col gap-1.5 animate-in slide-in-from-top-2 duration-200">
+                  <label className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Specify Business Domain</label>
+                  <input 
+                    type="text"
+                    value={otherPlanDomain}
+                    onChange={(e) => setOtherPlanDomain(e.target.value)}
+                    placeholder="e.g. Tours & Travels, Auto Dealership, Legal Services, Food & Restaurant"
+                    className="px-3.5 py-2.5 text-xs text-white bg-slate-950/80 border border-white/10 rounded-xl focus:outline-none focus:border-amber-500 w-full placeholder-gray-600"
+                    style={{ border: '1px solid rgba(255, 255, 255, 0.08)' }}
+                  />
+                </div>
+              )}
 
               {/* Context Idea Text Area */}
               <div className="flex flex-col gap-1.5">
@@ -771,7 +791,7 @@ Reference URL or notes: ${planUrl || 'None'}
 
       {/* Quick Design Config Modal Overlay */}
       {isDesignModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-md p-4 overflow-y-auto pt-10 pb-32 animate-in fade-in duration-300">
           <div className="w-full max-w-xl p-6 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden text-left"
                style={{ backgroundColor: '#0c0f17e0', ...glassStyle({ strong: true, glow: 'emerald' }) }}>
             <div className="absolute top-0 right-0 w-44 h-44 bg-emerald-500/5 rounded-full blur-3xl" />
