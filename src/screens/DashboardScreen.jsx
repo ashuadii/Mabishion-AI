@@ -121,15 +121,22 @@ export default function DashboardScreen({ onNavigate }) {
     loadDashboardData();
     fetchApprovals();
 
-    // Listen for incoming approvals
-    let unlisten;
+    // Listen for incoming approvals with robust unmount race condition handling
+    let active = true;
+    let unlistenApprovals = null;
+    let unlistenSkill = null;
+
     listen('approval_requested', (event) => {
+      if (!active) return;
       console.log('[UI] Received approval_requested event:', event.payload);
       fetchApprovals();
-    }).then(u => { unlisten = u; });
+    }).then(u => {
+      unlistenApprovals = u;
+      if (!active) u();
+    });
 
-    let unlistenSkill;
     listen('trigger_skill', async (event) => {
+      if (!active) return;
       console.log('[UI] Received trigger_skill event:', event.payload);
       const { skillId, context } = event.payload;
       
@@ -159,10 +166,14 @@ export default function DashboardScreen({ onNavigate }) {
       } catch (err) {
         alert(`Worker ${workerName} failed: ${err.message}`);
       }
-    }).then(u => { unlistenSkill = u; });
+    }).then(u => {
+      unlistenSkill = u;
+      if (!active) u();
+    });
 
     return () => {
-      if (unlisten) unlisten();
+      active = false;
+      if (unlistenApprovals) unlistenApprovals();
       if (unlistenSkill) unlistenSkill();
     };
   }, []);
