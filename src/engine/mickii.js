@@ -157,6 +157,36 @@ export async function runTool(toolName, input) {
 }
 
 
+export function validateSearchOutput(query, results) {
+  const queryLower = query.toLowerCase();
+  
+  // Check for common misinterpretation patterns
+  const misinterpretationPatterns = [
+    { 
+      queryHint: ['llm', 'language model', 'ai model'], 
+      badResultHint: ['nfl', 'free agent', 'football', 'draft', 'player'],
+      message: '⚠️ Search misinterpreted "LLM" as sports "free agents". Retrying with refined query...'
+    },
+    {
+      queryHint: ['api', 'endpoint'],
+      badResultHint: ['apiary', 'bee', 'honey'],
+      message: '⚠️ Search misinterpreted "API" as bees. Retrying...'
+    }
+  ];
+  
+  for (const pattern of misinterpretationPatterns) {
+    const queryMatches = pattern.queryHint.some(h => queryLower.includes(h));
+    const resultsText = results.map(r => (r?.title + ' ' + r?.snippet).toLowerCase()).join(' ');
+    const badResultMatches = pattern.badResultHint.some(h => resultsText.includes(h));
+    
+    if (queryMatches && badResultMatches) {
+      return { valid: false, message: pattern.message };
+    }
+  }
+  
+  return { valid: true };
+}
+
 export const TOOLS = {
   code_run:    { name: 'Code Tool',    icon: 'code',    desc: 'Code likhna + run karna' },
   file_read:   { name: 'File Reader',  icon: 'document',desc: 'Files padhna' },

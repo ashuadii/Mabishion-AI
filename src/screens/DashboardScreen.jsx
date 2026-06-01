@@ -711,8 +711,8 @@ Reference URL or notes: ${planUrl || "None"}
               <h4 className="text-xs font-black text-white mb-3 uppercase tracking-wider">
                 Revenue Trend (₹)
               </h4>
-              <div className="h-44">
-                <ResponsiveContainer width="100%" height="100%">
+              <div style={{ minWidth: 0 }}>
+                <ResponsiveContainer width="100%" height={176} minWidth={0}>
                   <AreaChart data={REVENUE_DATA}>
                     <defs>
                       <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
@@ -758,8 +758,8 @@ Reference URL or notes: ${planUrl || "None"}
               <h4 className="text-xs font-black text-white mb-3 uppercase tracking-wider">
                 Lead Acquisition Source
               </h4>
-              <div className="h-44">
-                <ResponsiveContainer width="100%" height="100%">
+              <div style={{ minWidth: 0 }}>
+                <ResponsiveContainer width="100%" height={176} minWidth={0}>
                   <BarChart data={LEAD_DATA}>
                     <XAxis
                       dataKey="source"

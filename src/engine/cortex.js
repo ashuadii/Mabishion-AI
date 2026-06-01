@@ -34,22 +34,20 @@ const pruneContextString = (str, limit = 800) => {
 function selectGeminiModel(userText) {
   const lower = userText.toLowerCase();
   
-  // Tool/Worker execution tasks
+  // Tool/Worker execution tasks — fast model with tool support
   const toolTasks = ['worker','trigger','tool','run',
     'execute','dispatch','start','activate','call','use'];
   
-  // Deep thinking tasks  
+  // Deep thinking tasks — pro model for reasoning
   const complexTasks = ['architecture','schema','blueprint',
     'design','plan','strategy','analyze','security',
     'database','implement','structure'];
   
-  if (toolTasks.some(k => lower.includes(k))) {
-    return 'gemini-3.1-pro-preview-customtools'; // Best for Mickii
-  }
   if (complexTasks.some(k => lower.includes(k))) {
-    return 'gemini-3.1-pro-preview'; // Deep reasoning
+    return 'gemini-2.5-pro-preview-05-06'; // Deep reasoning
   }
-  return 'gemini-3.5-flash'; // Default — fast + capable
+  // Default + tool tasks — gemini-2.5-flash handles tools well
+  return 'gemini-2.5-flash';
 }
 
 export class LLMProvider {
@@ -128,28 +126,124 @@ export class LLMProvider {
             key: geminiKey,
           };
         },
-        buildPayload: (msgs) => {
+        buildPayload: (msgs, toolDefs) => {
           const systemMsgs = msgs.filter((m) => m.role === "system");
-          const nonSystemMsgs = msgs.filter((m) => m.role !== "system");
+          let nonSystemMsgs = msgs.filter((m) => m.role !== "system");
+          
+          // REFINED: Fix tool-call sequence to prevent Gemini 400 error
+          const fixedSequence = [];
+          for (let i = 0; i < nonSystemMsgs.length; i++) {
+            const msg = nonSystemMsgs[i];
+            
+            // If previous message was tool_call, next MUST be tool_result
+            if (i > 0 && nonSystemMsgs[i-1].role === 'assistant' && nonSystemMsgs[i-1].tool_calls) {
+              if (msg.role !== 'tool') {
+                // Insert placeholder tool_result to fix sequence
+                fixedSequence.push({
+                  role: 'tool',
+                  tool_call_id: nonSystemMsgs[i-1].tool_calls[0].id,
+                  name: nonSystemMsgs[i-1].tool_calls[0].function.name,
+                  content: '{"error": "tool execution was skipped or interrupted"}'
+                });
+              }
+            }
+            fixedSequence.push(msg);
+          }
+          nonSystemMsgs = fixedSequence;
           const payload = {
-            contents: nonSystemMsgs.map((m) => ({
-              role: m.role === "assistant" ? "model" : "user",
-              parts: [{ text: m.content || "" }],
-            })),
+            contents: nonSystemMsgs.map((m) => {
+              if (m.role === "tool") {
+                console.log('[CORTEX DEBUG] Tool msg name:', JSON.stringify({ name: m.name, keys: Object.keys(m) }));
+                // Safe name extraction — m.name is set in think() when pushing tool results
+                const toolFuncName = (m.name && m.name.trim().length > 0)
+                  ? m.name.trim()
+                  : "mickii_web_search"; // absolute safe fallback — most common tool
+                
+                console.log('[CORTEX] functionResponse name resolved:', toolFuncName);
+                
+                return {
+                  role: "user",
+                  parts: [{
+                    functionResponse: {
+                      name: toolFuncName,
+                      response: {
+                        content: typeof m.content === "string" ? m.content : JSON.stringify(m.content || "")
+                      }
+                    }
+                  }]
+                };
+              }
+              
+              const parts = [];
+              if (m.content) parts.push({ text: m.content });
+              
+              if (m.role === "assistant" && m.tool_calls) {
+                m.tool_calls.forEach(tc => {
+                  parts.push({
+                    functionCall: {
+                      name: tc.function.name,
+                      args: tc.function.arguments ? JSON.parse(tc.function.arguments) : {}
+                    }
+                  });
+                });
+              }
+              
+              if (parts.length === 0) parts.push({ text: "" });
+              
+              return {
+                role: m.role === "assistant" ? "model" : "user",
+                parts
+              };
+            }),
           };
           if (systemMsgs.length > 0) {
             payload.systemInstruction = {
               parts: [{ text: systemMsgs.map((m) => m.content).join("\n") }],
             };
           }
+          // CRITICAL FIX: Inject tool definitions so Gemini knows about search
+          if (toolDefs && toolDefs.length > 0) {
+            payload.tools = [{
+              function_declarations: toolDefs.map(t => ({
+                name: t.function.name,
+                description: t.function.description,
+                parameters: t.function.parameters
+              }))
+            }];
+            payload.tool_config = { function_calling_config: { mode: "AUTO" } };
+          }
           return payload;
         },
         parseResponse: (data) => {
           if (!data.candidates || !data.candidates[0])
             throw new Error("Empty Gemini response");
-          const content = data.candidates[0].content?.parts?.[0]?.text;
-          if (!content) throw new Error("No text in Gemini response");
-          return { role: "assistant", content };
+          const candidate = data.candidates[0];
+          const contentParts = candidate.content?.parts || [];
+          
+          // Handle regular text response
+          const textPart = contentParts.find(p => p.text);
+          const contentText = textPart ? textPart.text : null;
+
+          // CRITICAL FIX: Handle function/tool call responses from Gemini
+          const funcParts = contentParts.filter(p => p.functionCall);
+          if (funcParts.length > 0) {
+            return {
+              role: "assistant",
+              content: contentText, // Kept thought process!
+              tool_calls: funcParts.map((p, i) => ({
+                id: `call_gem_${Date.now()}_${i}`,
+                type: "function",
+                function: {
+                  name: p.functionCall.name,
+                  arguments: JSON.stringify(p.functionCall.args || {})
+                }
+              }))
+            };
+          }
+          
+          if (contentText) return { role: "assistant", content: contentText };
+          
+          throw new Error("No usable content in Gemini response");
         },
       },
       {
@@ -160,19 +254,33 @@ export class LLMProvider {
             key: groqKey,
           };
         },
-        buildPayload: (msgs) => ({
-          model: "llama-3.3-70b-versatile",
-          messages: msgs,
-          temperature: this.temperature,
-          max_tokens: 4096,
-        }),
+        buildPayload: (msgs, toolDefs) => {
+          const payload = {
+            model: "llama-3.3-70b-versatile",
+            messages: msgs,
+            temperature: this.temperature,
+            max_tokens: 4096,
+          };
+          // CRITICAL FIX: Add tools so Groq can call search
+          if (toolDefs && toolDefs.length > 0) {
+            payload.tools = toolDefs;
+            payload.tool_choice = "auto";
+          }
+          return payload;
+        },
         parseResponse: (data) => {
           if (!data.choices || !data.choices[0])
             throw new Error("Empty Groq response");
-          return {
-            role: "assistant",
-            content: data.choices[0].message?.content || "No content",
-          };
+          const message = data.choices[0].message;
+          // CRITICAL FIX: Handle tool call responses from Groq
+          if (message?.tool_calls && message.tool_calls.length > 0) {
+            return {
+              role: "assistant",
+              content: message.content || null,
+              tool_calls: message.tool_calls
+            };
+          }
+          return { role: "assistant", content: message?.content || "No content" };
         },
       },
       {
@@ -183,18 +291,32 @@ export class LLMProvider {
             key: nimKey,
           };
         },
-        buildPayload: (msgs) => ({
-          model: "mistralai/mistral-nemo",
-          messages: msgs,
-          temperature: this.temperature,
-          max_tokens: 4096,
-        }),
+        buildPayload: (msgs, toolDefs) => {
+          const payload = {
+            model: "mistralai/mistral-nemo",
+            messages: msgs,
+            temperature: this.temperature,
+            max_tokens: 4096,
+          };
+          // CRITICAL FIX: Add tools so NIM can call search
+          if (toolDefs && toolDefs.length > 0) {
+            payload.tools = toolDefs;
+            payload.tool_choice = "auto";
+          }
+          return payload;
+        },
         parseResponse: (data) => {
           if (!data.choices?.[0]) throw new Error("Empty NVIDIA response");
-          return {
-            role: "assistant",
-            content: data.choices[0].message?.content || "No content",
-          };
+          const message = data.choices[0].message;
+          // CRITICAL FIX: Handle tool call responses from NIM
+          if (message?.tool_calls && message.tool_calls.length > 0) {
+            return {
+              role: "assistant",
+              content: message.content || null,
+              tool_calls: message.tool_calls
+            };
+          }
+          return { role: "assistant", content: message?.content || "No content" };
         },
       },
     ];
@@ -213,7 +335,7 @@ export class LLMProvider {
 
         console.log(`[Cortex] Trying ${provider.name}...`);
         logLLMProvider(provider.name);
-        const payload = provider.buildPayload(openaiMessages);
+        const payload = provider.buildPayload(openaiMessages, tools);
 
         let data;
         let retries = 0;
@@ -297,17 +419,11 @@ export class Cortex {
       "You are Mickii, Mabishion AI Business Agent.",
       "CRITICAL RULES (SEARCH-FIRST, DATE-AWARE):",
       "1. ALWAYS use mickii_web_search (and optionally mickii_deep_research) before any factual, market, or model-related answer.",
-      "2. NEVER rely only on your training memory for facts, dates, or model lists. If something is not clearly present in the latest search results, you must say you are not sure.",
-      "3. When search results are available, cite specific findings including YEAR or DATE when visible in the snippet.",
-      '4. When search results are older than the current year or look outdated, clearly warn: ", but ye info old search results par based hai".',
-      '5. If the user explicitly asks about a time window (for example: "in May 2026"), focus on results with dates closest to that window. If no such results appear, clearly say: "Boss, exact May 2026 ka data search mein nahi mila, sirf purani info mili".',
-      '6. If search is successful, your answer should start with: "Based on search results:" and quote the real findings.',
-      '7. CRITICAL: If search or deep research FAILS, errors out, or returns nothing useful, YOU MUST ABORT factual answering. Respond ONLY with: "Boss, live web search failed or returned no data. I cannot provide verified info right now." DO NOT guess, DO NOT invent lists, DO NOT say "Based on search results:".',
-      '8. Speak in professional Hinglish ("Boss, kaam ho gaya" style), but keep facts strictly tied to the search data.',
+      "2. When search results are available, provide a single, concise Hinglish response. Do not repeat instructions like a robot.",
+      "3. If search returns NO data or fails, state clearly ONCE: 'Boss, search mein iska koi exact live data nahi mila.' and do not invent a fake answer.",
       "ANTI-HALLUCINATION SHIELD:",
-      '9. NEVER fabricate fake citations like "TechCrunch May 2026" or "Microsoft blog May 5". If you cannot verify a source, DO NOT cite it.',
-      '10. Distinguish between "AI app builders" (Bolt, Taskade) and "ML platforms" (TensorFlow, Azure). They are different categories.',
-      '11. Before recommending a tool as free, verify: "Does this tool actually have a free tier in the search results?" If unsure, say "I need to verify the pricing."'
+      "4. NEVER fabricate fake citations, tools, or dates. If you cannot verify it from the search results, DO NOT write it.",
+      "5. Speak like a confident, professional AI Engineer in Hinglish ('Boss, yeh raha data...'). Do not copy-paste prompt rules into your answer."
     ].join("\n");
   }
 

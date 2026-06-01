@@ -165,6 +165,35 @@ const SettingsScreen = ({ onNavigate }) => {
     }, 6000);
   };
 
+  const handleTestSearch = async (provider, key) => {
+    if (!key || key.length < 5) {
+      alert(`Please enter a valid ${provider.toUpperCase()} key first!`);
+      return;
+    }
+    setTestStatuses((prev) => ({ ...prev, [provider]: 'testing' }));
+    try {
+      let res;
+      if (provider === 'exa') {
+        res = await fetch('https://api.exa.ai/search', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: 'test', numResults: 1 })
+        });
+      } else if (provider === 'serper') {
+        res = await fetch('https://google.serper.dev/search', {
+          method: 'POST',
+          headers: { 'X-API-KEY': key, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ q: 'test' })
+        });
+      }
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      setTestStatuses((prev) => ({ ...prev, [provider]: 'success' }));
+    } catch (err) {
+      setTestStatuses((prev) => ({ ...prev, [provider]: `error: ${err.message}` }));
+    }
+    setTimeout(() => setTestStatuses((prev) => ({ ...prev, [provider]: null })), 6000);
+  };
+
   const testMcpConnection = async (service) => {
     setMcpStatuses(prev => ({ ...prev, [service]: 'testing' }));
     await new Promise(r => setTimeout(r, 1200));
@@ -180,7 +209,7 @@ const SettingsScreen = ({ onNavigate }) => {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-              <span className="material-icons text-indigo-400">tune</span>
+              <Icon name="settings" className="text-indigo-400" size={32} />
               System Settings & Credentials
             </h1>
             <p className="text-gray-400 text-sm mt-1">
@@ -245,7 +274,7 @@ const SettingsScreen = ({ onNavigate }) => {
               {/* Cloud keys */}
               <div className="bg-white/5 backdrop-blur-xl p-6 rounded-3xl border border-white/10 relative overflow-hidden shadow-2xl">
                 <h2 className="text-xl font-bold text-indigo-300 mb-2 flex items-center gap-2">
-                  <span className="material-icons">vpn_key</span>
+                  <Icon name="lock" />
                   Cloud Intelligence Keys
                 </h2>
                 <p className="text-gray-400 text-xs mb-6">
@@ -256,7 +285,7 @@ const SettingsScreen = ({ onNavigate }) => {
                   {/* Gemini */}
                   <div>
                     <div className="flex justify-between items-center mb-1">
-                      <label className="text-xs text-gray-400 font-bold">Google Gemini Key (Flash 2.5)</label>
+                      <label className="text-xs text-gray-400 font-bold">Google Gemini API Key</label>
                       <button
                         onClick={() =>
                           handleTestConnection(
@@ -288,7 +317,7 @@ const SettingsScreen = ({ onNavigate }) => {
                   {/* Groq */}
                   <div>
                     <div className="flex justify-between items-center mb-1">
-                      <label className="text-xs text-gray-400 font-bold">Groq Cloud Key (Llama 3.3)</label>
+                      <label className="text-xs text-gray-400 font-bold">Groq Cloud API Key</label>
                       <button
                         onClick={() =>
                           handleTestConnection(
@@ -320,20 +349,7 @@ const SettingsScreen = ({ onNavigate }) => {
                   {/* NVIDIA NIM */}
                   <div>
                     <div className="flex justify-between items-center mb-1">
-                      <label className="text-xs text-gray-400 font-bold">NVIDIA NIM API Key (Mistral Nemo)</label>
-                      <button
-                        onClick={() =>
-                          handleTestConnection(
-                            'nvidia_nim',
-                            nvidiaNimKey,
-                            'https://integrate.api.nvidia.com/v1/chat/completions',
-                            'mistralai/mistral-nemo'
-                          )
-                        }
-                        className="text-xs text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1"
-                      >
-                        Test NVIDIA NIM
-                      </button>
+                      <label className="text-xs text-gray-400 font-bold">NVIDIA NIM API Key</label>
                     </div>
                     <input
                       type="password"
@@ -342,11 +358,6 @@ const SettingsScreen = ({ onNavigate }) => {
                       className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none transition-all font-mono text-sm"
                       placeholder="nvapi-..."
                     />
-                    {testStatuses.nvidia_nim === 'testing' && <p className="text-blue-400 text-xs mt-1">Connecting...</p>}
-                    {testStatuses.nvidia_nim === 'success' && <p className="text-green-400 text-xs mt-1">✅ Functional!</p>}
-                    {testStatuses.nvidia_nim && testStatuses.nvidia_nim.startsWith('error') && (
-                      <p className="text-red-400 text-xs mt-1">❌ {testStatuses.nvidia_nim}</p>
-                    )}
                   </div>
                 </div>
               </div>
@@ -356,7 +367,7 @@ const SettingsScreen = ({ onNavigate }) => {
             <div className="space-y-6">
               <div className="bg-white/5 backdrop-blur-xl p-6 rounded-3xl border border-white/10 shadow-2xl">
                 <h2 className="text-lg font-bold text-emerald-300 mb-3 flex items-center gap-2">
-                  <span className="material-icons">settings_ethernet</span>
+                  <Icon name="plug" />
                   Local Engine (Ollama)
                 </h2>
                 <p className="text-gray-400 text-xs mb-5">
@@ -375,12 +386,15 @@ const SettingsScreen = ({ onNavigate }) => {
 
               <div className="bg-white/5 backdrop-blur-xl p-6 rounded-3xl border border-white/10 shadow-2xl">
                 <h2 className="text-lg font-bold text-blue-300 mb-3 flex items-center gap-2">
-                  <span className="material-icons">public</span>
+                  <Icon name="language" />
                   Research Search Keys
                 </h2>
                 <div className="space-y-4">
                   <div>
-                    <label className="text-xs text-gray-500 uppercase font-bold mb-1 block">Exa.ai Key</label>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-xs text-gray-500 uppercase font-bold block">Exa.ai Key</label>
+                      <button onClick={() => handleTestSearch('exa', exaKey)} className="text-xs text-blue-400 hover:text-blue-300">Test Exa</button>
+                    </div>
                     <input
                       type="password"
                       value={exaKey}
@@ -388,9 +402,15 @@ const SettingsScreen = ({ onNavigate }) => {
                       className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:border-blue-500 outline-none transition-all font-mono text-xs"
                       placeholder="exa_..."
                     />
+                    {testStatuses.exa === 'testing' && <p className="text-blue-400 text-[10px] mt-1">Connecting...</p>}
+                    {testStatuses.exa === 'success' && <p className="text-green-400 text-[10px] mt-1">✅ Functional!</p>}
+                    {testStatuses.exa && testStatuses.exa.startsWith('error') && <p className="text-red-400 text-[10px] mt-1">❌ {testStatuses.exa}</p>}
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500 uppercase font-bold mb-1 block">Serper.dev Key</label>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-xs text-gray-500 uppercase font-bold block">Serper.dev Key</label>
+                      <button onClick={() => handleTestSearch('serper', serperKey)} className="text-xs text-blue-400 hover:text-blue-300">Test Serper</button>
+                    </div>
                     <input
                       type="password"
                       value={serperKey}
@@ -398,6 +418,9 @@ const SettingsScreen = ({ onNavigate }) => {
                       className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:border-blue-500 outline-none transition-all font-mono text-xs"
                       placeholder="serper_..."
                     />
+                    {testStatuses.serper === 'testing' && <p className="text-blue-400 text-[10px] mt-1">Connecting...</p>}
+                    {testStatuses.serper === 'success' && <p className="text-green-400 text-[10px] mt-1">✅ Functional!</p>}
+                    {testStatuses.serper && testStatuses.serper.startsWith('error') && <p className="text-red-400 text-[10px] mt-1">❌ {testStatuses.serper}</p>}
                   </div>
                 </div>
               </div>
@@ -412,7 +435,7 @@ const SettingsScreen = ({ onNavigate }) => {
               <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <h2 className="text-xl font-black text-white flex items-center gap-2">
-                    <span className="material-icons text-indigo-400">hub</span>
+                    <Icon name="layers" className="text-indigo-400" size={24} />
                     MCP Server Connectivity Hub
                   </h2>
                   <p className="text-xs text-gray-400 mt-1">
@@ -519,7 +542,7 @@ const SettingsScreen = ({ onNavigate }) => {
             {/* WhatsApp Integration Panel */}
             <div className="bg-white/5 backdrop-blur-xl p-6 rounded-3xl border border-white/10 shadow-2xl">
               <h2 className="text-lg font-black text-white mb-4 flex items-center gap-2">
-                <span className="material-icons text-green-400">message</span>
+                <Icon name="message" className="text-green-400" />
                 Mickii WhatsApp Routing Gateways
               </h2>
               
@@ -573,7 +596,7 @@ const SettingsScreen = ({ onNavigate }) => {
         {activeTab === 'database' && (
           <div className="bg-white/5 backdrop-blur-xl p-6 rounded-3xl border border-white/10 relative overflow-hidden shadow-2xl space-y-6">
             <h2 className="text-xl font-black text-white mb-2 flex items-center gap-2">
-              <span className="material-icons text-indigo-400">database</span>
+              <Icon name="archive" className="text-indigo-400" size={24} />
               Database Maintenance & Backups
             </h2>
             <p className="text-gray-400 text-xs">
@@ -663,11 +686,11 @@ const SettingsScreen = ({ onNavigate }) => {
           >
             {isSaved ? (
               <>
-                <span className="material-icons text-xl">check_circle</span> Settings Saved!
+                <Icon name="check" size={20} /> Settings Saved!
               </>
             ) : (
               <>
-                <span className="material-icons text-xl">save</span> Save Configuration
+                <Icon name="backup" size={20} /> Save Configuration
               </>
             )}
           </button>
