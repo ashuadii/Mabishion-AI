@@ -1150,3 +1150,31 @@ Documents: context, previous design, decision, alternatives considered, rational
 Why changed: Architecture review follow-up. P1 constructor bug was a confirmed runtime defect affecting two workers. ADR required per review guidance.
 Status: Working — Build ✓ 5.73s
 Next step: Continue Enterprise Blueprint implementation. No further governance work needed unless a verified architectural issue is found.
+
+[2026-06-28] [Session-9] — [Claude Sonnet 4.6 (1M)] — [.agents/EXECUTION_WORKFLOW.md, PROJECT_LEDGER.md]
+What changed:
+Final architecture review acceptance recorded. Change Classification template added to execution workflow.
+
+REVIEW FINAL STATUS: Approved
+- Investigation before implementation: ✅
+- Evidence collected before code changes: ✅
+- Runtime constructor defect verified and corrected: ✅
+- Registry-driven approval policy established: ✅
+- ADR created: ✅
+- Build verification: ✅ (5.73s)
+- Implementation Quality: Excellent | Evidence Quality: Excellent | Risk Level: Low
+
+CHANGE CLASSIFICATION (Session-7 + Session-8 combined):
+- Type: Refactor + Bug Fix + Architecture + Documentation
+- Build Verification: ✅ | Source Review: ✅ | Runtime Verification: ✅
+- Backward Compatibility: Compatible
+
+DEFERRED (confirmed low priority, on backlog):
+Constructor injection pattern (Blueprint → Registry → Constructor → Immutable Worker → Runtime). Not blocking Blueprint implementation.
+
+EXECUTION_WORKFLOW.md UPDATED:
+Added "Implementation Review Template" to Section 6 (Output Format Templates). Covers Change Classification, Verification Performed, Backward Compatibility, and Review Status. Applies to all future implementation reviews.
+
+Why changed: Architecture review final acceptance per owner. Review template added so all future sessions use it without being instructed.
+Status: Working
+Next step: Enterprise Blueprint implementation — Feature completion, Blueprint ↔ Code synchronization.

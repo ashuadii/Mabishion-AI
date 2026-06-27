@@ -208,6 +208,24 @@ Next Step: [what owner should share back for review]
 Next Step: [What to do next]
 ```
 
+### Implementation Review Template (mandatory for all code reviews):
+```
+## Change Classification
+- Type: Feature | Bug Fix | Refactor | Architecture | Documentation | Technical Debt
+
+## Verification Performed
+- [ ] Source Review
+- [ ] Build Verification
+- [ ] Runtime Verification
+- [ ] Manual Testing
+- [ ] Automated Tests
+
+## Backward Compatibility
+- Status: Compatible | Breaking Change | Migration Required
+
+## Review Status: Approved | Rejected | Approved with Follow-up
+```
+
 ---
 
 ## 7. Tier Completion Checklist
