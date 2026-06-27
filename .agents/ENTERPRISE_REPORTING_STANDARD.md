@@ -108,6 +108,26 @@ Each must be supported by its own evidence.
 
 ---
 
+# Batch Lifecycle
+
+Every batch moves through the following states in order:
+
+| State | Meaning |
+|-------|---------|
+| Not Started | Verification has not begun |
+| In Progress | Verification is active in current session |
+| Verified | Blueprint review, implementation review, evidence collection, and difference analysis are complete |
+| Owner Review Required | Verification is complete but one or more P0/P1 governance or architectural decisions are outstanding and require Product Owner input before implementation may proceed |
+| Approved | Owner has reviewed and approved the batch findings and any pending decisions |
+| Closed | No further action required for this batch |
+
+**Important distinctions:**
+- "Verified" and "Owner Review Required" are independent of each other. A batch can be Verified AND require Owner Review simultaneously.
+- "Owner Review Required" does not reopen the verification — it marks a governance gate, not a technical gap.
+- Batches in "Owner Review Required" state do not block verification of other batches.
+
+---
+
 # Batch Report Template
 
 ```
@@ -115,7 +135,8 @@ Each must be supported by its own evidence.
 
 **Date:** YYYY-MM-DD
 **Session:** [Agent ID / Session]
-**Batch Status:** In Progress / Complete / Blocked
+**Verification Status:** Verified / Partially Verified / Not Yet Verified
+**Batch Status:** Not Started / In Progress / Verified / Owner Review Required / Approved / Closed
 
 ## Scope
 Documents reviewed: [list]
