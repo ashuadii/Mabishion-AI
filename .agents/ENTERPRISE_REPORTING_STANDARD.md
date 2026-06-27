@@ -37,18 +37,22 @@ Allowed values:
 ## 2. Implementation Status
 
 Purpose:
-Tracks whether the functionality exists in the implementation.
+Tracks what was found within the reviewed implementation scope.
 
 Allowed values:
 
-* Implemented
-* Partially Implemented
-* Not Implemented
-* Unknown
+* Found in reviewed implementation
+* Partially found in reviewed implementation
+* Not found in reviewed implementation
+* Unable to verify within reviewed scope
 
-Implementation status must be based on direct implementation evidence.
+**Critical rule:** Implementation status claims must not exceed the reviewed scope.
 
-Never infer implementation status from verification status.
+Do not use "Not Implemented" — this implies project-wide knowledge that a partial inspection cannot establish.
+
+Use "Not found in reviewed implementation" to accurately reflect that the item was absent from the files and components that were actually read and verified.
+
+Implementation status must be based on direct evidence from the reviewed files only.
 
 ---
 
@@ -92,7 +96,9 @@ Every Blueprint Verification Report must include these sections:
 
 ---
 
-# Reporting Principle
+# Reporting Principles
+
+## Principle 1 — Independence of Dimensions
 
 Keep the following concepts completely independent:
 
@@ -105,6 +111,41 @@ Keep the following concepts completely independent:
 Never use one status dimension to infer another.
 
 Each must be supported by its own evidence.
+
+## Principle 2 — Evidence Boundaries
+
+Verification reports describe only what has been established by evidence within the reviewed scope.
+
+Do not make project-wide claims from partial inspection.
+
+Apply evidence-scoped language:
+
+| Avoid | Use instead |
+|-------|------------|
+| Not Implemented | Not found in reviewed implementation |
+| Implemented | Found in reviewed implementation |
+| Partially Implemented | Partially found in reviewed implementation |
+| Unknown | Unable to verify within reviewed scope |
+
+## Principle 3 — Neutral Architecture Questions
+
+When Blueprint and implementation differ on an architectural point requiring an owner decision, do not frame it as a binary choice.
+
+Instead, describe the divergence neutrally and invite an open decision:
+
+> Avoid: "Accept JS classes or do a Rust thread rewrite?"
+>
+> Use: "Blueprint and the reviewed implementation differ regarding [specific aspect]. Please confirm the intended target architecture. Possible solutions remain open until an architectural decision is made."
+
+## Principle 4 — Batch Lifecycle Accuracy
+
+Never declare a batch "Complete" when owner review is pending.
+
+Use the correct lifecycle state:
+- **Verification Status:** Verified (technical work is done)
+- **Batch Status:** Owner Review Required (governance decision outstanding)
+
+These two states coexist. "Complete" is reserved for when both verification AND all governance decisions are resolved (i.e., Approved or Closed).
 
 ---
 
