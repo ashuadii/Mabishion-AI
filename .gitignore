@@ -1,0 +1,16 @@
+# App code has its own branch — not tracked here
+Nexious Mickii/
+Mickii
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor artifacts
+*.swp
+*.swo
+
+# Secrets — never commit
+.env
+.env.local
+*.secret

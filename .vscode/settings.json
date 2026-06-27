@@ -1,0 +1,56 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+
+  "tailwindCSS.includeLanguages": {
+    "javascript": "javascript",
+    "typescript": "typescript",
+    "html": "html"
+  },
+
+  "rust-analyzer.checkOnSave": true,
+  "rust-analyzer.cargo.features": "all",
+
+  "eslint.enable": true,
+  "eslint.format.enable": true,
+
+  "files.exclude": {
+    "node_modules": true,
+    "dist": true,
+    "target": true,
+    ".antigravity": true
+  },
+
+  "search.exclude": {
+    "node_modules": true,
+    "dist": true,
+    "target": true
+  },
+
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer"
+  },
+
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "python.testing.pytestArgs": ["Nexious Mickii"],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "claudeCode.useTerminal": true,
+  "[jsonc]": {
+    "editor.defaultFormatter": "rvest.vs-code-prettier-eslint"
+  },
+  "chat.useClaudeHooks": true
+}
