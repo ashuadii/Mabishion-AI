@@ -35,6 +35,7 @@ For any non-trivial task, the IDE Agent must read these documents in this exact 
 | Historical migration reference | + [Information and Vision/archive/MABISHION-IMPLEMENTATION-SEQUENCE.md](../Information%20and%20Vision/archive/MABISHION-IMPLEMENTATION-SEQUENCE.md) |
 | Execution playbook / diagnostics | + [EXECUTION_WORKFLOW.md](EXECUTION_WORKFLOW.md) |
 | Before declaring any task Done | **Mandatory:** [SELF_REVIEW_STANDARD.md](SELF_REVIEW_STANDARD.md) — 7-pass self-review |
+| Any Blueprint verification report | **Mandatory:** [ENTERPRISE_REPORTING_STANDARD.md](ENTERPRISE_REPORTING_STANDARD.md) — 3-dimension status |
 
 ---
 
