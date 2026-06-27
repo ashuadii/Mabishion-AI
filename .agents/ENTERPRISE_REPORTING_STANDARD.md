@@ -219,9 +219,12 @@ Every finding that cannot be fully resolved in the current batch carries its own
 | Implementation Finding | Resolved within the current batch — gap, conflict, or alignment confirmed |
 | Carry Forward | Cannot be resolved in current batch. Requires verification of additional Blueprint domains |
 | Dependency Verification Pending | Carry Forward finding. The specific Blueprint domains that materially influence it have not yet been determined or verified. Assigned during later batches as evidence accumulates |
-| Blueprint Reconciliation Finding | Blueprint documents are internally inconsistent on this point. Requires document-level resolution before escalation |
+| Blueprint Reconciliation Candidate | An apparent internal Blueprint inconsistency has been observed, but the Blueprint documents governing this topic have not yet been fully verified. Additional Blueprint evidence may clarify or supersede the apparent conflict. Do not confirm as a Finding until all relevant documents are reviewed. |
+| Blueprint Reconciliation Finding | All Blueprint documents governing this topic have been verified. An internal Blueprint contradiction remains after full review. Requires document-level resolution before implementation decisions can be made. |
 | Product Owner Decision Required | All relevant Blueprint evidence has been verified. Blueprint is internally consistent. Implementation still differs. Owner must decide |
 | Closed | Finding resolved — either by later evidence or owner decision |
+
+**Classification rule:** Use "Blueprint Reconciliation Candidate" when relevant Blueprint evidence is still incomplete for the specific topic. Promote to "Blueprint Reconciliation Finding" only after all Blueprint documents materially governing that topic have been reviewed and the contradiction remains. Do not use recency of observation as the classification criterion — use evidence completeness for the specific topic.
 
 ## Principle 6 — Verification Escalation Rule
 

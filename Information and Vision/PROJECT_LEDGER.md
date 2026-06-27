@@ -1286,10 +1286,30 @@ CONFIRMED STACK: React 18 ✅, Tauri v2 ✅, SQLite ✅, Vite ✅, Ollama→Groq
 
 CONFLICTS/GAPS: Worker runtime (CF-3A persists — Blueprint Rust intent confirmed by ARCHITECTURE.md + TRD, still pending Batch 7+9). TypeScript: Blueprint specifies it, implementation = JavaScript (0 .ts files). axios + shadcn/ui: not in implementation.
 
-BLUEPRINT RECONCILIATION FINDINGS:
-- BRF-1: Worker isolation — SECURITY-ARCH says "Rust threads"; ARCHITECTURE says "Rust Async, No Threads"
-- BRF-2: State management — ARCHITECTURE says Redux Toolkit; TRD says Zustand; implementation uses React Context
+BLUEPRINT RECONCILIATION CANDIDATES (not yet confirmed — dependent Blueprint docs unverified for these topics):
+- BRC-1: Worker isolation — SECURITY-ARCH says "Rust threads"; ARCHITECTURE says "Rust Async, No Threads". Candidate until all Blueprint docs governing worker runtime are reviewed.
+- BRC-2: State management — ARCHITECTURE says Redux Toolkit; TRD says Zustand. Candidate until UI/UX Specification and Business Requirements docs reviewed — one may supersede or clarify.
 
 PREVIOUSLY RECONCILED: Worker naming system — no drift detected.
 
 Next step: Batch 6 — UI/UX Verification (UI-UX-SPECIFICATION.md).
+
+[2026-06-28] [Session-14 cont.] — [Claude Sonnet 4.6 (1M)] — [Batch 6 UI/UX Verification — READ ONLY]
+BATCH 6 STATUS: Verification Status = Verified | Batch Status = Verified
+
+ALIGNED: Dashboard ✅, Projects ✅, Approvals ✅, Finance ✅, Settings ✅, Dark theme ✅, Glassmorphism ✅, Tailwind ✅, Hinglish microcopy ✅
+
+CONFLICTS/GAPS: No /command-center route (ResearchScreen partial substitute). ClientsScreen, LoginScreen, WorkerMonitorScreen, InvoicesScreen exist as files but NOT ROUTED. Authentication bypassed (no /login route active). shadcn/ui not in implementation. /setup screen missing. /projects/{id} detail route missing.
+
+RUNTIME EXTENSIONS: ResearchScreen (Build New), AutomationsScreen (Visual Workflow), SalesMarketingHubScreen, SkillLibraryScreen — no Blueprint equivalent.
+
+NEW BLUEPRINT RECONCILIATION CANDIDATES:
+- BRC-3: STANDARD gate timeout — UI/UX §1 says auto-reject, UI/UX §3 + HUMAN-APPROVAL-FRAMEWORK say escalate to CRITICAL
+- BRC-4: Operating modes — UI/UX defines 4 (Work/Play/Personal/Emergency); ARCHITECTURE + DB-SPEC define 5 (Agency/Product/Marketing/Ops/Research)
+
+NEW CARRY-FORWARD FINDING: UI/UX §Appendix D introduces 4th worker naming system, claims to "supersede all other documents." WK-024 = Mickii (UI/UX) conflicts with owner-approved WK-024 = SecurityAuditor. Owner decision stands. Blueprint authority question deferred to Batch 7.
+
+BRC-2 unchanged (UI/UX doesn't address state management library).
+CF-3B updated: UI/UX confirms authentication screens required.
+
+Next step: Batch 7 — Business Requirements (Vision + BRD + PRD + SRD).
