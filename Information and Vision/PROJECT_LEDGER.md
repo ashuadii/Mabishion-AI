@@ -1333,3 +1333,21 @@ CF-3A (worker runtime) still Carry Forward — Batch 9 remaining.
 BRC-1 (worker isolation) still Carry Forward — Batch 9 remaining.
 
 Next step: Batch 8 — Operations Verification (TESTING + DEPLOYMENT + DR + OPS + COST docs).
+
+[2026-06-28] [Owner Decision] — UI/UX Architecture Direction v1.0
+What changed: Owner approved new UI/UX architectural direction (Enterprise Minimalism + AI Workspace). Saved as Information and Vision/UI-UX-ARCHITECTURE-DIRECTION-v1.0.md.
+
+KEY DIRECTION CHANGES from UI/UX Spec v5.1:
+- Philosophy: Glassmorphism → Enterprise Minimalism + AI Workspace
+- Typography: Inter → Geist (primary), Inter (fallback), JetBrains Mono (mono)
+- Color: Glassmorphic dark → 90% Neutral / 8% Enterprise Blue / 2% Clay
+- Navigation: 8 items → 10 items (Workspace, Projects, Agents, Workers, Approvals, Knowledge, Memory, Automation, Analytics, Settings)
+- Layout: Three-panel (Left nav, Center workspace, Right inspector, Bottom status bar)
+- New: Information density modes (Comfortable/Compact/Dense)
+- New: Command palette (keyboard-first interaction model)
+- New: State-driven UI (dynamic, not static dashboard)
+- Implementation Order: Design System → Navigation Architecture → ... → Screens (Design System FIRST, screens last)
+
+IMPLEMENTATION RULE: No UI screens until Design System is complete and Navigation Architecture is approved.
+
+BATCH 6 IMPACT: Batch 6 verification findings remain valid (they document current state vs UI/UX Spec v5.1). This direction modifies the TARGET for future implementation. Current implementation (glassmorphism, sidebar) will need revision when UI implementation phase begins.
