@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "tauri-dev": "tauri dev"
+    "tauri-dev": "tauri dev",
+    "test": "vitest run src/tests/",
+    "test:watch": "vitest src/tests/"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",
@@ -30,8 +32,10 @@
     "@types/react-dom": "^18.2.7",
     "@vitejs/plugin-react": "^4.2.0",
     "autoprefixer": "^10.4.17",
+    "playwright": "^1.61.1",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
-    "vite": "^5.0.0"
+    "vite": "^5.0.0",
+    "vitest": "^4.1.9"
   }
 }

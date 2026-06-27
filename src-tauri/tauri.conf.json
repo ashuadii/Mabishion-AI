@@ -44,7 +44,9 @@
         "title": "Mabishion AI — Private Desktop Factory",
         "width": 1440,
         "center": true,
-        "theme": "Dark"
+        "theme": "Dark",
+        "zoomHotkeysEnabled": true,
+        "decorations": true
       }
     ]
   },

@@ -182,6 +182,7 @@ export const SearchService = {
       } else {
         parsedResults = validResults.slice(0, 5);
         sourceUrl = parsedResults[0]?.link || 'N/A';
+        console.log('[SearchService] Raw results:', JSON.stringify(parsedResults.slice(0,2), null, 2));
       }
     } else {
       // If live search returned nothing or errored, log the search failure to DB

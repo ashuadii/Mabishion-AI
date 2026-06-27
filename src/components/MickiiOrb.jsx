@@ -8,21 +8,21 @@ export default function MickiiOrb({ size = 'md', isThinking = false }) {
     <div className="relative shrink-0 rounded-full" style={{ width: px, height: px }}>
       <style>{`
         @keyframes mOrb { 0%,100%{transform:scale(1);opacity:.52} 50%{transform:scale(1.32);opacity:.92} }
-        @keyframes mGlow { 0%,100%{box-shadow:0 0 22px ${isThinking ? C.violetBright : C.violetBright}80} 50%{box-shadow:0 0 42px ${isThinking ? C.violetBright : C.gold}66} }
+        @keyframes mGlow { 0%,100%{box-shadow:0 0 22px ${isThinking ? C.primary : C.primary}80} 50%{box-shadow:0 0 42px ${isThinking ? C.primary : C.warning}66} }
         @keyframes mThink { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
       `}</style>
       <div className="absolute inset-0 rounded-full blur-md" 
         style={{ 
-          backgroundColor: isThinking ? `${C.violetBright}44` : `${C.gold}33`, 
+          backgroundColor: isThinking ? `${C.primary}44` : `${C.warning}33`, 
           animation: `mOrb ${isThinking ? '0.8s' : '2.7s'} ease-in-out infinite` 
         }} />
       <div className="absolute inset-0 rounded-full overflow-hidden" 
         style={{ 
           background: isThinking 
-            ? `conic-gradient(from 0deg, ${C.violetBright}, ${C.violet}, ${C.violetBright})`
-            : `radial-gradient(circle at 33% 23%, ${C.softGold} 0%, ${C.gold} 30%, ${C.violet} 72%, ${C.bg} 100%)`, 
+            ? `conic-gradient(from 0deg, ${C.primary}, ${C.primary}, ${C.primary})`
+            : `radial-gradient(circle at 33% 23%, ${C.warning} 0%, ${C.warning} 30%, ${C.primary} 72%, ${C.background} 100%)`, 
           animation: `${isThinking ? 'mThink 1s linear infinite,' : ''} mGlow ${isThinking ? '0.5s' : '3.4s'} ease-in-out infinite`,
-          border: `1.5px solid ${C.gold}80`
+          border: `1.5px solid ${C.warning}80`
         }}>
         <img src={mickiiAvatar} alt="Mickii" className="h-full w-full object-cover opacity-90" />
       </div>

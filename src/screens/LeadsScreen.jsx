@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getLeads, updateLeadStatus, deleteLead } from '../data/db.js';
+import { getLeads, updateLeadStatus, deleteLead, autoScoreAllLeads } from '../data/db.js';
 import AppShell from '../components/AppShell';
 import ScreenHeader from '../components/ScreenHeader';
 import Badge from '../components/Badge';
@@ -22,6 +22,8 @@ export default function LeadsScreen({ onNavigate }) {
   const fetchLeads = async () => {
     setIsLoading(true);
     try {
+      // Auto-score all leads on load (T7.1)
+      await autoScoreAllLeads().catch(() => {});
       const data = await getLeads();
       setLeads(data || []);
     } catch (e) {

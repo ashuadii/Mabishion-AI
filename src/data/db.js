@@ -1,7 +1,61 @@
 import { emit } from '@tauri-apps/api/event';
+import { invoke } from '@tauri-apps/api/core';
 import { upgradeDatabase } from './db_schema_upgrade.js';
+import { normalizeApprovalStatus, normalizeApprovalType, normalizeWorkerId } from '../utils/approvalRouting.js';
 
 let dbInstance = null;
+const SECRET_REF_PREFIX = 'secret://';
+const SECRET_SETTING_KEYS = new Set([
+  'nvidia_nim_api_key',
+  'gemini_api_key',
+  'groq_api_key',
+  'cerebras_api_key',
+  'openrouter_api_key',
+  'serper_api_key',
+  'exa_api_key',
+  'huggingface_api_key',
+  'figma_token',
+  'github_token',
+  'stripe_secret',
+  'supabase_anon_key',
+  'canva_key',
+  'wa_business_token',
+  'cpanel_pass'
+]);
+const browserPreviewSecrets = new Map();
+
+function isSecretSetting(key) {
+  return SECRET_SETTING_KEYS.has(key);
+}
+
+function isSecretRef(value) {
+  return typeof value === 'string' && value.startsWith(SECRET_REF_PREFIX);
+}
+
+function isPlaceholderSecret(value) {
+  return !value || value.includes('PASTE_YOUR') || value.trim() === '';
+}
+
+async function storeSecretValue(key, value) {
+  if (typeof window === 'undefined') return `${SECRET_REF_PREFIX}${key}`;
+
+  try {
+    return await invoke('store_secret', { key, value });
+  } catch (err) {
+    browserPreviewSecrets.set(key, value);
+    return `${SECRET_REF_PREFIX}${key}`;
+  }
+}
+
+async function readSecretValue(key) {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    return await invoke('read_secret', { key });
+  } catch (err) {
+    return browserPreviewSecrets.get(key) || null;
+  }
+}
 
 // Persistent localStorage database simulation to avoid temporary in-memory fallback outside Tauri shell
 const savedState = typeof window !== 'undefined' && window.localStorage ? localStorage.getItem('mabishion_local_db') : null;
@@ -505,6 +559,17 @@ export async function initDb() {
     await db.execute(`ALTER TABLE approvals ADD COLUMN whatsapp_sent INTEGER DEFAULT 0;`).catch(() => {});
     await db.execute(`ALTER TABLE approvals ADD COLUMN owner_notes TEXT;`).catch(() => {});
     await db.execute(`ALTER TABLE approvals ADD COLUMN created_at TEXT;`).catch(() => {});
+    await db.execute(`ALTER TABLE approvals ADD COLUMN cost_impact INTEGER;`).catch(() => {});
+    await db.execute(`ALTER TABLE approvals ADD COLUMN compliance_impact TEXT;`).catch(() => {});
+    await db.execute(`ALTER TABLE approvals ADD COLUMN undo_deadline TEXT;`).catch(() => {});
+    await db.execute(`UPDATE approvals SET status = lower(status) WHERE status IS NOT NULL;`).catch(() => {});
+    await db.execute(`UPDATE approvals SET type = lower(type) WHERE type IS NOT NULL;`).catch(() => {});
+    await db.execute(`UPDATE approvals SET worker_name = 'business_analyst' WHERE lower(worker_name) = 'business analyst';`).catch(() => {});
+    await db.execute(`UPDATE approvals SET worker_name = 'proposal_maker' WHERE lower(worker_name) = 'proposal maker';`).catch(() => {});
+    await db.execute(`UPDATE approvals SET worker_name = 'blueprint_maker' WHERE lower(worker_name) = 'blueprint maker';`).catch(() => {});
+    await db.execute(`UPDATE approvals SET worker_name = 'website_builder' WHERE lower(worker_name) = 'website builder';`).catch(() => {});
+    await db.execute(`UPDATE approvals SET worker_name = 'lead_gen' WHERE lower(worker_name) = 'lead copysmith';`).catch(() => {});
+    await db.execute(`UPDATE approvals SET worker_name = 'mickii_cortex' WHERE lower(worker_name) IN ('mickii cortex', 'mickii (cortex)');`).catch(() => {});
   } catch (err) {
     console.warn("[Mickii DB] Approvals table column migrations handled:", err);
   }
@@ -600,7 +665,7 @@ export async function initDb() {
     );
   }
 
-  // 7. Settings Table (For API Keys)
+  // 7. Settings Table (secret values are referenced, not stored directly)
   await db.execute(`
     CREATE TABLE IF NOT EXISTS settings (
       key TEXT PRIMARY KEY,
@@ -609,12 +674,10 @@ export async function initDb() {
     );
   `);
 
-  // Seed API Keys (Placeholders ONLY)
-  await db.execute('INSERT OR IGNORE INTO settings (key, value) VALUES ($1, $2)', ['nvidia_nim_api_key', 'PASTE_YOUR_NVIDIA_NIM_KEY_HERE']);
-  await db.execute('INSERT OR IGNORE INTO settings (key, value) VALUES ($1, $2)', ['serper_api_key', 'PASTE_YOUR_SERPER_KEY_HERE']);
-  await db.execute('INSERT OR IGNORE INTO settings (key, value) VALUES ($1, $2)', ['exa_api_key', 'PASTE_YOUR_EXA_KEY_HERE']);
-  await db.execute('INSERT OR IGNORE INTO settings (key, value) VALUES ($1, $2)', ['groq_api_key', 'PASTE_YOUR_GROQ_KEY_HERE']);
-  await db.execute('INSERT OR IGNORE INTO settings (key, value) VALUES ($1, $2)', ['cerebras_api_key', 'PASTE_YOUR_CEREBRAS_KEY_HERE']);
+  // Seed secret references only. Real values live in desktop secret storage/env.
+  for (const key of ['nvidia_nim_api_key', 'gemini_api_key', 'serper_api_key', 'exa_api_key', 'groq_api_key', 'cerebras_api_key']) {
+    await db.execute('INSERT OR IGNORE INTO settings (key, value) VALUES ($1, $2)', [key, `${SECRET_REF_PREFIX}${key}`]);
+  }
 
   // 8. Revenue Table
   await db.execute(`
@@ -841,14 +904,35 @@ export async function getTotalRevenue() {
 export async function getSetting(key) {
   const db = await getDb();
   const res = await db.select('SELECT value FROM settings WHERE key = $1', [key]);
-  return res.length > 0 ? res[0].value : null;
+  const value = res.length > 0 ? res[0].value : null;
+
+  if (!isSecretSetting(key)) return value;
+  if (isSecretRef(value)) return await readSecretValue(key);
+  if (isPlaceholderSecret(value)) return null;
+
+  const secretRef = await storeSecretValue(key, value);
+  await db.execute(
+    'INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP)',
+    [key, secretRef]
+  );
+  return value;
 }
 
 export async function setSetting(key, value) {
   const db = await getDb();
+  let storedValue = value;
+
+  if (isSecretSetting(key)) {
+    if (isPlaceholderSecret(value)) {
+      await storeSecretValue(key, '');
+    } else {
+      storedValue = await storeSecretValue(key, value);
+    }
+  }
+
   await db.execute(
     'INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP)',
-    [key, value]
+    [key, storedValue]
   );
 }
 
@@ -877,7 +961,7 @@ export async function getSkills() {
 
 export async function getPendingApprovals() {
   const db = await getDb();
-  return await db.select("SELECT * FROM approvals WHERE status = 'pending' OR status = 'Pending' ORDER BY created_at DESC");
+  return await db.select("SELECT * FROM approvals WHERE lower(status) = 'pending' ORDER BY created_at DESC");
 }
 
 export async function addApproval(preview, action_type, context, source, risk_level) {
@@ -888,14 +972,14 @@ export async function addApproval(preview, action_type, context, source, risk_le
   await db.execute(
     `INSERT INTO approvals (id, title, type, project_id, worker_name, request_data, status, expires_at, owner_notified, whatsapp_sent, owner_notes) 
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-    [id, preview, risk_level === 'High' ? 'critical' : 'standard', '', action_type, JSON.stringify({ context, source }), 'pending', now, 0, 0, '']
+    [id, preview, normalizeApprovalType(risk_level === 'High' ? 'critical' : 'standard'), '', normalizeWorkerId(action_type), JSON.stringify({ context, source }), 'pending', now, 0, 0, '']
   );
   return id;
 }
 
 export async function approveAction(id) {
   const db = await getDb();
-  await db.execute("UPDATE approvals SET status = 'approved', owner_notes = 'Approved via Legacy API' WHERE id = $1", [id]);
+  await db.execute("UPDATE approvals SET status = $1, owner_notes = 'Approved via Legacy API' WHERE id = $2", ['approved', id]);
   const rows = await db.select("SELECT * FROM approvals WHERE id = $1", [id]);
   if (rows[0]) {
     await db.execute(
@@ -904,7 +988,7 @@ export async function approveAction(id) {
     );
     
     // Auto-trigger proposal maker when blueprint maker is approved
-    if (rows[0].worker_name === 'Blueprint Maker' && rows[0].project_id) {
+    if (normalizeWorkerId(rows[0].worker_name) === 'blueprint_maker' && rows[0].project_id) {
       console.log(`[Mickii DB Auto-Trigger] Blueprint approved for project ${rows[0].project_id}. Launching Proposal Maker...`);
       import('../engine/workers/index.js')
         .then(({ runWorker }) => {
@@ -915,13 +999,13 @@ export async function approveAction(id) {
         .catch(err => console.error('[Mickii DB Auto-Trigger] Failed to import runWorker:', err));
     }
   }
-  await emit('approval_granted', { approvalId: id, decision: 'Approved' });
+  await emit('approval_granted', { approvalId: id, decision: 'approved' });
 }
 
 export async function rejectAction(id) {
   const db = await getDb();
-  await db.execute("UPDATE approvals SET status = 'rejected', owner_notes = 'Rejected via Legacy API' WHERE id = $1", [id]);
-  await emit('approval_granted', { approvalId: id, decision: 'Rejected' });
+  await db.execute("UPDATE approvals SET status = $1, owner_notes = 'Rejected via Legacy API' WHERE id = $2", ['rejected', id]);
+  await emit('approval_granted', { approvalId: id, decision: 'rejected' });
 }
 
 export async function getApprovals() {
@@ -941,29 +1025,30 @@ export async function addApprovalExtended(title, type, projectId, workerName, re
   await db.execute(
     `INSERT INTO approvals (id, title, type, project_id, worker_name, request_data, status, expires_at, owner_notified, whatsapp_sent, owner_notes) 
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-    [id, title, type, projectId, workerName, JSON.stringify(requestData), 'pending', expiresAt, 0, 0, '']
+    [id, title, normalizeApprovalType(type), projectId, normalizeWorkerId(workerName), JSON.stringify(requestData), 'pending', expiresAt, 0, 0, '']
   );
   return id;
 }
 
 export async function updateApprovalStatus(id, status, notes = '') {
   const db = await getDb();
+  const normalizedStatus = normalizeApprovalStatus(status);
   await db.execute(
     "UPDATE approvals SET status = $1, owner_notes = $2 WHERE id = $3",
-    [status, notes, id]
+    [normalizedStatus, notes, id]
   );
   
   // If approved or rejected, log in action ledger
-  if (status === 'approved' || status === 'rejected' || status === 'Approved' || status === 'Rejected') {
+  if (normalizedStatus === 'approved' || normalizedStatus === 'rejected') {
     const rows = await db.select("SELECT * FROM approvals WHERE id = $1", [id]);
     if (rows[0]) {
       await db.execute(
         'INSERT INTO action_ledger (id, action_type, decision, risk_level) VALUES ($1, $2, $3, $4)',
-        [crypto.randomUUID(), rows[0].title || rows[0].worker_name, (status.toLowerCase() === 'approved') ? 'YES' : 'NO', rows[0].type === 'critical' ? 'High' : 'Standard']
+        [crypto.randomUUID(), rows[0].title || rows[0].worker_name, normalizedStatus === 'approved' ? 'YES' : 'NO', rows[0].type === 'critical' ? 'High' : 'Standard']
       );
       
       // Auto-trigger proposal maker when blueprint maker is approved
-      if (status.toLowerCase() === 'approved' && rows[0].worker_name === 'Blueprint Maker' && rows[0].project_id) {
+      if (normalizedStatus === 'approved' && normalizeWorkerId(rows[0].worker_name) === 'blueprint_maker' && rows[0].project_id) {
         console.log(`[Mickii DB Auto-Trigger] Blueprint approved for project ${rows[0].project_id}. Launching Proposal Maker...`);
         import('../engine/workers/index.js')
           .then(({ runWorker }) => {
@@ -974,7 +1059,7 @@ export async function updateApprovalStatus(id, status, notes = '') {
           .catch(err => console.error('[Mickii DB Auto-Trigger] Failed to import runWorker:', err));
       }
     }
-    await emit('approval_granted', { approvalId: id, decision: status });
+    await emit('approval_granted', { approvalId: id, decision: normalizedStatus });
   }
 }
 
@@ -1145,6 +1230,58 @@ export async function updateLeadStatus(id, status) {
   await db.execute('UPDATE leads SET status = $1, last_contacted = $2 WHERE id = $3', [status, now, id]);
 }
 
+// ── LEAD SCORING FORMULA (T7.1) ───────────────────────────────────────────────
+// Score = budget_points(40) + source_points(20) + stage_points(30) + recency_points(10)
+export function calculateLeadScore(lead) {
+  let score = 0;
+
+  // Budget (max 40 pts)
+  const budget = Number(String(lead.budget || '0').replace(/[^0-9.]/g, '')) || 0;
+  if (budget >= 100000) score += 40;
+  else if (budget >= 50000) score += 32;
+  else if (budget >= 25000) score += 24;
+  else if (budget >= 10000) score += 16;
+  else if (budget >= 5000)  score += 8;
+  else if (budget > 0)      score += 4;
+
+  // Source quality (max 20 pts)
+  const srcMap = { Referral: 20, WhatsApp: 18, LinkedIn: 15, Instagram: 12, 'Cold Email': 8, Fiverr: 6, Upwork: 5, Other: 3 };
+  score += srcMap[lead.source] || 3;
+
+  // Stage / Status (max 30 pts)
+  const stageMap = { Negotiating: 30, Contacted: 20, 'Hot Lead': 25, New: 10, 'Closed Won': 5, 'Closed Lost': 0 };
+  score += stageMap[lead.status] || 5;
+
+  // Recency: contacted in last 3 days = 10pts, last week = 5pts
+  try {
+    const last = new Date(lead.last_contacted);
+    const daysSince = (Date.now() - last.getTime()) / (1000 * 60 * 60 * 24);
+    if (daysSince <= 3) score += 10;
+    else if (daysSince <= 7) score += 5;
+  } catch (_) {}
+
+  return Math.min(100, Math.max(0, score));
+}
+
+export async function autoScoreLead(id) {
+  const db = await getDb();
+  const rows = await db.select('SELECT * FROM leads WHERE id=$1', [id]);
+  if (!rows?.[0]) return 0;
+  const newScore = calculateLeadScore(rows[0]);
+  await db.execute('UPDATE leads SET score=$1 WHERE id=$2', [newScore, id]);
+  return newScore;
+}
+
+export async function autoScoreAllLeads() {
+  const db = await getDb();
+  const leads = await db.select('SELECT * FROM leads');
+  for (const lead of (leads || [])) {
+    const score = calculateLeadScore(lead);
+    await db.execute('UPDATE leads SET score=$1 WHERE id=$2', [score, lead.id]).catch(() => {});
+  }
+  return (leads || []).length;
+}
+
 export async function updateLeadScore(id, score) {
   const db = await getDb();
   await db.execute('UPDATE leads SET score = $1 WHERE id = $2', [Number(score || 0), id]);
@@ -1211,6 +1348,22 @@ export async function backupDatabase() {
     }
   }
   return JSON.stringify(backupData, null, 2);
+}
+
+export function validateBackupIntegrity(jsonString) {
+  try {
+    const data = JSON.parse(jsonString);
+    const requiredTables = ['projects', 'leads', 'approvals', 'settings'];
+    const missing = requiredTables.filter(t => !(t in data));
+    if (missing.length > 0) return { valid: false, reason: `Missing tables: ${missing.join(', ')}` };
+    // Check it's an object (not an array or primitive)
+    if (typeof data !== 'object' || Array.isArray(data)) return { valid: false, reason: 'Invalid backup format' };
+    const tableCount = Object.keys(data).length;
+    const totalRows = Object.values(data).reduce((s, arr) => s + (Array.isArray(arr) ? arr.length : 0), 0);
+    return { valid: true, tableCount, totalRows };
+  } catch (e) {
+    return { valid: false, reason: `JSON parse error: ${e.message}` };
+  }
 }
 
 export async function restoreDatabase(jsonString) {
@@ -1444,6 +1597,321 @@ export async function getBlueprintDiff(projectId, v1, v2) {
   }
 
   return { old: plans[0], new: plans[1], added, removed, diff_summary: diffSummary };
+}
+
+// ── DOCUMENTS (T5.1) ─────────────────────────────────────────────────────────
+
+export async function saveDocument(data) {
+  const db = await getDb();
+  const id = data.id || crypto.randomUUID();
+  const now = new Date().toISOString();
+  await db.execute(
+    `INSERT OR REPLACE INTO documents (id, project_id, client_id, doc_type, title, content, version, status, created_at, updated_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+    [id, data.project_id||null, data.client_id||null, data.doc_type||'general',
+     data.title||'Untitled', data.content||'', data.version||'1.0', data.status||'draft', now, now]
+  );
+  return id;
+}
+
+export async function getDocumentsByProject(projectId) {
+  const db = await getDb();
+  return await db.select('SELECT * FROM documents WHERE project_id=$1 ORDER BY created_at DESC', [projectId]);
+}
+
+// ── SYSTEM METRICS (T5.1) ─────────────────────────────────────────────────────
+
+export async function logSystemMetric(name, value, unit = '') {
+  try {
+    const db = await getDb();
+    await db.execute(
+      'INSERT INTO system_metrics (id, metric_name, metric_value, unit, recorded_at) VALUES ($1,$2,$3,$4,$5)',
+      [crypto.randomUUID(), name, Number(value), unit, new Date().toISOString()]
+    );
+  } catch (e) { console.warn('[logSystemMetric] non-blocking:', e); }
+}
+
+export async function getSystemMetrics(name, limit = 20) {
+  const db = await getDb();
+  return await db.select(
+    'SELECT * FROM system_metrics WHERE metric_name=$1 ORDER BY recorded_at DESC LIMIT $2',
+    [name, limit]
+  );
+}
+
+// ── AUDIT LOG + PII MASKING (Tier 3) ─────────────────────────────────────────
+
+function maskPii(text) {
+  if (typeof text !== 'string') return text;
+  return text
+    .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, '[EMAIL]')
+    .replace(/\b(\+91|0)?[6-9]\d{9}\b/g, '[PHONE]')
+    .replace(/\b\d{12}\b/g, '[AADHAAR]')
+    .replace(/\b[A-Z]{5}\d{4}[A-Z]\b/g, '[PAN]');
+}
+
+export async function logAudit(level, message, context) {
+  try {
+    const db = await getDb();
+    const safeMsg = maskPii(typeof message === 'string' ? message : JSON.stringify(message));
+    const safeCtx = maskPii(typeof context === 'string' ? context : JSON.stringify(context || {}));
+    const ts = Date.now();
+
+    // HMAC signature for tamper-evidence (Tier 3)
+    let hmac = '';
+    try {
+      hmac = await invoke('hmac_sign', { payload: `${level}|${safeMsg}|${safeCtx}|${ts}` });
+    } catch (_) {
+      // Non-blocking — Tauri IPC unavailable in browser preview
+    }
+
+    // Store HMAC in context field as suffix for auditability
+    const ctxWithHmac = hmac ? `${safeCtx}|sig:${hmac}` : safeCtx;
+
+    await db.execute(
+      'INSERT INTO audit_logs (level, message, context, timestamp) VALUES ($1, $2, $3, $4)',
+      [level || 'INFO', safeMsg, ctxWithHmac, ts]
+    );
+  } catch (err) {
+    console.warn('[logAudit] Failed (non-blocking):', err);
+  }
+}
+
+// ── AUTH (Tier 3) — PIN-based single-user auth ────────────────────────────────
+
+async function simpleHash(pin) {
+  // SHA-256 via Web Crypto — no external dependency
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin + 'mabishion_salt_v1'));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+export async function getAuthUser() {
+  try {
+    const db = await getDb();
+    const rows = await db.select('SELECT * FROM users LIMIT 1');
+    return rows?.[0] || null;
+  } catch { return null; }
+}
+
+export async function setupPin(pin) {
+  const db = await getDb();
+  const hash = await simpleHash(pin);
+  const existing = await db.select('SELECT id FROM users LIMIT 1');
+  if (existing && existing.length > 0) {
+    await db.execute('UPDATE users SET pin_hash=$1, is_setup=1 WHERE id=$2', [hash, existing[0].id]);
+  } else {
+    await db.execute(
+      'INSERT INTO users (id, name, pin_hash, is_setup, created_at) VALUES ($1, $2, $3, 1, $4)',
+      [crypto.randomUUID(), 'Ashu', hash, new Date().toISOString()]
+    );
+  }
+}
+
+export async function verifyPin(pin) {
+  const user = await getAuthUser();
+  if (!user || !user.is_setup) return { valid: true, firstTime: true }; // not set up yet
+  const hash = await simpleHash(pin);
+  const valid = hash === user.pin_hash;
+  if (valid) {
+    const db = await getDb();
+    await db.execute('UPDATE users SET last_login=$1 WHERE id=$2', [new Date().toISOString(), user.id]);
+  }
+  return { valid, firstTime: false };
+}
+
+export async function isPinSetup() {
+  const user = await getAuthUser();
+  return !!(user && user.is_setup);
+}
+
+// ── CLIENT CRUD (Tier 2) ──────────────────────────────────────────────────────
+
+export async function getClients() {
+  const db = await getDb();
+  return await db.select('SELECT * FROM clients ORDER BY created_at DESC');
+}
+
+export async function addClient(data) {
+  const db = await getDb();
+  const id = crypto.randomUUID();
+  const now = Date.now();
+  await db.execute(
+    `INSERT INTO clients (id, name, business, budget, preferences, history, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+    [id, data.name, data.business || '', Number(data.budget || 0), data.preferences || '', '', now, now]
+  );
+  return id;
+}
+
+export async function updateClient(id, data) {
+  const db = await getDb();
+  await db.execute(
+    `UPDATE clients SET name=$1, business=$2, budget=$3, preferences=$4, updated_at=$5 WHERE id=$6`,
+    [data.name, data.business || '', Number(data.budget || 0), data.preferences || '', Date.now(), id]
+  );
+}
+
+export async function deleteClient(id) {
+  const db = await getDb();
+  await db.execute('DELETE FROM clients WHERE id=$1', [id]);
+}
+
+// ── EXECUTION SPANS — Real-Time Cost Tracking (Tier 1) ───────────────────────
+
+export async function logExecutionSpan(workerName, provider, model, tokensUsed, costInr) {
+  try {
+    const db = await getDb();
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+    await db.execute(
+      `INSERT INTO execution_spans (id, worker_name, provider, model, tokens_used, cost_inr, start_time, end_time, status, timestamp)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [
+        id,
+        workerName || 'cortex',
+        provider || 'unknown',
+        model || 'unknown',
+        Number(tokensUsed || 0),
+        Number(costInr || 0),
+        now,
+        now,
+        'completed',
+        now
+      ]
+    );
+    return id;
+  } catch (err) {
+    console.warn('[logExecutionSpan] Failed to log span (non-blocking):', err);
+    return null;
+  }
+}
+
+export async function getDailyCostTotal() {
+  try {
+    const db = await getDb();
+    const today = new Date().toISOString().slice(0, 10);
+    const rows = await db.select(
+      `SELECT COALESCE(SUM(cost_inr), 0) as total FROM execution_spans WHERE timestamp >= $1`,
+      [`${today}T00:00:00.000Z`]
+    );
+    return Number(rows?.[0]?.total || 0);
+  } catch (err) {
+    console.warn('[getDailyCostTotal] Failed (fail-open):', err);
+    return 0;
+  }
+}
+
+export async function getMonthlyCostTotal() {
+  try {
+    const db = await getDb();
+    const firstOfMonth = new Date();
+    firstOfMonth.setDate(1);
+    firstOfMonth.setHours(0, 0, 0, 0);
+    const rows = await db.select(
+      `SELECT COALESCE(SUM(cost_inr), 0) as total FROM execution_spans WHERE timestamp >= $1`,
+      [firstOfMonth.toISOString()]
+    );
+    return Number(rows?.[0]?.total || 0);
+  } catch (err) {
+    console.warn('[getMonthlyCostTotal] Failed (fail-open):', err);
+    return 0;
+  }
+}
+
+// ── INVOICES (Tier 1 Foundation) ──────────────────────────────────────────────
+
+export async function createInvoice(data) {
+  const db = await getDb();
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  const subtotal = Number(data.subtotal_inr || 0);
+  const gstRate = Number(data.gst_rate ?? 18.0);
+  const gstAmount = Math.round(subtotal * gstRate / 100);
+  const total = subtotal + gstAmount;
+  await db.execute(
+    `INSERT INTO invoices (id, client_id, project_id, invoice_number, line_items, subtotal_inr, gst_rate, gst_amount_inr, total_inr, status, issued_date, due_date, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+    [
+      id,
+      data.client_id || null,
+      data.project_id || null,
+      data.invoice_number || `INV-${Date.now()}`,
+      typeof data.line_items === 'string' ? data.line_items : JSON.stringify(data.line_items || []),
+      subtotal,
+      gstRate,
+      gstAmount,
+      total,
+      data.status || 'draft',
+      data.issued_date || now,
+      data.due_date || null,
+      now,
+      now
+    ]
+  );
+  return id;
+}
+
+export async function getInvoices() {
+  const db = await getDb();
+  return await db.select('SELECT * FROM invoices ORDER BY created_at DESC');
+}
+
+export async function getInvoiceById(id) {
+  const db = await getDb();
+  const rows = await db.select('SELECT * FROM invoices WHERE id = $1', [id]);
+  return rows?.[0] || null;
+}
+
+export async function updateInvoiceStatus(id, status) {
+  const db = await getDb();
+  await db.execute(
+    `UPDATE invoices SET status = $1, updated_at = $2 WHERE id = $3`,
+    [status, new Date().toISOString(), id]
+  );
+}
+
+// ── PAYMENTS (Tier 1 Foundation) ──────────────────────────────────────────────
+
+export async function createPayment(data) {
+  const db = await getDb();
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  await db.execute(
+    `INSERT INTO payments (id, invoice_id, amount_inr, payment_method, payment_date, reference_number, notes, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+    [
+      id,
+      data.invoice_id || null,
+      Number(data.amount_inr || 0),
+      data.payment_method || null,
+      data.payment_date || now,
+      data.reference_number || null,
+      data.notes || null,
+      now
+    ]
+  );
+  return id;
+}
+
+// ── APPROVAL UNDO (Tier 1) ────────────────────────────────────────────────────
+
+export async function undoApproval(id) {
+  try {
+    const db = await getDb();
+    const rows = await db.select('SELECT * FROM approvals WHERE id = $1', [id]);
+    if (!rows || rows.length === 0) return { success: false, reason: 'Approval not found' };
+    const approval = rows[0];
+    if (!approval.undo_deadline) return { success: false, reason: 'Undo not available for this approval' };
+    if (new Date() > new Date(approval.undo_deadline)) return { success: false, reason: 'Undo window has expired (24h limit)' };
+    await db.execute(
+      `UPDATE approvals SET status = 'pending', owner_notes = NULL WHERE id = $1`,
+      [id]
+    );
+    return { success: true };
+  } catch (err) {
+    console.error('[undoApproval] Error:', err);
+    return { success: false, reason: err.message };
+  }
 }
 
 // Client Context Re-exports

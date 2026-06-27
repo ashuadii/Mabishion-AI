@@ -10,12 +10,16 @@ import { getPendingApprovals } from '../data/db.js';
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Home', icon: 'dashboard' },
   { id: 'build-new', label: 'Build New', icon: 'rocket' },
+  { id: 'clients', label: 'Clients', icon: 'person' },
   { id: 'projects', label: 'Projects', icon: 'project' },
   { id: 'leads', label: 'Lead CRM', icon: 'users' },
   { id: 'sales-marketing', label: 'Sales & Marketing Hub', icon: 'megaphone' },
   { id: 'approvals', label: 'Approval Center', icon: 'approval', badge: true },
   { id: 'finance', label: 'Finance Hub', icon: 'wallet' },
-  { id: 'system-monitor', label: 'System Monitor', icon: 'brain' },
+  { id: 'invoices', label: 'Invoices', icon: 'file' },
+  { id: 'worker-monitor', label: 'Worker Monitor', icon: 'brain' },
+  { id: 'documents', label: 'Documents', icon: 'file' },
+  { id: 'knowledge', label: 'Knowledge Base', icon: 'chart' },
   { id: 'settings', label: 'Settings', icon: 'settings' },
 ];
 
@@ -58,7 +62,7 @@ export default function Sidebar({ activeNavId, onNavigate }) {
           padding: expanded ? '12px 18px' : '10px 0', 
           border: '1px solid rgba(255, 255, 255, 0.08)', 
           backgroundColor: 'rgba(255, 255, 255, 0.02)', 
-          color: C.softGold,
+          color: C.warning,
           alignItems: expanded ? 'flex-start' : 'center'
         }}>
         {expanded ? (
@@ -77,12 +81,12 @@ export default function Sidebar({ activeNavId, onNavigate }) {
             <button key={item.id}
               title={item.label}
               onClick={() => onNavigate(item.id)}
-              className={`relative flex h-10 items-center rounded-2xl text-xs transition-all duration-200 ${active ? 'bg-indigo-600/20 border-l-2 border-indigo-500' : ''}`}
+              className={`relative flex h-10 items-center rounded-2xl text-xs transition-all duration-300 ${active ? 'bg-indigo-600/25 border-l-2 border-indigo-500 shadow-[inset_2px_0_10px_rgba(99,102,241,0.2)]' : 'hover:bg-white/5 hover:translate-x-1'}`}
               style={{
                 justifyContent: expanded ? 'flex-start' : 'center',
                 gap: expanded ? 12 : 0,
                 padding: expanded ? '0 14px' : 0,
-                color: active ? '#FFF' : C.mutedLow,
+                color: active ? '#FFF' : C.textMuted,
               }}>
 
               <Icon name={item.icon} size={18} />
@@ -108,7 +112,7 @@ export default function Sidebar({ activeNavId, onNavigate }) {
             <div className="mb-2 flex items-center gap-2" style={{ color: C.success }}>
               <Icon name="shield" size={16} /><span className="text-xs font-black">Approval Safe</span>
             </div>
-            <p className="text-[11px] leading-5" style={{ color: C.mutedLow }}>No external action without manual YES. Mickii executes only stored skills.</p>
+            <p className="text-[11px] leading-5" style={{ color: C.textMuted }}>No external action without manual YES. Mickii executes only stored skills.</p>
           </div>
         ) : <Icon name="shield" size={19} className="mx-auto" style={{ color: C.success }} />}
       </div>

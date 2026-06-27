@@ -491,10 +491,11 @@ export default function ApprovalCenterScreen({ onNavigate }) {
       {/* Slide-in Detail Drawer */}
       {selectedApproval && (
         <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedApproval(null)}>
-          <ApprovalDetailDrawer 
+          <ApprovalDetailDrawer
             approval={selectedApproval}
             onClose={() => setSelectedApproval(null)}
             onResolve={handleResolveApproval}
+            onUndo={() => { setSelectedApproval(null); loadData(); }}
           />
         </div>
       )}

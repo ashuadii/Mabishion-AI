@@ -68,9 +68,9 @@ export default function SkillLibraryScreen({ onNavigate }) {
       <AppShell activeNavId="system-monitor" onNavigate={onNavigate}>
         <div className="flex items-center justify-center h-screen">
           <div className="text-center">
-            <Icon name="brain" size={48} style={{ color: C.softGold }} />
+            <Icon name="brain" size={48} style={{ color: C.warning }} />
             <p className="mt-4 text-lg font-black">Initializing Mickii Brain...</p>
-            <p className="mt-2 text-sm" style={{ color: C.mutedLow }}>Loading master skills & templates</p>
+            <p className="mt-2 text-sm" style={{ color: C.textMuted }}>Loading master skills & templates</p>
           </div>
         </div>
       </AppShell>
@@ -81,7 +81,7 @@ export default function SkillLibraryScreen({ onNavigate }) {
     <AppShell activeNavId="system-monitor" onNavigate={onNavigate}
       commandBar={
         <div className="fixed bottom-5 right-6 z-40 flex h-[64px] items-center gap-4 px-4"
-          style={{ left: C.sidebarW + 24, ...glassStyle({ strong: true, glow: 'gold' }) }}>
+          style={{ left: C.sidebarW + 24, ...glassStyle({ strong: true, glow: 'warning' }) }}>
           <Badge tone="gold">Skill Library</Badge>
           <input className="min-w-0 flex-1 bg-transparent text-sm outline-none" style={{ color: C.text }}
             placeholder="Ask Mickii: run website_build, create proposal, followup lead..." />
@@ -105,9 +105,9 @@ export default function SkillLibraryScreen({ onNavigate }) {
               onClick={() => setActiveCategory(cat.id)}
               className="flex items-center gap-2 rounded-[14px] px-4 py-2 text-sm font-bold transition-all"
               style={{
-                backgroundColor: activeCategory === cat.id ? `${C.gold}1A` : 'rgba(255,255,255,.045)',
-                border: `1px solid ${activeCategory === cat.id ? `${C.gold}55` : C.glassBorder}`,
-                color: activeCategory === cat.id ? C.softGold : C.mutedLow
+                backgroundColor: activeCategory === cat.id ? `${C.warning}1A` : 'rgba(255,255,255,.045)',
+                border: `1px solid ${activeCategory === cat.id ? `${C.warning}55` : C.glassBorder}`,
+                color: activeCategory === cat.id ? C.warning : C.textMuted
               }}>
               <Icon name={cat.icon} size={16} />
               {cat.label}
@@ -127,7 +127,7 @@ export default function SkillLibraryScreen({ onNavigate }) {
                     <Badge tone="muted">{skill.avg_time_seconds}s avg</Badge>
                   </div>
                   <h3 className="text-lg font-black">{skill.name}</h3>
-                  <p className="mt-1 text-sm" style={{ color: C.mutedLow }}>ID: {skill.id}</p>
+                  <p className="mt-1 text-sm" style={{ color: C.textMuted }}>ID: {skill.id}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="soft" onClick={() => setSelectedSkill(skill)}>
@@ -150,7 +150,7 @@ export default function SkillLibraryScreen({ onNavigate }) {
 
         {/* Templates Panel */}
         <div className="col-span-4 space-y-4">
-          <div className="p-5" style={glassStyle({ glow: 'cyan' })}>
+          <div className="p-5" style={glassStyle({ glow: 'info' })}>
             <h3 className="font-black mb-4">Templates Vault</h3>
             <div className="space-y-3">
               {templates.length > 0 ? templates.map(tmpl => (
@@ -167,12 +167,12 @@ export default function SkillLibraryScreen({ onNavigate }) {
           </div>
 
           {/* Expert Consult Box */}
-          <div className="p-5" style={glassStyle({ glow: 'violet' })}>
-            <div className="flex items-center gap-2 mb-3" style={{ color: C.violetBright }}>
+          <div className="p-5" style={glassStyle({ glow: 'primary' })}>
+            <div className="flex items-center gap-2 mb-3" style={{ color: C.primary }}>
               <Icon name="brain" size={20} />
               <p className="font-black">Expert Consult</p>
             </div>
-            <p className="text-sm leading-6" style={{ color: C.mutedLow }}>
+            <p className="text-sm leading-6" style={{ color: C.textMuted }}>
               Need a new skill? Describe the workflow and Mickii will learn it 
               (with your approval). Once learned, it runs offline forever.
             </p>

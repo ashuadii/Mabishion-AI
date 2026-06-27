@@ -5,22 +5,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        mickii: {
-          bg: '#02040A',
-          navy: '#070B16',
-          navy2: '#0B1220',
-          gold: '#FFB703',
-          softGold: '#FFE08A',
-          cyan: '#0F766E',
-          cyanBright: '#2DD4BF',
-          violet: '#4338CA',
-          violetBright: '#818CF8',
-          success: '#00D4AA',
-          danger: '#FF6B6B',
-          text: '#F8FAFC',
-          muted: '#CBD5E1',
-          mutedLow: '#94A3B8'
-        }
+        primary: '#6366F1',
+        'primary-dark': '#4F46E5',
+        success: '#10B981',
+        danger: '#EF4444',
+        warning: '#F59E0B',
+        info: '#3B82F6',
+        background: '#0F172A',
+        surface: '#1E293B',
+        border: '#334155',
+        text: '#F8FAFC',
+        'text-muted': '#94A3B8'
       }
     }
   },

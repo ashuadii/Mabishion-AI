@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import ReactFlow, {
   MiniMap,
   Controls,
@@ -17,6 +17,7 @@ import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
 import QuickCommandBar from '../components/QuickCommandBar';
+import { getWorkflows } from '../data/db.js';
 
 // Custom CSS to style React Flow glassmorphic nodes
 const flowStyles = {
@@ -141,6 +142,11 @@ export default function AutomationsScreen({ onNavigate }) {
   const [activeWorkflow, setActiveWorkflow] = useState('Client Acquisition Pipeline');
   const [isSimulating, setIsSimulating] = useState(false);
   const [simStep, setSimStep] = useState('');
+  const [dbWorkflows, setDbWorkflows] = useState([]);
+
+  useEffect(() => {
+    getWorkflows().then(rows => setDbWorkflows(rows || [])).catch(() => {});
+  }, []);
 
   const onConnect = useCallback(
     (params) => setEdges((eds) => addEdge({ ...params, animated: true }, eds)),
@@ -239,17 +245,33 @@ export default function AutomationsScreen({ onNavigate }) {
       <section className="grid grid-cols-12 gap-5">
         {/* Drag & Drop Tool Box */}
         <div className="col-span-12 lg:col-span-3 space-y-5">
-          <div className="p-5" style={glassStyle({ glow: 'violet' })}>
+          <div className="p-5" style={glassStyle({ glow: 'primary' })}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-black text-sm">Flow Workspaces</h3>
-              <Badge tone="violet">Active</Badge>
+              <Badge tone={dbWorkflows.length > 0 ? 'success' : 'violet'}>{dbWorkflows.length > 0 ? 'Live DB' : 'Templates'}</Badge>
             </div>
             <div className="space-y-2">
-              {[
-                'Client Acquisition Pipeline',
-                'Landing Page Manufacturing',
-                'Email Lead Nurture Loop',
-              ].map((flow) => (
+              {/* Live DB workflows first */}
+              {dbWorkflows.map(wf => (
+                <button
+                  key={wf.id}
+                  onClick={() => setActiveWorkflow(wf.name)}
+                  className="w-full text-left p-3 rounded-2xl text-xs font-black transition-all hover:bg-white/5"
+                  style={{
+                    backgroundColor: activeWorkflow === wf.name ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,.02)',
+                    border: `1px solid ${activeWorkflow === wf.name ? 'rgba(16,185,129,0.4)' : C.glassBorder}`,
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span>{wf.name}</span>
+                    <Badge tone={wf.status === 'Active' ? 'success' : wf.status === 'Draft' ? 'muted' : 'warning'}>
+                      {wf.status || 'Draft'}
+                    </Badge>
+                  </div>
+                </button>
+              ))}
+              {/* Template workflows */}
+              {['Client Acquisition Pipeline', 'Landing Page Manufacturing', 'Email Lead Nurture Loop'].map((flow) => (
                 <button
                   key={flow}
                   onClick={() => setActiveWorkflow(flow)}
@@ -265,12 +287,12 @@ export default function AutomationsScreen({ onNavigate }) {
             </div>
           </div>
 
-          <div className="p-5" style={glassStyle({ glow: 'cyan' })}>
+          <div className="p-5" style={glassStyle({ glow: 'info' })}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-black text-sm">Drag-Drop Workers</h3>
               <Badge tone="cyan">Inject</Badge>
             </div>
-            <p className="text-[11px] mb-3" style={{ color: C.mutedLow }}>
+            <p className="text-[11px] mb-3" style={{ color: C.textMuted }}>
               Click to inject new custom worker nodes straight into the dynamic flow canvas:
             </p>
             <div className="grid grid-cols-2 gap-2">
@@ -305,7 +327,7 @@ export default function AutomationsScreen({ onNavigate }) {
             </div>
           </div>
 
-          <div className="p-5" style={glassStyle({ glow: 'gold' })}>
+          <div className="p-5" style={glassStyle({ glow: 'warning' })}>
             <div className="mb-3 flex items-center justify-between">
               <h3 className="font-black text-sm">Simulation Desk</h3>
               <Badge tone={isSimulating ? 'gold' : 'muted'}>{isSimulating ? 'Running' : 'Ready'}</Badge>
@@ -327,11 +349,11 @@ export default function AutomationsScreen({ onNavigate }) {
         </div>
 
         {/* React Flow Editor Workspace */}
-        <div className="col-span-12 lg:col-span-9 p-5" style={glassStyle({ strong: true, glow: 'violet' })}>
+        <div className="col-span-12 lg:col-span-9 p-5" style={glassStyle({ strong: true, glow: 'primary' })}>
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h3 className="font-black">{activeWorkflow}</h3>
-              <p className="text-[11px]" style={{ color: C.mutedLow }}>
+              <p className="text-[11px]" style={{ color: C.textMuted }}>
                 Click nodes to edit properties. Connect handles to map operational execution sequences.
               </p>
             </div>

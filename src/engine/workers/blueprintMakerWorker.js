@@ -528,7 +528,7 @@ ${riskFlags.map(f => `- ${f}`).join('\n')}
         `Technical Architecture Blueprint for "${projectName}" (v${nextVersion.toFixed(1)})`,
         'standard',
         projectId,
-        'Blueprint Maker',
+        'blueprint_maker',
         JSON.stringify({
           blueprintId,
           projectName,

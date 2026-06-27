@@ -11,7 +11,9 @@ import {
   getPendingApprovals,
   approveAction,
   rejectAction,
-  getDb
+  getDb,
+  getDailyCostTotal,
+  getMonthlyCostTotal,
 } from "../data/db.js";
 import { listen } from "@tauri-apps/api/event";
 import { runWorker } from "../engine/workers/index.js";
@@ -33,6 +35,7 @@ import Badge from "../components/Badge";
 import Button from "../components/Button";
 import Icon from "../components/Icon";
 import ProgressBar from "../components/ProgressBar";
+import { SkeletonCard } from "../components/SkeletonCard.jsx";
 import MickiiOrb from "../components/MickiiOrb";
 
 const DEMO_PROJECTS = [
@@ -42,7 +45,7 @@ const DEMO_PROJECTS = [
     phase: "Design",
     progress: 72,
     health: "Stable",
-    tone: "gold",
+    tone: 'warning',
     approvals: 1,
     last: "12 min ago",
   },
@@ -72,7 +75,7 @@ const DEMO_PROJECTS = [
     phase: "Research",
     progress: 38,
     health: "Blocked",
-    tone: "violet",
+    tone: 'primary',
     approvals: 1,
     last: "2 hr ago",
   },
@@ -131,6 +134,13 @@ export default function DashboardScreen({ onNavigate }) {
   const [approvals, setApprovals] = useState(DEMO_APPROVALS);
   const [leads, setLeads] = useState([]);
   const [revenue, setRevenue] = useState(0);
+  const [dailyCostPaise, setDailyCostPaise] = useState(0);
+  const [monthlyCostPaise, setMonthlyCostPaise] = useState(0);
+  const [revenueChartData, setRevenueChartData] = useState(REVENUE_DATA);
+  const [leadChartData, setLeadChartData] = useState(LEAD_DATA);
+  const [invoiceCount, setInvoiceCount] = useState(0);
+  const [clientCount, setClientCount] = useState(0);
+  const [morningBrief, setMorningBrief] = useState('');
   const [skillRunning, setSkillRunning] = useState(null); // null or skillId
 
   // Quick Plan Config Modal States
@@ -192,6 +202,54 @@ export default function DashboardScreen({ onNavigate }) {
 
         const rev = await getTotalRevenue();
         setRevenue(rev || 143000);
+
+        const daily = await getDailyCostTotal();
+        setDailyCostPaise(daily || 0);
+        const monthly = await getMonthlyCostTotal();
+        setMonthlyCostPaise(monthly || 0);
+
+        // Live counts for summary cards
+        try {
+          const db = await getDb();
+          const invRows = await db.select("SELECT COUNT(*) as c FROM invoices");
+          setInvoiceCount(invRows?.[0]?.c || 0);
+          const cliRows = await db.select("SELECT COUNT(*) as c FROM clients");
+          setClientCount(cliRows?.[0]?.c || 0);
+
+          // Build live revenue chart from revenue table (last 6 months)
+          const revRows = await db.select(
+            `SELECT strftime('%b', datetime(timestamp/1000,'unixepoch')) as month,
+                    SUM(amount) as revenue
+             FROM revenue
+             GROUP BY strftime('%Y-%m', datetime(timestamp/1000,'unixepoch'))
+             ORDER BY timestamp DESC LIMIT 6`
+          );
+          if (revRows && revRows.length > 0) {
+            setRevenueChartData([...revRows].reverse());
+          }
+
+          // Build live lead source chart
+          const leadRows = await db.select(
+            `SELECT source, COUNT(*) as count FROM leads GROUP BY source ORDER BY count DESC LIMIT 5`
+          );
+          if (leadRows && leadRows.length > 0) setLeadChartData(leadRows);
+          // Morning brief — latest from audit_logs
+          const briefRows = await db.select(
+            `SELECT message FROM audit_logs WHERE message LIKE 'Morning Brief%' ORDER BY timestamp DESC LIMIT 1`
+          );
+          if (briefRows?.[0]?.message) {
+            // Extract the context (brief text) — stored as "Morning Brief" with context in next row
+            const ctxRows = await db.select(
+              `SELECT context FROM audit_logs WHERE message = 'Morning Brief' ORDER BY timestamp DESC LIMIT 1`
+            );
+            if (ctxRows?.[0]?.context) {
+              const ctx = ctxRows[0].context.split('|sig:')[0]; // remove HMAC suffix
+              setMorningBrief(ctx);
+            }
+          }
+        } catch (_) {
+          // Non-critical — keep chart defaults if tables not ready
+        }
       } catch (err) {
         console.error("Dashboard database loading error:", err);
         setProjects(DEMO_PROJECTS);
@@ -468,7 +526,7 @@ Reference URL or notes: ${planUrl || "None"}
       commandBar={
         <div
           className="fixed bottom-5 right-6 z-40 flex h-[64px] items-center gap-4 px-4"
-          style={{ left: 300, ...glassStyle({ strong: true, glow: "violet" }) }}
+          style={{ left: 300, ...glassStyle({ strong: true, glow: 'primary' }) }}
         >
           <MickiiOrb isThinking={isProcessing} />
           <Badge tone="violet">Dashboard</Badge>
@@ -517,21 +575,74 @@ Reference URL or notes: ${planUrl || "None"}
       />
 
       <section className="grid grid-cols-12 gap-5 pb-24">
+        {/* AG-CFO Cost Gauge */}
+        {(() => {
+          const dailyRupees = (dailyCostPaise / 100).toFixed(2);
+          const monthlyRupees = (monthlyCostPaise / 100).toFixed(2);
+          const dailyPct = Math.min(100, Math.round((dailyCostPaise / 15000) * 100));
+          const monthlyPct = Math.min(100, Math.round((monthlyCostPaise / 150000) * 100));
+          const dailyTone = dailyPct >= 100 ? C.danger : dailyPct >= 80 ? C.warning : C.success;
+          const monthlyTone = monthlyPct >= 100 ? C.danger : monthlyPct >= 80 ? C.warning : C.success;
+          return (
+            <div className="col-span-12 lg:col-span-6 p-5" style={glassStyle({ glow: dailyPct >= 80 ? 'warning' : 'none' })}>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="font-black text-white">AG-CFO Cost Monitor</h3>
+                  <p className="text-xs mt-1" style={{ color: C.textMuted }}>Real-time AI spend vs daily/monthly limits</p>
+                </div>
+                <Badge tone={dailyPct >= 100 ? 'danger' : dailyPct >= 80 ? 'warning' : 'success'}>
+                  {dailyPct >= 100 ? 'LIMIT HIT' : dailyPct >= 80 ? 'WARNING' : 'OK'}
+                </Badge>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between text-xs mb-1" style={{ color: C.textMuted }}>
+                    <span>Today: ₹{dailyRupees}</span>
+                    <span style={{ color: dailyTone }}>₹150 limit ({dailyPct}%)</span>
+                  </div>
+                  <ProgressBar value={dailyPct} tone={dailyPct >= 100 ? 'danger' : dailyPct >= 80 ? 'warning' : 'success'} />
+                </div>
+                <div>
+                  <div className="flex justify-between text-xs mb-1" style={{ color: C.textMuted }}>
+                    <span>This month: ₹{monthlyRupees}</span>
+                    <span style={{ color: monthlyTone }}>₹1,500 limit ({monthlyPct}%)</span>
+                  </div>
+                  <ProgressBar value={monthlyPct} tone={monthlyPct >= 100 ? 'danger' : monthlyPct >= 80 ? 'warning' : 'success'} />
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Morning Brief */}
+        {morningBrief && (
+          <div className="col-span-12 lg:col-span-6 p-5" style={glassStyle({ glow: 'success' })}>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-lg">🌅</span>
+              <h3 className="font-black text-white">Morning Brief</h3>
+              <Badge tone="success">Today</Badge>
+            </div>
+            <pre className="text-sm leading-6 whitespace-pre-wrap" style={{ color: C.textMuted, fontFamily: 'inherit' }}>
+              {morningBrief}
+            </pre>
+          </div>
+        )}
+
         {/* Quick Skills Execution */}
         <div
           className="col-span-12 p-5"
           style={glassStyle({
             strong: true,
-            glow: "gold",
-            borderColor: `${C.gold}55`,
+            glow: 'warning',
+            borderColor: `${C.warning}55`,
           })}
         >
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-xl font-black text-white">
+              <h2 className="text-xl font-bold text-white">
                 Quick Skill Execution
               </h2>
-              <p className="text-sm" style={{ color: C.muted }}>
+              <p className="text-sm" style={{ color: C.textMuted }}>
                 One-click deterministic workflows — offline, safe execution
               </p>
             </div>
@@ -561,11 +672,11 @@ Reference URL or notes: ${planUrl || "None"}
                     <Icon
                       name={skill.icon || "star"}
                       size={24}
-                      style={{ color: C.softGold }}
+                      style={{ color: C.warning }}
                     />
-                    <p className="font-black text-white">{skill.name}</p>
+                    <p className="font-bold text-white">{skill.name}</p>
                   </div>
-                  <p className="text-xs" style={{ color: C.mutedLow }}>
+                  <p className="text-xs" style={{ color: C.textMuted }}>
                     {skill.description || skill.desc}
                   </p>
                   <div className="mt-3 flex items-center gap-2">
@@ -594,7 +705,7 @@ Reference URL or notes: ${planUrl || "None"}
                 </Badge>
                 <Badge tone="gold">Human Approval Gate</Badge>
               </div>
-              <h2 className="text-xl font-black text-white">
+              <h2 className="text-xl font-bold text-white">
                 Approval Safe Guard
               </h2>
               <p className="mt-1 text-sm text-gray-400">
@@ -672,35 +783,29 @@ Reference URL or notes: ${planUrl || "None"}
         {/* Real-time Analytics Recharts widget */}
         <div
           className="col-span-12 lg:col-span-8 p-6"
-          style={glassStyle({ strong: true, glow: "violet" })}
+          style={glassStyle({ strong: true, glow: 'primary' })}
         >
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h3 className="font-black text-lg text-white">
+              <h3 className="font-bold text-lg text-white">
                 Real-time Analytics
               </h3>
-              <p className="text-xs" style={{ color: C.mutedLow }}>
+              <p className="text-xs" style={{ color: C.textMuted }}>
                 Direct real-time pull from SQLite production engine
               </p>
             </div>
             <div className="flex gap-4">
               <div className="text-right">
-                <span className="text-[10px] uppercase font-bold text-gray-400">
-                  Conversion Rate
-                </span>
-                <p className="text-sm font-black text-cyan-400">78.4%</p>
+                <span className="text-[10px] uppercase font-bold text-gray-400">Total Clients</span>
+                <p className="text-sm font-bold text-cyan-400">{clientCount}</p>
               </div>
               <div className="text-right">
-                <span className="text-[10px] uppercase font-bold text-gray-400">
-                  Pipeline Speed
-                </span>
-                <p className="text-sm font-black text-green-400">4.2 Days</p>
+                <span className="text-[10px] uppercase font-bold text-gray-400">Total Leads</span>
+                <p className="text-sm font-bold text-green-400">{leads.length}</p>
               </div>
               <div className="text-right">
-                <span className="text-[10px] uppercase font-bold text-gray-400">
-                  Active Load
-                </span>
-                <p className="text-sm font-black text-yellow-400">4 Workers</p>
+                <span className="text-[10px] uppercase font-bold text-gray-400">Invoices</span>
+                <p className="text-sm font-bold text-yellow-400">{invoiceCount}</p>
               </div>
             </div>
           </div>
@@ -708,12 +813,12 @@ Reference URL or notes: ${planUrl || "None"}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Revenue Trend Area Chart */}
             <div className="p-4 rounded-2xl bg-black/20 border border-white/5">
-              <h4 className="text-xs font-black text-white mb-3 uppercase tracking-wider">
+              <h4 className="text-xs font-bold text-white mb-3 uppercase tracking-wider">
                 Revenue Trend (₹)
               </h4>
               <div style={{ minWidth: 0 }}>
                 <ResponsiveContainer width="100%" height={176} minWidth={0}>
-                  <AreaChart data={REVENUE_DATA}>
+                  <AreaChart data={revenueChartData}>
                     <defs>
                       <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
                         <stop
@@ -755,12 +860,12 @@ Reference URL or notes: ${planUrl || "None"}
 
             {/* Lead Sources Bar Chart */}
             <div className="p-4 rounded-2xl bg-black/20 border border-white/5">
-              <h4 className="text-xs font-black text-white mb-3 uppercase tracking-wider">
+              <h4 className="text-xs font-bold text-white mb-3 uppercase tracking-wider">
                 Lead Acquisition Source
               </h4>
               <div style={{ minWidth: 0 }}>
                 <ResponsiveContainer width="100%" height={176} minWidth={0}>
-                  <BarChart data={LEAD_DATA}>
+                  <BarChart data={leadChartData}>
                     <XAxis
                       dataKey="source"
                       stroke="#94A3B8"
@@ -785,12 +890,12 @@ Reference URL or notes: ${planUrl || "None"}
         {/* Mickii Autonomous Console */}
         <div
           className="col-span-12 lg:col-span-4 p-6"
-          style={glassStyle({ glow: "violet" })}
+          style={glassStyle({ glow: 'primary' })}
         >
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <h3 className="font-black text-white">Mickii System Status</h3>
-              <p className="text-[10px]" style={{ color: C.mutedLow }}>
+              <h3 className="font-bold text-white">Mickii System Status</h3>
+              <p className="text-[10px]" style={{ color: C.textMuted }}>
                 Local Autonomous Loop Active
               </p>
             </div>
@@ -807,8 +912,8 @@ Reference URL or notes: ${planUrl || "None"}
             </div>
           </div>
 
-          <div className="space-y-2 max-h-[170px] overflow-y-auto scrollbar-hide">
-            {messages.slice(-3).map((msg, i) => (
+          <div className="space-y-2 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 pr-2">
+            {messages.map((msg, i) => (
               <div
                 key={i}
                 className={`rounded-xl p-3 text-xs border ${
@@ -845,7 +950,7 @@ Reference URL or notes: ${planUrl || "None"}
             className="w-full max-w-lg p-6 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden text-left"
             style={{
               backgroundColor: "#0c0f17e0",
-              ...glassStyle({ strong: true, glow: "gold" }),
+              ...glassStyle({ strong: true, glow: 'warning' }),
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -854,7 +959,7 @@ Reference URL or notes: ${planUrl || "None"}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <span className="text-xl">📐</span>
-                <h3 className="text-lg font-black text-white">
+                <h3 className="text-lg font-bold text-white">
                   Setup Quick Plan Execution
                 </h3>
               </div>
@@ -875,7 +980,7 @@ Reference URL or notes: ${planUrl || "None"}
             <div className="space-y-4">
               {/* Type of Build Dropdown */}
               <div className="flex flex-col gap-1.5 relative">
-                <label className="text-[10px] font-black text-amber-400 uppercase tracking-widest">
+                <label className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">
                   Type of Build
                 </label>
                 <button
@@ -936,7 +1041,7 @@ Reference URL or notes: ${planUrl || "None"}
                         }}
                         className={`w-full text-left px-3.5 py-2 text-xs rounded-xl transition-all flex items-center justify-between mb-0.5 last:mb-0 ${
                           planType === opt.value
-                            ? "bg-amber-500/20 text-amber-300 font-black border-l-2 border-amber-500 pl-2.5"
+                            ? "bg-amber-500/20 text-amber-300 font-bold border-l-2 border-amber-500 pl-2.5"
                             : "text-gray-300 hover:bg-white/[0.04] hover:text-white"
                         }`}
                       >
@@ -953,7 +1058,7 @@ Reference URL or notes: ${planUrl || "None"}
               {/* Other Specify Custom Input - Shows ONLY when "Other" is selected */}
               {planType === "Other" && (
                 <div className="flex flex-col gap-1.5 animate-in slide-in-from-top-2 duration-200">
-                  <label className="text-[10px] font-black text-amber-400 uppercase tracking-widest">
+                  <label className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">
                     Specify Project Type
                   </label>
                   <input
@@ -969,7 +1074,7 @@ Reference URL or notes: ${planUrl || "None"}
 
               {/* Business Domain Dropdown */}
               <div className="flex flex-col gap-1.5 relative">
-                <label className="text-[10px] font-black text-amber-400 uppercase tracking-widest">
+                <label className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">
                   Business Domain (Field / Industry)
                 </label>
                 <button
@@ -1024,7 +1129,7 @@ Reference URL or notes: ${planUrl || "None"}
                         }}
                         className={`w-full text-left px-3.5 py-2 text-xs rounded-xl transition-all flex items-center justify-between mb-0.5 last:mb-0 ${
                           planDomain === opt.value
-                            ? "bg-amber-500/20 text-amber-300 font-black border-l-2 border-amber-500 pl-2.5"
+                            ? "bg-amber-500/20 text-amber-300 font-bold border-l-2 border-amber-500 pl-2.5"
                             : "text-gray-300 hover:bg-white/[0.04] hover:text-white"
                         }`}
                       >
@@ -1041,7 +1146,7 @@ Reference URL or notes: ${planUrl || "None"}
               {/* Other Specify Domain Custom Input - Shows ONLY when "Other" is selected */}
               {planDomain === "Other" && (
                 <div className="flex flex-col gap-1.5 animate-in slide-in-from-top-2 duration-200">
-                  <label className="text-[10px] font-black text-amber-400 uppercase tracking-widest">
+                  <label className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">
                     Specify Business Domain
                   </label>
                   <input
@@ -1057,7 +1162,7 @@ Reference URL or notes: ${planUrl || "None"}
 
               {/* Context Idea Text Area */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black text-amber-400 uppercase tracking-widest">
+                <label className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">
                   Context & Core Ideas (Blueprint Notes)
                 </label>
                 <textarea
@@ -1072,7 +1177,7 @@ Reference URL or notes: ${planUrl || "None"}
 
               {/* Reference URL or Notes */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black text-amber-400 uppercase tracking-widest">
+                <label className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">
                   Reference URL / Source Link (Optional)
                 </label>
                 <input
@@ -1087,7 +1192,7 @@ Reference URL or notes: ${planUrl || "None"}
 
               {/* Premium File Attachment Dropzone */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black text-amber-400 uppercase tracking-widest">
+                <label className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">
                   Attach Files & Assets (Media, PDF, Excel, PPT, DOCS)
                 </label>
                 <div
@@ -1184,7 +1289,7 @@ Reference URL or notes: ${planUrl || "None"}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <span className="text-xl">🎨</span>
-                <h3 className="text-lg font-black text-white">
+                <h3 className="text-lg font-bold text-white">
                   Setup Quick Design Execution
                 </h3>
               </div>
@@ -1205,7 +1310,7 @@ Reference URL or notes: ${planUrl || "None"}
             <div className="space-y-4">
               {/* Visual Theme Presets Grid */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-1">
+                <label className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest block mb-1">
                   Visual Theme Preset (Choose a look)
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
@@ -1269,7 +1374,7 @@ Reference URL or notes: ${planUrl || "None"}
 
               {/* Pages to Generate */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">
+                <label className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">
                   Required Website Pages (Comma-separated)
                 </label>
                 <input
@@ -1283,7 +1388,7 @@ Reference URL or notes: ${planUrl || "None"}
 
               {/* Custom Design Notes textarea */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">
+                <label className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">
                   Custom Brand Notes / HEX Colors (Optional)
                 </label>
                 <textarea

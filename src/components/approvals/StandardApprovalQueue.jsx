@@ -4,6 +4,7 @@ import Badge from '../Badge';
 import Button from '../Button';
 import { C } from '../consts';
 import { formatLocalTime } from '../../utils/dateFormatter.js';
+import { normalizeWorkerId, getWorkerLabel, normalizeApprovalStatus, normalizeApprovalType } from '../../utils/approvalRouting.js';
 
 export default function StandardApprovalQueue({ approvals, onSelectApproval, onResolveFast }) {
   const [filterTab, setFilterTab] = useState('pending'); // pending | approved | rejected | all
@@ -13,18 +14,18 @@ export default function StandardApprovalQueue({ approvals, onSelectApproval, onR
   // Filtering Logic
   const filteredApprovals = approvals.filter(app => {
     // 1. Tab Status Filter
-    const appStatus = (app.status || 'pending').toLowerCase();
+    const appStatus = normalizeApprovalStatus(app.status);
     if (filterTab !== 'all' && appStatus !== filterTab) return false;
 
     // 2. Type Filter
-    const appType = (app.type || 'standard').toLowerCase();
+    const appType = normalizeApprovalType(app.type);
     if (filterType !== 'all' && appType !== filterType) return false;
 
     // 3. Search Query
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       const titleMatch = (app.title || '').toLowerCase().includes(q);
-      const workerMatch = (app.worker_name || '').toLowerCase().includes(q);
+      const workerMatch = (app.worker_name || '').toLowerCase().includes(q) || getWorkerLabel(app.worker_name).toLowerCase().includes(q);
       return titleMatch || workerMatch;
     }
 
@@ -46,8 +47,8 @@ export default function StandardApprovalQueue({ approvals, onSelectApproval, onR
         
         {/* Count indicators */}
         <div className="flex gap-2">
-          <Badge tone="violet">{approvals.filter(a => (a.status || '').toLowerCase() === 'pending').length} Pending</Badge>
-          <Badge tone="success">{approvals.filter(a => (a.status || '').toLowerCase() === 'approved').length} Approved</Badge>
+          <Badge tone="violet">{approvals.filter(a => normalizeApprovalStatus(a.status) === 'pending').length} Pending</Badge>
+          <Badge tone="success">{approvals.filter(a => normalizeApprovalStatus(a.status) === 'approved').length} Approved</Badge>
         </div>
       </div>
 
@@ -98,8 +99,8 @@ export default function StandardApprovalQueue({ approvals, onSelectApproval, onR
       {/* List Queue Area */}
       <div className="flex-1 overflow-y-auto min-h-[360px] max-h-[500px] pr-1 space-y-3 scrollbar-thin">
         {filteredApprovals.map(app => {
-          const isCritical = (app.type || 'standard').toLowerCase() === 'critical';
-          const isPending = (app.status || 'pending').toLowerCase() === 'pending';
+          const isCritical = normalizeApprovalType(app.type) === 'critical';
+          const isPending = normalizeApprovalStatus(app.status) === 'pending';
           
           return (
             <div 
@@ -116,7 +117,7 @@ export default function StandardApprovalQueue({ approvals, onSelectApproval, onR
                   <Badge tone={isCritical ? 'danger' : 'info'}>
                     {isCritical ? '🚨 CRITICAL' : '⚙️ STANDARD'}
                   </Badge>
-                  <Badge tone={(app.status || 'pending').toLowerCase() === 'approved' ? 'success' : (app.status || 'pending').toLowerCase() === 'rejected' ? 'danger' : 'gold'}>
+                  <Badge tone={normalizeApprovalStatus(app.status) === 'approved' ? 'success' : normalizeApprovalStatus(app.status) === 'rejected' ? 'danger' : 'gold'}>
                     {app.status || 'Pending'}
                   </Badge>
                   {app.whatsapp_sent === 1 && (
@@ -129,7 +130,7 @@ export default function StandardApprovalQueue({ approvals, onSelectApproval, onR
                 <h4 className="font-bold text-white text-sm truncate">{app.title || 'Execute safety command'}</h4>
                 
                 <div className="flex items-center gap-3 text-[10px] text-slate-400">
-                  <span className="font-semibold text-slate-300">Worker: {app.worker_name || 'System'}</span>
+                  <span className="font-semibold text-slate-300">Worker: {getWorkerLabel(app.worker_name)}</span>
                   <span>·</span>
                   <span>Requested: {formatLocalTime(app.created_at)}</span>
                 </div>

@@ -1,6 +1,7 @@
 import { BaseWorker } from './baseWorker.js';
 import { getDb } from '../../data/db.js';
 import { executeLlmWithFallback } from '../../services/llmManager.js';
+import { generateProposalPdf, saveFileToUserDirectory } from '../../services/fileOperationService.js';
 
 export class ProposalMakerWorker extends BaseWorker {
   constructor() {
@@ -92,16 +93,33 @@ Generate a professional proposal tailored for this client.
         `Commercial Proposal for "${projectName}"`,
         'critical',
         projectId,
-        'Proposal Maker',
+        'proposal_maker',
         JSON.stringify(parsedResult),
         'pending',
         expiresAt
       ]
     );
 
+    // Auto-export PDF (non-blocking — worker result is returned regardless)
+    let pdfPath = null;
+    try {
+      const pdfBlob = await generateProposalPdf({
+        name: projectName,
+        clientName,
+        budget: parsedResult.pricing || 'See proposal',
+        description: parsedResult.executiveSummary || brief,
+        stage: 'Proposal'
+      });
+      const fileName = `${projectName.replace(/\s+/g, '_')}_proposal.pdf`;
+      pdfPath = await saveFileToUserDirectory(fileName, pdfBlob);
+    } catch (pdfErr) {
+      console.warn('[ProposalMakerWorker] PDF export failed (non-blocking):', pdfErr.message);
+    }
+
     return {
       proposal: parsedResult,
-      approvalId
+      approvalId,
+      pdfPath
     };
   }
 }

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
+import CommandPalette from './components/CommandPalette';
 
 // Import all active screens
 import DashboardScreen from './screens/DashboardScreen';
@@ -13,10 +14,28 @@ import FinanceScreen from './screens/FinanceScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import ResearchScreen from './screens/ResearchScreen';
 import ApprovalCenterScreen from './screens/ApprovalCenterScreen';
+import ClientsScreen from './screens/ClientsScreen';
+import InvoicesScreen from './screens/InvoicesScreen';
+import WorkerMonitorScreen from './screens/WorkerMonitorScreen';
+import DocumentsScreen from './screens/DocumentsScreen';
+import KnowledgeBaseScreen from './screens/KnowledgeBaseScreen';
 import { BuildProvider } from './context/BuildContext';
 
 export default function App() {
   const navigate = useNavigate();
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  // Ctrl+K → open command palette
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.ctrlKey && e.key === 'k') {
+        e.preventDefault();
+        setPaletteOpen(p => !p);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   const handleNavigate = (id, state) => {
     navigate(`/${id}`, { state });
@@ -24,6 +43,7 @@ export default function App() {
 
   return (
     <BuildProvider>
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
       <Routes>
         <Route path="/" element={<DashboardScreen onNavigate={handleNavigate} />} />
         <Route path="/dashboard" element={<DashboardScreen onNavigate={handleNavigate} />} />
@@ -50,6 +70,13 @@ export default function App() {
         
         <Route path="/settings" element={<SettingsScreen onNavigate={handleNavigate} />} />
         <Route path="/analytics" element={<ReportsScreen onNavigate={handleNavigate} />} />
+
+        {/* Tier 2 new screens */}
+        <Route path="/clients" element={<ClientsScreen onNavigate={handleNavigate} />} />
+        <Route path="/invoices" element={<InvoicesScreen onNavigate={handleNavigate} />} />
+        <Route path="/worker-monitor" element={<WorkerMonitorScreen onNavigate={handleNavigate} />} />
+        <Route path="/documents" element={<DocumentsScreen onNavigate={handleNavigate} />} />
+        <Route path="/knowledge" element={<KnowledgeBaseScreen onNavigate={handleNavigate} />} />
       </Routes>
     </BuildProvider>
   );

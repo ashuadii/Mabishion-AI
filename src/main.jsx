@@ -7,9 +7,51 @@ import { initDb } from './data/db'
 import { cronEngine } from './services/cronService'
 import { fetchSystemTimeInfo } from './utils/dateFormatter'
 
+// ── Global keyboard shortcuts (T4.5) ──────────────────────────────────────────
+let currentZoom = 1;
+window.addEventListener('keydown', (e) => {
+  // Zoom controls
+  if (e.ctrlKey && (e.key === '=' || e.key === '+')) {
+    e.preventDefault();
+    currentZoom = Math.min(currentZoom + 0.1, 2.0);
+    document.body.style.zoom = currentZoom;
+  } else if (e.ctrlKey && e.key === '-') {
+    e.preventDefault();
+    currentZoom = Math.max(currentZoom - 0.1, 0.5);
+    document.body.style.zoom = currentZoom;
+  } else if (e.ctrlKey && e.key === '0') {
+    e.preventDefault();
+    currentZoom = 1;
+    document.body.style.zoom = currentZoom;
+
+  // Ctrl+K → focus QuickCommandBar (if visible)
+  } else if (e.ctrlKey && e.key === 'k') {
+    e.preventDefault();
+    const qBar = document.querySelector('[data-quickbar-input]');
+    if (qBar) { qBar.focus(); }
+
+  // Ctrl+Shift+A → navigate to Approvals
+  } else if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+    e.preventDefault();
+    window.history.pushState({}, '', '/approvals');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+
+  // Ctrl+Shift+D → navigate to Dashboard
+  } else if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+    e.preventDefault();
+    window.history.pushState({}, '', '/dashboard');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+
+  // Ctrl+Shift+I → navigate to Invoices
+  } else if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+    e.preventDefault();
+    window.history.pushState({}, '', '/invoices');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  }
+});
+
 // Initialize the database and system timezone offset before rendering
 Promise.all([initDb(), fetchSystemTimeInfo()]).then(() => {
-  // Start the background cron engine for automatic approvals and periodic operations
   cronEngine.start();
 
   ReactDOM.createRoot(document.getElementById('root')).render(
@@ -18,10 +60,9 @@ Promise.all([initDb(), fetchSystemTimeInfo()]).then(() => {
         <App />
       </BrowserRouter>
     </React.StrictMode>,
-  )
+  );
 }).catch(err => {
-  console.error("Database initialization failed:", err);
-  // Still render to show error if possible
+  console.error('Database initialization failed:', err);
   ReactDOM.createRoot(document.getElementById('root')).render(
     <div style={{ padding: 40, color: 'white', background: '#111', height: '100vh' }}>
       <h1>Mickii Engine Error</h1>

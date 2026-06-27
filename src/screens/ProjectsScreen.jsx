@@ -249,16 +249,52 @@ export default function ProjectsScreen({ onNavigate }) {
       />
 
       <section className="grid grid-cols-12 gap-5">
-        
+
+        {/* Revenue Pipeline Status Tracker (T7.5) */}
+        {(() => {
+          const PIPELINE = ['Research', 'Design', 'Build', 'Test', 'Ready', 'Delivered / Archived'];
+          const stageCounts = PIPELINE.map(stage => ({
+            stage,
+            count: projects.filter(p => p.stage === stage).length,
+          }));
+          const totalActive = projects.filter(p => p.stage !== 'Delivered / Archived').length;
+          return (
+            <div className="col-span-12 p-4" style={glassStyle({ glow: 'primary' })}>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-black text-white text-sm">Revenue Pipeline</h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg" style={{ background: 'rgba(99,102,241,0.2)', color: '#818cf8' }}>
+                  {totalActive} active projects
+                </span>
+              </div>
+              <div className="flex items-stretch gap-0">
+                {stageCounts.map(({ stage, count }, i) => {
+                  const pct = projects.length > 0 ? Math.round((count / Math.max(projects.length, 1)) * 100) : 0;
+                  const colors = ['#6366F1','#8B5CF6','#EC4899','#F59E0B','#10B981','#64748B'];
+                  return (
+                    <div key={stage} className="flex-1 text-center px-2 py-2 relative"
+                      style={{ borderRight: i < stageCounts.length - 1 ? `1px solid rgba(255,255,255,0.06)` : 'none' }}>
+                      <p className="text-[10px] font-bold mb-1 truncate" style={{ color: colors[i] }}>{stage}</p>
+                      <p className="text-xl font-black text-white">{count}</p>
+                      <div className="mt-1 h-1 rounded-full w-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: colors[i] }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Kanban Board */}
         <div className="col-span-12 p-5 transition-all duration-300" style={glassStyle()}>
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="font-black text-white flex items-center gap-2">
+              <h3 className="font-bold text-white flex items-center gap-2">
                 <Icon name="kanban" className="text-indigo-400" size={18} />
                 Interactive Kanban Board (Live SQLite)
               </h3>
-              <p className="mt-1 text-xs" style={{ color: C.mutedLow }}>
+              <p className="mt-1 text-xs" style={{ color: C.textMuted }}>
                 Drag any project card to shift stages. Click a card to open detailed control dashboard.
               </p>
             </div>
@@ -296,7 +332,7 @@ export default function ProjectsScreen({ onNavigate }) {
                     }}
                   >
                     <div className="mb-4 flex items-center justify-between border-b border-white/5 pb-2">
-                      <p className="font-black text-sm text-white/90">{col}</p>
+                      <p className="font-bold text-sm text-white/90">{col}</p>
                       <Badge tone={tone}>{cards.length}</Badge>
                     </div>
 
@@ -322,12 +358,12 @@ export default function ProjectsScreen({ onNavigate }) {
                             }`}
                           >
                             <div className="mb-2 flex items-start justify-between gap-2">
-                              <p className="truncate text-sm font-black text-white">{p.name}</p>
+                              <p className="truncate text-sm font-bold text-white">{p.name}</p>
                               <Badge tone={ht}>{p.health}</Badge>
                             </div>
                             <p className="text-[10px] text-gray-500 mb-2 truncate">{p.type || 'Digital Product'}</p>
                             
-                            <div className="mb-1 flex justify-between text-[11px]" style={{ color: C.mutedLow }}>
+                            <div className="mb-1 flex justify-between text-[11px]" style={{ color: C.textMuted }}>
                               <span>{p.progress || 0}% Complete</span>
                               {p.client_name && <span className="max-w-[80px] truncate">{p.client_name}</span>}
                             </div>
@@ -354,7 +390,7 @@ export default function ProjectsScreen({ onNavigate }) {
             <div className="flex flex-wrap justify-between items-start gap-4 mb-4 pb-4 border-b border-white/10">
               <div>
                 <Badge tone="indigo">Active Selection Control</Badge>
-                <h3 className="text-2xl font-black text-white mt-1">{selectedProject.name}</h3>
+                <h3 className="text-2xl font-bold text-white mt-1">{selectedProject.name}</h3>
                 <p className="text-xs text-gray-400 mt-1">
                   Type: <span className="text-indigo-300 font-bold">{selectedProject.type || 'Digital Product'}</span> · Client: <span className="text-indigo-300 font-bold">{selectedProject.client_name || 'Mabishion'}</span>
                 </p>
@@ -472,10 +508,10 @@ export default function ProjectsScreen({ onNavigate }) {
         )}
 
         {/* Build types launcher cards */}
-        <div className="col-span-8 p-5" style={glassStyle({ glow: 'gold' })}>
+        <div className="col-span-8 p-5" style={glassStyle({ glow: 'warning' })}>
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="font-black text-white">Production Build Types</h3>
-            <p className="text-xs" style={{ color: C.mutedLow }}>Website Builder & all builders open here as child workspaces</p>
+            <h3 className="font-bold text-white">Production Build Types</h3>
+            <p className="text-xs" style={{ color: C.textMuted }}>Website Builder & all builders open here as child workspaces</p>
           </div>
           <div className="grid grid-cols-3 gap-3">
             {[
@@ -496,9 +532,9 @@ export default function ProjectsScreen({ onNavigate }) {
                   setIsNewModalOpen(true);
                 }}
                 className="rounded-[18px] p-3 text-left text-xs font-bold transition-all duration-300 hover:scale-105 active:scale-95 border border-white/5 bg-white/[0.03] hover:bg-white/[0.08]"
-                style={{ color: C.muted }}
+                style={{ color: C.textMuted }}
               >
-                <Icon name={item.icon} size={17} style={{ color: C.softGold }} />
+                <Icon name={item.icon} size={17} style={{ color: C.warning }} />
                 <p className="mt-2 text-white/80">{item.t}</p>
               </button>
             ))}
@@ -506,23 +542,23 @@ export default function ProjectsScreen({ onNavigate }) {
         </div>
 
         {/* Production health summary */}
-        <div className="col-span-4 p-5" style={glassStyle({ glow: 'cyan' })}>
+        <div className="col-span-4 p-5" style={glassStyle({ glow: 'info' })}>
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="font-black text-white">Live Operations Health</h3>
+            <h3 className="font-bold text-white">Live Operations Health</h3>
             <Badge tone="success">Live</Badge>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: 'Active Builds', value: stats.active, tone: 'gold' },
+              { label: 'Active Builds', value: stats.active, tone: 'warning' },
               { label: 'Blocked Items', value: stats.blocked, tone: 'danger' },
-              { label: 'Pending Review', value: stats.pendingReview, tone: 'violet' },
+              { label: 'Pending Review', value: stats.pendingReview, tone: 'primary' },
               { label: 'Ready to Pack', value: stats.ready, tone: 'success' }
             ].map((m) => (
               <div key={m.label} className="rounded-2xl p-4 border border-white/5 bg-white/[0.03]">
-                <p className="text-3xl font-black" style={{ color: m.tone === 'danger' ? C.danger : m.tone === 'success' ? C.success : m.tone === 'violet' ? C.violetBright : C.softGold }}>
+                <p className="text-3xl font-bold" style={{ color: m.tone === 'danger' ? C.danger : m.tone === 'success' ? C.success : m.tone === 'primary' ? C.primary : C.warning }}>
                   {m.value}
                 </p>
-                <p className="mt-1 text-[11px]" style={{ color: C.mutedLow }}>{m.label}</p>
+                <p className="mt-1 text-[11px]" style={{ color: C.textMuted }}>{m.label}</p>
               </div>
             ))}
           </div>
@@ -536,10 +572,10 @@ export default function ProjectsScreen({ onNavigate }) {
           <form 
             onSubmit={handleCreateProject}
             className="w-full max-w-md p-6 rounded-[28px] border border-white/10 shadow-2xl relative overflow-hidden space-y-4" 
-            style={glassStyle({ glow: 'gold' })}
+            style={glassStyle({ glow: 'warning' })}
           >
             <div className="flex justify-between items-center pb-2 border-b border-white/5">
-              <h3 className="text-xl font-black text-white">Launch New Build</h3>
+              <h3 className="text-xl font-bold text-white">Launch New Build</h3>
               <button 
                 type="button"
                 onClick={() => setIsNewModalOpen(false)} 

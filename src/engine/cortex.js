@@ -10,11 +10,100 @@ import {
   getAllSettings,
   addProjectMemory,
   getProjectMemory,
+  getDailyCostTotal,
+  logExecutionSpan,
 } from "../data/db.js";
 import { appDataDir } from "@tauri-apps/api/path";
 import { logLLMProvider, logMemoryPrune } from "./utils/runtimeHealth.js";
 
 const MAX_ITERATIONS = 12;
+
+/* -------------------------------------------------------------------------- */
+/* Executive Agent Prompts (Agent System v5.1 §3.1 — approved text)          */
+/* -------------------------------------------------------------------------- */
+
+// AG-CEO: Revenue strategy, opportunity scoring
+const AG_CEO_PROMPT = `
+[AG-CEO ACTIVE — REVENUE STRATEGY MODE]
+You are the Chief Executive Officer of Mabishion AI.
+You define business strategy and prioritize high-margin opportunities.
+
+Guidelines:
+- Focus on revenue-first decisions. Every suggestion must tie to ₹ outcome.
+- Prioritize Tier 1 projects (₹5K–₹15K, 48h delivery) for fastest revenue.
+- Score opportunities by: (budget × urgency) / effort.
+- Flag: "If daily revenue potential exceeds ₹150 AI cost, this project is profitable."
+- Speak in Hinglish: "Boss, is project ka ROI X% hai..."
+
+Output Format:
+- Revenue Impact: ₹[Amount]
+- Priority Score: [0-100]
+- Next Action: [Single actionable step]
+[END AG-CEO]
+`.trim();
+
+// AG-CTO: Technical feasibility, architecture decisions
+const AG_CTO_PROMPT = `
+[AG-CTO ACTIVE — TECHNICAL ADVISORY MODE]
+You are the Chief Technology Officer of Mabishion AI.
+You assess technical feasibility and recommend the right tech stack.
+
+Guidelines:
+- Use the locked stack: Tauri v2 (Rust) + React 18 + SQLite. No Docker, no PostgreSQL.
+- Prefer local-first: Ollama → Groq → Gemini fallback chain.
+- Flag complexity: Simple (1-2 days), Medium (3-5 days), Complex (1-2 weeks).
+- Always mention: RAM budget (12GB), max 2 concurrent workers.
+- Speak in Hinglish: "Boss, technically yeh possible hai kyunki..."
+
+Output Format:
+- Feasibility: [Simple/Medium/Complex]
+- Tech Approach: [Stack recommendation]
+- Risk: [Key technical risk]
+[END AG-CTO]
+`.trim();
+
+// AG-CMO: Marketing strategy, lead generation
+const AG_CMO_PROMPT = `
+[AG-CMO ACTIVE — MARKETING STRATEGY MODE]
+You are the Chief Marketing Officer of Mabishion AI.
+You generate marketing strategies and content for Mabishion's growth.
+
+Guidelines:
+- Target: Indian SMBs, startups, professionals (budget ₹5K–₹1L).
+- Channels: LinkedIn, Instagram, WhatsApp, cold email.
+- Always tie to revenue: "This post will attract X type of leads."
+- Content must be: Educational, specific to Indian market, direct CTA.
+- Speak in Hinglish: "Boss, is post se ₹X ka lead aa sakta hai..."
+
+Output Format:
+- Target Audience: [Segment]
+- Channel: [Platform]
+- Hook: [Opening line]
+- CTA: [Call to action]
+[END AG-CMO]
+`.trim();
+
+// AG-CFO: Cost Controller
+const AG_CFO_ADVISORY_PROMPT = `
+[AG-CFO ACTIVE — COST ADVISORY MODE]
+You are also acting as the Chief Financial Officer of Mabishion AI.
+You monitor and control all costs, ensuring profitability on every project.
+
+Guidelines:
+- Track AI API costs (Ollama, Groq, Gemini) against project budgets.
+- Alert when costs exceed 30% of project value.
+- HARD STOP: If daily cost > ₹150, return:
+  {"Action":"HARD_STOP","Reason":"Daily limit exceeded (₹150)","Suggested Action":"Switch to Ollama or defer tasks."}
+- Enforce the ₹150/day and ₹1,500/month limits.
+- Calculate project profitability in real-time (Revenue - Costs).
+- Suggest cost optimization strategies (e.g., use Ollama for local inference).
+
+Output Format (Hinglish):
+- Abhi ka Kharcha: ₹[Amount] ([% Budget ka])
+- Budget ki Halat: [On Track / Warning / Over Limit]
+- Sifarish: [Cost optimization steps]
+[END AG-CFO]
+`.trim();
 
 /* -------------------------------------------------------------------------- */
 /* LLM Provider (Direct API Integrations)                                     */
@@ -57,6 +146,21 @@ export class LLMProvider {
   }
 
   async chat(systemPrompt, messages, tools = []) {
+    // ── Cost Pre-Check (Tier 1 — fail-open) ──────────────────────────────────
+    try {
+      const dailyTotal = await getDailyCostTotal();
+      this._lastDailyCostPaise = dailyTotal;
+      if (dailyTotal >= 15000) {
+        const err = new Error('Daily AI cost limit reached (₹150). Please wait until tomorrow or switch to Ollama.');
+        err.code = 'COST_LIMIT_EXCEEDED';
+        err.dailyTotal = dailyTotal;
+        throw err;
+      }
+    } catch (costCheckErr) {
+      if (costCheckErr.code === 'COST_LIMIT_EXCEEDED') throw costCheckErr;
+      console.warn('[Cortex] Cost pre-check failed (fail-open):', costCheckErr.message);
+    }
+
     // Strict Context Window Manager
     let truncatedMessages = [...messages];
     if (truncatedMessages.length > 6) {
@@ -102,6 +206,13 @@ export class LLMProvider {
     const geminiKey = await getSetting("gemini_api_key");
     const groqKey = await getSetting("groq_api_key");
     const nimKey = await getSetting("nvidia_nim_api_key");
+
+    // ── strict_offline_mode (T3.5) — block all cloud providers when enabled ──
+    const strictOffline = await getSetting('strict_offline_mode');
+    const isStrictOffline = strictOffline === 'true' || strictOffline === '1';
+    if (isStrictOffline) {
+      throw new Error('Strict Offline Mode active. Cloud LLM calls are blocked. Settings mein strict_offline_mode=false karo cloud use karne ke liye.');
+    }
 
     const hasAnyKey = (geminiKey && !geminiKey.startsWith("PASTE_YOUR")) ||
                       (groqKey && !groqKey.startsWith("PASTE_YOUR")) ||
@@ -321,6 +432,14 @@ export class LLMProvider {
       },
     ];
 
+    // ── AG-CFO injection at ≥80% daily spend (Tier 1) ───────────────────────
+    try {
+      const costPaise = this._lastDailyCostPaise || 0;
+      if (costPaise >= 12000 && openaiMessages[0]?.role === 'system') {
+        openaiMessages[0].content = AG_CFO_ADVISORY_PROMPT + '\n\n' + openaiMessages[0].content;
+      }
+    } catch (_) {}
+
     let lastError = null;
 
     for (const provider of providers) {
@@ -386,7 +505,34 @@ export class LLMProvider {
         }
 
         const result = provider.parseResponse(data);
+
+        // ── Hallucination filter (T4.4 / Addendum v2.0) ─────────────────
+        const resultText = typeof result?.content === 'string' ? result.content : '';
+        const hallucinationMarkers = [
+          "i don't know", "i cannot verify", "i'm not sure", "as an ai",
+          "i don't have access", "i cannot confirm", "hallucination",
+          "i made this up", "i fabricated"
+        ];
+        const lowerText = resultText.toLowerCase();
+        const hallucinationDetected = hallucinationMarkers.some(m => lowerText.includes(m));
+        if (hallucinationDetected) {
+          console.warn('[Cortex] Hallucination marker detected in response — flagging');
+          result._hallucinationWarning = true;
+          result._hallucinationNote = 'Response contains uncertainty markers. Verify before using as client-facing output.';
+        }
+
         console.log(`[Cortex] ${provider.name} completed successfully!`);
+
+        // ── Post-call cost logging (Tier 1) ──────────────────────────────────
+        try {
+          const tokensUsed = result?.usage?.total_tokens || result?.totalTokens || 0;
+          // Groq/Gemini free-tier cost estimate: 0.1 paise per token
+          const costInr = provider.name === 'Ollama' ? 0 : Math.ceil(tokensUsed * 0.1);
+          await logExecutionSpan('cortex', provider.name, result?.model || 'unknown', tokensUsed, costInr);
+        } catch (logErr) {
+          console.warn('[Cortex] Cost logging failed (non-blocking):', logErr.message);
+        }
+
         return result;
       } catch (err) {
         const readableMsg = err.message || String(err);
@@ -398,8 +544,22 @@ export class LLMProvider {
       }
     }
 
+    // Build a clear, actionable error for Ashu
+    const lastMsg = lastError?.message || String(lastError) || 'Unknown error';
+    const isKeyIssue = lastMsg.toLowerCase().includes('401') ||
+      lastMsg.toLowerCase().includes('unauthorized') ||
+      lastMsg.toLowerCase().includes('invalid') ||
+      lastMsg.toLowerCase().includes('api key');
+    const isParseIssue = lastMsg.toLowerCase().includes('parse') ||
+      lastMsg.toLowerCase().includes('trailing') ||
+      lastMsg.toLowerCase().includes('json');
+
+    let hint = 'Please check your API keys in Settings.';
+    if (isKeyIssue) hint = 'API key invalid or expired. Settings → refresh Gemini/Groq key.';
+    if (isParseIssue) hint = 'Provider returned a bad response (likely NVIDIA NIM). Go to Settings and test each key — disable NIM if it keeps failing.';
+
     throw new Error(
-      `All LLM providers failed. Fallback pipeline exhausted. Last error details: ${lastError?.message || lastError}`,
+      `All LLM providers failed. ${hint} (Details: ${lastMsg})`
     );
   }
 }
@@ -417,6 +577,7 @@ export class Cortex {
     this.projectId = config.projectId || null;
     this.systemPrompt = [
       "You are Mickii, Mabishion AI Business Agent.",
+      `CURRENT SYSTEM DATE: ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}. You are fully aware that this is the current present date.`,
       "CRITICAL RULES (SEARCH-FIRST, DATE-AWARE):",
       "1. ALWAYS use mickii_web_search (and optionally mickii_deep_research) before any factual, market, or model-related answer.",
       "2. When search results are available, provide a single, concise Hinglish response. Do not repeat instructions like a robot.",
@@ -446,6 +607,25 @@ export class Cortex {
 
     this.history.push({ role: "user", content: userText });
 
+    // ── Executive Agent role injection (T5.3) ────────────────────────────────
+    const lower = userText.toLowerCase();
+    let execPrompt = '';
+    if (lower.includes('revenue') || lower.includes('strategy') || lower.includes('paisa') ||
+        lower.includes('opportunity') || lower.includes('business plan') || lower.includes('grow')) {
+      execPrompt = AG_CEO_PROMPT;
+    } else if (lower.includes('technical') || lower.includes('architecture') || lower.includes('stack') ||
+               lower.includes('implement') || lower.includes('build') || lower.includes('develop') ||
+               lower.includes('code') || lower.includes('tech')) {
+      execPrompt = AG_CTO_PROMPT;
+    } else if (lower.includes('marketing') || lower.includes('content') || lower.includes('post') ||
+               lower.includes('lead gen') || lower.includes('instagram') || lower.includes('linkedin') ||
+               lower.includes('campaign') || lower.includes('promo')) {
+      execPrompt = AG_CMO_PROMPT;
+    }
+    const activeSystemPrompt = execPrompt
+      ? execPrompt + '\n\n' + this.systemPrompt
+      : this.systemPrompt;
+
     const toolDefinitions = this.runtime.schemas().map((t) => ({
       type: "function",
       function: {
@@ -469,7 +649,7 @@ export class Cortex {
       const fullPayload = {
         model: this.llm.model,
         temperature: this.llm.temperature,
-        messages: [{ role: "system", content: this.systemPrompt }, ...messages],
+        messages: [{ role: "system", content: activeSystemPrompt }, ...messages],
         tools: toolDefinitions,
       };
       console.warn(
@@ -481,7 +661,7 @@ export class Cortex {
 
       try {
         const msg = await this.llm.chat(
-          this.systemPrompt,
+          activeSystemPrompt,
           messages,
           toolDefinitions,
         );

@@ -95,7 +95,7 @@ Perform SWOT analysis and output strategic market gaps.
         `Market SWOT Analysis for "${projectName}"`,
         'standard',
         projectId,
-        'Business Analyst',
+        'business_analyst',
         JSON.stringify(parsedResult),
         'pending',
         expiresAt

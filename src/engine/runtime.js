@@ -73,22 +73,28 @@ export const SystemTools = [
   },
   {
     name: 'mickii_web_search',
-    description: 'Search web for live data.',
+    description: 'Search web for live data. IMPORTANT: ALWAYS translate conversational/Hinglish inputs into concise, keyword-rich ENGLISH search queries (e.g. "Claude AI server status down today").',
     parameters: {
       type: 'object',
       properties: {
-        query: { type: 'string' }
+        query: { 
+          type: 'string',
+          description: 'The optimized search query in plain English.'
+        }
       },
       required: ['query']
     }
   },
   {
     name: 'mickii_deep_research',
-    description: 'Exa neural search for complex analysis.',
+    description: 'Exa neural search for complex analysis. IMPORTANT: ALWAYS translate conversational/Hinglish inputs into concise ENGLISH search queries.',
     parameters: {
       type: 'object',
       properties: {
-        query: { type: 'string' }
+        query: { 
+          type: 'string',
+          description: 'The optimized search query in plain English.'
+        }
       },
       required: ['query']
     }

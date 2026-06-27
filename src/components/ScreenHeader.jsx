@@ -8,6 +8,7 @@ import Icon from './Icon';
 import { getWorkerLogs } from '../data/db.js';
 import { formatLocalTime } from '../utils/dateFormatter.js';
 import { listen } from '@tauri-apps/api/event';
+import { getWorkerLabel } from '../utils/approvalRouting.js';
 
 export default function ScreenHeader({ title, pageTitle, subtitle, index, badgeLabel, primaryAction, primaryIcon, secondaryAction, secondaryIcon, extraBadges, onPrimaryClick, onSecondaryClick }) {
   const navigate = useNavigate();
@@ -140,7 +141,7 @@ export default function ScreenHeader({ title, pageTitle, subtitle, index, badgeL
       <header className="mb-5 flex items-center justify-between gap-4 px-5 py-3 relative z-50" style={glassStyle()}>
         <div className="flex min-w-0 items-center gap-3">
           <div className="min-w-0">
-            <h2 className="truncate text-sm font-black tracking-wider uppercase text-white/80">{title}</h2>
+            <h2 className="truncate text-sm font-bold tracking-wider uppercase text-white/80">{title}</h2>
           </div>
         </div>
         <div className="relative flex shrink-0 items-center gap-2">
@@ -170,7 +171,7 @@ export default function ScreenHeader({ title, pageTitle, subtitle, index, badgeL
             </Button>
             {showNotifications && (
               <div className="absolute right-0 mt-3 w-80 rounded-2xl p-4 text-xs z-50 transition-all animate-in fade-in duration-200 text-left"
-                style={{ ...glassStyle({ strong: true, glow: 'violet' }), backgroundColor: 'rgba(2, 4, 10, 0.95)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                style={{ ...glassStyle({ strong: true, glow: 'primary' }), backgroundColor: 'rgba(2, 4, 10, 0.95)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
                 <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
                   <h4 className="font-bold text-white uppercase tracking-wider">System Operations Log</h4>
                   <span className="text-[10px] text-slate-400">Live Logs</span>
@@ -188,7 +189,7 @@ export default function ScreenHeader({ title, pageTitle, subtitle, index, badgeL
                       >
                         <div className="flex justify-between items-center mb-1">
                           <span className="font-extrabold uppercase text-[9px] tracking-wider" style={{ color: log.status === 'failed' ? C.danger : C.success }}>
-                            {log.worker_name} · {log.status}
+                            {getWorkerLabel(log.worker_name)} · {log.status}
                           </span>
                           <span className="text-[9px] text-slate-500">
                             {formatLocalTime(log.timestamp)}
@@ -212,8 +213,8 @@ export default function ScreenHeader({ title, pageTitle, subtitle, index, badgeL
             </span>
             {badgeLabel && <Badge tone="muted">{badgeLabel}</Badge>}
           </div>
-          <h1 className="text-4xl font-black tracking-tight" style={{ color: C.text }}>{pageTitle || title}</h1>
-          <p className="mt-2 max-w-4xl text-sm leading-6" style={{ color: C.mutedLow }}>{subtitle}</p>
+          <h1 className="text-4xl font-extrabold tracking-tight" style={{ color: C.text }}>{pageTitle || title}</h1>
+          <p className="mt-2 max-w-4xl text-sm leading-6" style={{ color: C.textMuted }}>{subtitle}</p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-3">
           {secondaryAction && <Button variant="soft" icon={secondaryIcon || 'filter'} onClick={onSecondaryClick}>{secondaryAction}</Button>}

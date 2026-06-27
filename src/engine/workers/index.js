@@ -3,6 +3,34 @@
  * Each worker is a specialized autonomous agent that performs a specific business function.
  */
 
+// ── Concurrency Semaphore (max 2 workers, BRD v1.4 §14.2) ────────────────────
+const MAX_CONCURRENT = 2;
+let _activeWorkers = 0;
+const _waitQueue = [];
+
+function acquireSlot() {
+  return new Promise(resolve => {
+    if (_activeWorkers < MAX_CONCURRENT) {
+      _activeWorkers++;
+      resolve();
+    } else {
+      _waitQueue.push(resolve);
+    }
+  });
+}
+
+function releaseSlot() {
+  _activeWorkers = Math.max(0, _activeWorkers - 1);
+  if (_waitQueue.length > 0) {
+    const next = _waitQueue.shift();
+    _activeWorkers++;
+    next();
+  }
+}
+
+export function getActiveWorkerCount() { return _activeWorkers; }
+export function getQueuedWorkerCount() { return _waitQueue.length; }
+
 import { LeadGenWorker } from './leadGenWorker.js';
 import { BusinessAnalystWorker } from './businessAnalystWorker.js';
 import { ProposalMakerWorker } from './proposalMakerWorker.js';
@@ -190,7 +218,36 @@ export async function runWorker(workerName, input, config = {}, hooks = {}) {
 
   if (hooks.onStatus) hooks.onStatus(`Starting ${registry.name}...`);
 
-  const result = await worker.run(input, runParams);
+  // Per-worker daily cost cap: ₹50/day (5000 paise) — BRD v1.4 §14.2
+  try {
+    const { getDb } = await import('../../data/db.js');
+    const db = await getDb();
+    const today = new Date().toISOString().slice(0, 10);
+    const rows = await db.select(
+      `SELECT COALESCE(SUM(cost_inr),0) as total FROM execution_spans WHERE worker_name=$1 AND timestamp>=$2`,
+      [actualWorkerName, `${today}T00:00:00.000Z`]
+    );
+    const workerDailyCost = Number(rows?.[0]?.total || 0);
+    if (workerDailyCost >= 5000) {
+      throw new Error(`Worker "${actualWorkerName}" ne aaj ka ₹50 daily cap reach kar liya. Kal dobara try karein.`);
+    }
+  } catch (capErr) {
+    if (capErr.message.includes('daily cap')) throw capErr;
+    // DB not ready — fail open
+  }
+
+  // Enforce max 2 concurrent workers (BRD v1.4 §14.2 — 12GB RAM limit)
+  if (_waitQueue.length > 0 && hooks.onStatus) {
+    hooks.onStatus(`Queue mein wait kar raha hai... (${_waitQueue.length + 1} workers pending)`);
+  }
+  await acquireSlot();
+
+  let result;
+  try {
+    result = await worker.run(input, runParams);
+  } finally {
+    releaseSlot();
+  }
 
   if (hooks.onStatus) hooks.onStatus(`${registry.name} complete!`);
 

@@ -17,6 +17,7 @@ import {
   getDb,
   getPendingApprovals 
 } from '../data/db.js';
+import { normalizeWorkerId, getWorkerLabel } from '../utils/approvalRouting.js';
 import { 
   generateProposalPdf, 
   saveFileToUserDirectory 
@@ -168,9 +169,10 @@ export default function ResearchScreen({ onNavigate }) {
   };
 
   const getWorkerStatusInfo = (workerName, registryId) => {
-    const log = workerLogs.find(l => l.worker_name === workerName);
+    const targetId = normalizeWorkerId(registryId || workerName);
+    const log = workerLogs.find(l => normalizeWorkerId(l.worker_name) === targetId);
     if (!log) {
-      if (registryId === 'website_builder') return { state: 'coming_soon' };
+      if (targetId === 'website_builder') return { state: 'coming_soon' };
       return { state: 'idle' };
     }
 
@@ -180,7 +182,7 @@ export default function ResearchScreen({ onNavigate }) {
     }
 
     if (log.status === 'completed') {
-      const hasPendingApp = pendingApprovals.find(a => a.worker_name === workerName && a.project_id === selectedProjectId);
+      const hasPendingApp = pendingApprovals.find(a => normalizeWorkerId(a.worker_name) === targetId && a.project_id === selectedProjectId);
       if (hasPendingApp) {
         return { state: 'approval', data: hasPendingApp };
       }
@@ -784,7 +786,7 @@ export default function ResearchScreen({ onNavigate }) {
                       </div>
                       <h3 className="font-black text-sm text-white">Playwright Website Scraper</h3>
                     </div>
-                    <p className="text-xs mb-4" style={{ color: C.mutedLow }}>
+                    <p className="text-xs mb-4" style={{ color: C.textMuted }}>
                       Enter client landing page URL. Scraper extracts design elements, components and content structures.
                     </p>
                     <div className="flex gap-2">
@@ -801,14 +803,14 @@ export default function ResearchScreen({ onNavigate }) {
                     </div>
                   </div>
 
-                  <div className="p-6" style={glassStyle({ glow: 'gold' })}>
+                  <div className="p-6" style={glassStyle({ glow: 'warning' })}>
                     <div className="mb-4 flex items-center gap-3">
                       <div className="h-9 w-9 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-400">
                         <Icon name="upload" size={18} />
                       </div>
                       <h3 className="font-black text-sm text-white">PDF / Excel / Word Parser</h3>
                     </div>
-                    <p className="text-xs mb-4" style={{ color: C.mutedLow }}>
+                    <p className="text-xs mb-4" style={{ color: C.textMuted }}>
                       Upload custom files or project specifications. Content is parsed locally into SQLite knowledge maps.
                     </p>
                     <div className="relative">
@@ -819,7 +821,7 @@ export default function ResearchScreen({ onNavigate }) {
                         disabled={isUploading}
                       />
                       <div className="p-4 border border-dashed rounded-2xl text-center text-xs font-black transition-all hover:bg-white/5"
-                           style={{ borderColor: 'rgba(255,255,255,0.15)', color: C.muted }}>
+                           style={{ borderColor: 'rgba(255,255,255,0.15)', color: C.textMuted }}>
                         {isUploading ? 'Parsing Document...' : '📎 Choose File to Parse'}
                       </div>
                     </div>
@@ -843,19 +845,19 @@ export default function ResearchScreen({ onNavigate }) {
                             <Icon
                               name={source.source_type === 'Website' ? 'language' : 'description'}
                               size={15}
-                              style={{ color: source.source_type === 'Website' ? C.cyanBright : C.softGold }}
+                              style={{ color: source.source_type === 'Website' ? C.info : C.warning }}
                             />
                             <p className="text-xs font-black text-white">{source.title}</p>
                           </div>
                           <Badge tone="success">Parsed</Badge>
                         </div>
-                        <p className="text-[11px] leading-5" style={{ color: C.mutedLow }}>
+                        <p className="text-[11px] leading-5" style={{ color: C.textMuted }}>
                           {source.notes}
                         </p>
                       </div>
                     ))}
                     {knowledgeSources.length === 0 && (
-                      <p className="text-xs text-center py-10" style={{ color: C.muted }}>
+                      <p className="text-xs text-center py-10" style={{ color: C.textMuted }}>
                         No context files loaded yet. Scrape a website or upload a document to begin.
                       </p>
                     )}
@@ -985,7 +987,7 @@ export default function ResearchScreen({ onNavigate }) {
               </div>
 
               {/* Tauri Desktop Compiler */}
-              <div className="p-6 rounded-3xl bg-slate-950/60 border border-white/10" style={glassStyle({ glow: 'gold' })}>
+              <div className="p-6 rounded-3xl bg-slate-950/60 border border-white/10" style={glassStyle({ glow: 'warning' })}>
                 <h3 className="text-xs font-black text-amber-400 uppercase tracking-widest mb-2">Tauri Desktop Assets Package</h3>
                 <p className="text-xs text-slate-400 mb-4">Compile production-ready native desktop installers (.deb, .msi) from static HTML bundles.</p>
                 <button 
@@ -1062,7 +1064,7 @@ export default function ResearchScreen({ onNavigate }) {
 
             {/* Card 2: Project Brief */}
             <div className="p-6 rounded-3xl bg-slate-900/40 border border-white/10 hover:border-indigo-500/30 transition-all flex flex-col justify-between h-[200px]"
-                 style={glassStyle({ glow: 'cyan' })}>
+                 style={glassStyle({ glow: 'info' })}>
               <div>
                 <div className="flex items-center justify-between">
                   <h3 className="text-base font-black text-white flex items-center gap-2">
@@ -1086,7 +1088,7 @@ export default function ResearchScreen({ onNavigate }) {
 
             {/* Card 3: Lead Magnet */}
             <div className="p-6 rounded-3xl bg-slate-900/40 border border-white/10 hover:border-indigo-500/30 transition-all flex flex-col justify-between h-[200px]"
-                 style={glassStyle({ glow: 'gold' })}>
+                 style={glassStyle({ glow: 'warning' })}>
               <div>
                 <div className="flex items-center justify-between">
                   <h3 className="text-base font-black text-white flex items-center gap-2">
@@ -1110,7 +1112,7 @@ export default function ResearchScreen({ onNavigate }) {
 
             {/* Card 4: Pricing Sheet */}
             <div className="p-6 rounded-3xl bg-slate-900/40 border border-white/10 hover:border-indigo-500/30 transition-all flex flex-col justify-between h-[200px]"
-                 style={glassStyle({ glow: 'violet' })}>
+                 style={glassStyle({ glow: 'primary' })}>
               <div>
                 <div className="flex items-center justify-between">
                   <h3 className="text-base font-black text-white flex items-center gap-2">
@@ -1263,8 +1265,8 @@ function SwotCard({ title, icon, color, items }) {
   const colorMap = {
     green: { bg: 'bg-green-500/20', text: 'text-green-400', glow: 'success' },
     red: { bg: 'bg-red-500/20', text: 'text-red-400', glow: 'danger' },
-    cyan: { bg: 'bg-cyan-500/20', text: 'text-cyan-400', glow: 'cyan' },
-    yellow: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', glow: 'gold' },
+    cyan: { bg: 'bg-cyan-500/20', text: 'text-cyan-400', glow: 'info' },
+    yellow: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', glow: 'warning' },
   };
   const c = colorMap[color] || colorMap.green;
 

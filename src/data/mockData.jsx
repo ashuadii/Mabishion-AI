@@ -2,10 +2,10 @@
 // Auto-generated from MabishionApp_Fixed.jsx
 
 export const DASHBOARD_PROJECTS = [
-  { name: "AI Website Builder", type: "Internal Product", phase: "Design", progress: 72, health: "Stable", tone: "gold", approvals: 1, last: "12 min ago" },
+  { name: "AI Website Builder", type: "Internal Product", phase: "Design", progress: 72, health: "Stable", tone: 'warning', approvals: 1, last: "12 min ago" },
   { name: "Lead Engine", type: "Automation Tool", phase: "Build", progress: 54, health: "Needs Review", tone: "danger", approvals: 2, last: "38 min ago" },
   { name: "Agency Kit", type: "Digital Product", phase: "Testing", progress: 86, health: "Strong", tone: "success", approvals: 0, last: "1 hr ago" },
-  { name: "Proposal OS", type: "Client Asset", phase: "Research", progress: 38, health: "Blocked", tone: "violet", approvals: 1, last: "2 hr ago" },
+  { name: "Proposal OS", type: "Client Asset", phase: "Research", progress: 38, health: "Blocked", tone: 'primary', approvals: 1, last: "2 hr ago" },
 ];
 
 export const DASHBOARD_APPROVALS = [
@@ -28,11 +28,11 @@ export const CMD_CHAT = [
 ];
 
 export const PROJ_PROJECTS = [
-  { id: 1, name: "AI Website Builder", client: "Internal", phase: "Design", health: "Stable", progress: 72, tone: "gold", tasks: 14, blocking: 1, due: "May 20" },
+  { id: 1, name: "AI Website Builder", client: "Internal", phase: "Design", health: "Stable", progress: 72, tone: 'warning', tasks: 14, blocking: 1, due: "May 20" },
   { id: 2, name: "Lead Engine", client: "Internal", phase: "Build", health: "Needs Review", progress: 54, tone: "danger", tasks: 22, blocking: 3, due: "May 15" },
   { id: 3, name: "Agency Kit", client: "Internal", phase: "Testing", health: "Strong", progress: 86, tone: "success", tasks: 8, blocking: 0, due: "May 12" },
-  { id: 4, name: "Proposal OS", client: "Mabishion Internal", phase: "Research", health: "Blocked", progress: 38, tone: "violet", tasks: 10, blocking: 2, due: "May 28" },
-  { id: 5, name: "Client Dashboard v2", client: "Rahul Enterprises", phase: "Design", health: "Stable", progress: 61, tone: "cyan", tasks: 18, blocking: 0, due: "Jun 3" },
+  { id: 4, name: "Proposal OS", client: "Mabishion Internal", phase: "Research", health: "Blocked", progress: 38, tone: 'primary', tasks: 10, blocking: 2, due: "May 28" },
+  { id: 5, name: "Client Dashboard v2", client: "Rahul Enterprises", phase: "Design", health: "Stable", progress: 61, tone: 'info', tasks: 18, blocking: 0, due: "Jun 3" },
   { id: 6, name: "Content Calendar Bot", client: "Internal", phase: "Sandbox", health: "Strong", progress: 90, tone: "success", tasks: 6, blocking: 0, due: "May 10" },
 ];
 
@@ -100,16 +100,16 @@ export const CAMPAIGNS = [
 ];
 
 export const KPI_CARDS = [
-  { label: "Revenue MTD", value: "₹18.4K", change: "+12%", tone: "gold", icon: "currency" },
-  { label: "Active Leads", value: "24", change: "+5", tone: "cyan", icon: "users" },
+  { label: "Revenue MTD", value: "₹18.4K", change: "+12%", tone: 'warning', icon: "currency" },
+  { label: "Active Leads", value: "24", change: "+5", tone: 'info', icon: "users" },
   { label: "Projects Live", value: "6", change: "Stable", tone: "success", icon: "factory" },
   { label: "Pending Tasks", value: "11", change: "High", tone: "danger", icon: "tasks" },
 ];
 
 export const FINANCE_METRICS = [
-  { label: "Revenue MTD", value: "₹18,400", change: "+12%", tone: "gold", icon: "currency" },
-  { label: "Pipeline Value", value: "₹45,000", change: "+8%", tone: "cyan", icon: "chart" },
-  { label: "Pending Invoices", value: "₹7,200", change: "3 open", tone: "gold", icon: "orders" },
+  { label: "Revenue MTD", value: "₹18,400", change: "+12%", tone: 'warning', icon: "currency" },
+  { label: "Pipeline Value", value: "₹45,000", change: "+8%", tone: 'info', icon: "chart" },
+  { label: "Pending Invoices", value: "₹7,200", change: "3 open", tone: 'warning', icon: "orders" },
   { label: "Monthly Burn", value: "₹2,100", change: "-5%", tone: "success", icon: "health" },
 ];
 

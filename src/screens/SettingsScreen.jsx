@@ -1,10 +1,90 @@
 import React, { useState, useEffect } from 'react';
-import { getSetting, setSetting, initDb, backupDatabase, restoreDatabase } from '../data/db.js';
+import { invoke } from '@tauri-apps/api/core';
+import { getSetting, setSetting, initDb, backupDatabase, restoreDatabase, setupPin, validateBackupIntegrity } from '../data/db.js';
 import AppShell from '../components/AppShell';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
 import Button from '../components/Button';
 import { glassStyle, C } from '../components/consts';
+
+function CpanelDeployPanel() {
+  const [host, setHost] = useState('');
+  const [user, setUser] = useState('');
+  const [pass, setPass] = useState('');
+  const [localDir, setLocalDir] = useState('');
+  const [remoteDir, setRemoteDir] = useState('/public_html');
+  const [deploying, setDeploying] = useState(false);
+  const [result, setResult] = useState('');
+
+  const handleDeploy = async () => {
+    if (!host || !user || !pass || !localDir) {
+      setResult('❌ Sab fields fill karo — host, username, password, aur local directory.');
+      return;
+    }
+    setDeploying(true);
+    setResult('🚀 Deploying... (FTP upload ho raha hai)');
+    try {
+      const msg = await invoke('deploy_to_cpanel', {
+        host: host.trim(),
+        user: user.trim(),
+        pass: pass.trim(),
+        localDir: localDir.trim(),
+        remoteDir: remoteDir.trim() || '/public_html',
+      });
+      setResult(`✅ ${msg}`);
+    } catch (err) {
+      setResult(`❌ Deploy failed: ${err}`);
+    } finally {
+      setDeploying(false);
+    }
+  };
+
+  return (
+    <div className="bg-white/5 backdrop-blur-xl p-6 rounded-3xl border border-white/10 space-y-5">
+      <div className="flex items-center gap-3">
+        <h2 className="text-xl font-black text-white">🚀 cPanel FTP Deploy</h2>
+        <Badge tone="warning">Requires Approval Gate</Badge>
+      </div>
+      <p className="text-xs text-gray-400">
+        Built project folder ko directly cPanel hosting pe FTP se upload karo. Local folder select karo, credentials daalein, Deploy karo.
+      </p>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {[
+          ['FTP Host', host, setHost, 'e.g. yourdomain.com or ftp.yourdomain.com'],
+          ['FTP Username', user, setUser, 'cPanel FTP username'],
+          ['FTP Password', pass, setPass, 'cPanel FTP password', 'password'],
+          ['Local Directory (absolute path)', localDir, setLocalDir, 'e.g. /home/ashu/builds/project-name'],
+          ['Remote Directory', remoteDir, setRemoteDir, '/public_html'],
+        ].map(([label, val, setter, ph, type = 'text']) => (
+          <div key={label} className={label.includes('Local') || label.includes('Remote') ? 'md:col-span-2' : ''}>
+            <label className="text-[10px] uppercase font-bold block mb-1 text-gray-500">{label}</label>
+            <input type={type} placeholder={ph} value={val}
+              onChange={e => setter(e.target.value)}
+              className="w-full px-4 py-2 rounded-xl text-sm bg-slate-900 border border-white/10 text-white outline-none focus:border-indigo-500 placeholder-slate-600" />
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={handleDeploy}
+        disabled={deploying}
+        className="w-full py-3 rounded-xl text-sm font-black text-white transition-all"
+        style={{ background: deploying ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg,#4F46E5,#7C3AED)', cursor: deploying ? 'not-allowed' : 'pointer' }}
+      >
+        {deploying ? '📤 Uploading via FTP...' : '🚀 Deploy to cPanel'}
+      </button>
+
+      {result && (
+        <div className="p-3 rounded-xl text-xs font-bold"
+          style={{ background: result.startsWith('✅') ? 'rgba(16,185,129,0.1)' : result.startsWith('❌') ? 'rgba(239,68,68,0.1)' : 'rgba(99,102,241,0.1)',
+                   color: result.startsWith('✅') ? '#10b981' : result.startsWith('❌') ? '#ef4444' : '#94a3b8' }}>
+          {result}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const SettingsScreen = ({ onNavigate }) => {
   const [activeTab, setActiveTab] = useState('credentials'); // 'credentials' or 'mcp'
@@ -264,6 +344,14 @@ const SettingsScreen = ({ onNavigate }) => {
             }`}
           >
             Database Maintenance
+          </button>
+          <button
+            onClick={() => setActiveTab('deploy')}
+            className={`pb-3 px-4 text-xs font-black uppercase tracking-wider transition-all ${
+              activeTab === 'deploy' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-500'
+            }`}
+          >
+            🚀 cPanel Deploy
           </button>
         </div>
 
@@ -575,7 +663,7 @@ const SettingsScreen = ({ onNavigate }) => {
                       <span className="text-xs font-black text-white">Owner Approval Gate Link</span>
                       <Badge tone={mcpStatuses.whatsapp_personal === 'connected' ? 'success' : 'muted'}>{mcpStatuses.whatsapp_personal}</Badge>
                     </div>
-                    <p className="text-[10px] text-gray-500 mb-3">Sends a quick WhatsApp message to you for YES/NO pipeline approvals.</p>
+                    <p className="text-[10px] text-gray-500 mb-3">CRITICAL approvals yahan bheje jaate hain. Format: 919876543210 (country code + number, no +).</p>
                     <input
                       type="text"
                       value={waPersonalNumber}
@@ -655,6 +743,16 @@ const SettingsScreen = ({ onNavigate }) => {
                         try {
                           const json = evt.target?.result;
                           if (json) {
+                            // T7.4: Integrity check before restore
+                            const integrity = validateBackupIntegrity(json);
+                            if (!integrity.valid) {
+                              alert(`❌ Backup integrity check failed!\nReason: ${integrity.reason}\n\nRestore cancelled.`);
+                              return;
+                            }
+                            const confirmed = window.confirm(
+                              `✅ Backup verified!\n${integrity.tableCount} tables, ${integrity.totalRows} rows\n\nKya aap sure hain? Current data overwrite ho jaayega.`
+                            );
+                            if (!confirmed) return;
                             await restoreDatabase(json);
                             alert("Database restored successfully! Reloading configurations...");
                             window.location.reload();
@@ -675,7 +773,87 @@ const SettingsScreen = ({ onNavigate }) => {
                 </div>
               </div>
             </div>
+
+            {/* Security Settings — PIN + Offline Mode */}
+            <div className="p-5 rounded-2xl bg-black/20 border border-white/5 space-y-4">
+              <h3 className="text-sm font-black text-white flex items-center gap-2">
+                🔐 Security Settings
+              </h3>
+
+              {/* Emergency Lockdown */}
+              <div className="p-3 rounded-xl border" style={{ borderColor: 'rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.05)' }}>
+                <p className="text-xs font-black text-red-400 mb-1">🚨 Emergency Lockdown</p>
+                <p className="text-[10px] mb-2" style={{ color: C.textMuted }}>
+                  Sab workers band kar dega, pending approvals reject karega, aur AI calls block karega.
+                </p>
+                <button
+                  onClick={async () => {
+                    const confirmed = window.confirm('⚠️ EMERGENCY LOCKDOWN\n\nYeh action:\n• Sab AI workers rokta hai\n• Strict offline mode on karta hai\n• Ashu ko notify karta hai\n\nKya aap sure hain?');
+                    if (!confirmed) return;
+                    await setSetting('strict_offline_mode', 'true');
+                    await setSetting('emergency_lockdown_at', new Date().toISOString());
+                    alert('🔒 Lockdown active. Strict offline mode ON. Settings mein jaake disable kar sakte hain.');
+                  }}
+                  className="w-full py-2 rounded-lg text-xs font-black text-red-400 border border-red-500/30 hover:bg-red-500/20 transition-all"
+                >
+                  🔒 Activate Emergency Lockdown
+                </button>
+              </div>
+
+              {/* PIN Reset */}
+              <div>
+                <p className="text-xs text-gray-400 mb-2">PIN Reset — apna login PIN change karo</p>
+                <div className="flex gap-2">
+                  <input
+                    id="new-pin-input"
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="New PIN (4-6 digits)"
+                    className="flex-1 px-3 py-2 rounded-xl text-sm bg-slate-900 border border-white/10 text-white outline-none focus:border-indigo-500 placeholder-slate-600"
+                  />
+                  <button
+                    onClick={async () => {
+                      const inp = document.getElementById('new-pin-input');
+                      const val = inp?.value?.trim();
+                      if (!val || val.length < 4) { alert('4-6 digit PIN daalo'); return; }
+                      if (!/^\d+$/.test(val)) { alert('Sirf numbers (0-9)'); return; }
+                      await setupPin(val);
+                      inp.value = '';
+                      alert('PIN successfully updated! ✅');
+                    }}
+                    className="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all"
+                  >
+                    Update PIN
+                  </button>
+                </div>
+              </div>
+
+              {/* Strict Offline Mode */}
+              <div>
+                <p className="text-xs text-gray-400 mb-2">
+                  Strict Offline Mode — enable karne pe Gemini/Groq/NIM cloud calls block ho jaate hain
+                </p>
+                <div className="flex items-center gap-3">
+                  <select
+                    defaultValue="false"
+                    onChange={async e => {
+                      await setSetting('strict_offline_mode', e.target.value);
+                    }}
+                    className="px-3 py-2 rounded-xl text-sm bg-slate-900 border border-white/10 text-white outline-none focus:border-indigo-500"
+                  >
+                    <option value="false">Disabled (Cloud allowed)</option>
+                    <option value="true">Enabled (Offline only)</option>
+                  </select>
+                  <span className="text-[10px] text-gray-500">Default: Disabled</span>
+                </div>
+              </div>
+            </div>
           </div>
+        )}
+
+        {activeTab === 'deploy' && (
+          <CpanelDeployPanel />
         )}
 
         {/* Global Save Button */}

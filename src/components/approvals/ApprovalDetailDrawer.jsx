@@ -4,9 +4,12 @@ import Badge from '../Badge';
 import Button from '../Button';
 import { glassStyle } from '../consts';
 import { formatLocalTime, formatLocalDate } from '../../utils/dateFormatter.js';
+import { normalizeWorkerId, getWorkerLabel, normalizeApprovalStatus, normalizeApprovalType } from '../../utils/approvalRouting.js';
 
-export default function ApprovalDetailDrawer({ approval, onClose, onResolve }) {
+export default function ApprovalDetailDrawer({ approval, onClose, onResolve, onUndo }) {
   const [ownerNotes, setOwnerNotes] = useState('');
+  const [undoLoading, setUndoLoading] = useState(false);
+  const [undoMessage, setUndoMessage] = useState('');
   const [blueprintData, setBlueprintData] = useState(null);
   const [websiteData, setWebsiteData] = useState(null);
   const [codeData, setCodeData] = useState(null);
@@ -54,19 +57,19 @@ export default function ApprovalDetailDrawer({ approval, onClose, onResolve }) {
       try {
         const { getDb } = await import('../../data/db.js');
         const db = await getDb();
-        const worker = (approval.worker_name || '').toLowerCase();
+        const workerId = normalizeWorkerId(approval.worker_name);
         
-        if (worker.includes('blueprint') || worker.includes('plan')) {
+        if (workerId === 'blueprint_maker' || workerId === 'documentor') {
           const rows = await db.select('SELECT * FROM blueprints WHERE project_id = $1 ORDER BY created_at DESC LIMIT 1', [approval.project_id]);
           if (active && rows && rows.length > 0) {
             setBlueprintData(rows[0]);
           }
-        } else if (worker.includes('website') || worker.includes('design') || worker.includes('builder')) {
+        } else if (workerId === 'website_builder') {
           const rows = await db.select('SELECT * FROM websites WHERE project_id = $1 ORDER BY created_at DESC LIMIT 1', [approval.project_id]);
           if (active && rows && rows.length > 0) {
             setWebsiteData(rows[0]);
           }
-        } else if (worker.includes('developer') || worker.includes('code')) {
+        } else if (workerId === 'developer') {
           const rows = await db.select('SELECT * FROM code_modules WHERE project_id = $1 ORDER BY created_at DESC LIMIT 1', [approval.project_id]);
           if (active && rows && rows.length > 0) {
             setCodeData(rows[0]);
@@ -83,8 +86,8 @@ export default function ApprovalDetailDrawer({ approval, onClose, onResolve }) {
 
   if (!approval) return null;
 
-  const isCritical = (approval.type || 'standard').toLowerCase() === 'critical';
-  const isPending = (approval.status || 'pending').toLowerCase() === 'pending';
+  const isCritical = normalizeApprovalType(approval.type) === 'critical';
+  const isPending = normalizeApprovalStatus(approval.status) === 'pending';
 
   // Parse JSON data requested
   let requestObj = {};
@@ -96,12 +99,14 @@ export default function ApprovalDetailDrawer({ approval, onClose, onResolve }) {
     requestObj = { raw: approval.request_data };
   }
 
+  const workerId = normalizeWorkerId(approval.worker_name);
+
   // Detect context type to render customized visual previews
-  const isPaymentAction = approval.title?.toLowerCase().includes('payment') || approval.worker_name?.toLowerCase().includes('payment') || requestObj.amount;
-  const isProposalAction = approval.title?.toLowerCase().includes('proposal') || approval.worker_name?.toLowerCase().includes('proposal');
-  const isBlueprintAction = approval.worker_name?.toLowerCase().includes('blueprint') || approval.worker_name?.toLowerCase().includes('plan');
-  const isWebsiteAction = approval.worker_name?.toLowerCase().includes('website') || approval.worker_name?.toLowerCase().includes('design') || approval.worker_name?.toLowerCase().includes('builder');
-  const isCodeAction = approval.worker_name?.toLowerCase().includes('developer') || approval.worker_name?.toLowerCase().includes('code');
+  const isPaymentAction = approval.title?.toLowerCase().includes('payment') || workerId === 'payment_handler' || requestObj.amount;
+  const isProposalAction = approval.title?.toLowerCase().includes('proposal') || workerId === 'proposal_maker';
+  const isBlueprintAction = workerId === 'blueprint_maker' || workerId === 'documentor';
+  const isWebsiteAction = workerId === 'website_builder';
+  const isCodeAction = workerId === 'developer';
 
   return (
     <div 
@@ -133,7 +138,7 @@ export default function ApprovalDetailDrawer({ approval, onClose, onResolve }) {
           <span className="text-[10px] uppercase font-bold text-slate-400 block">Task Request</span>
           <h3 className="text-lg font-black text-white leading-snug">{approval.title || 'Safety Gate Action Request'}</h3>
           <div className="flex items-center gap-2 text-xs text-slate-400">
-            <span className="font-semibold text-slate-300">Worker Queue: {approval.worker_name || 'System Worker'}</span>
+            <span className="font-semibold text-slate-300">Worker Queue: {getWorkerLabel(approval.worker_name)}</span>
             <span>·</span>
             <span>Requested: {formatLocalTime(approval.created_at || new Date().toISOString())}</span>
           </div>
@@ -400,8 +405,20 @@ export default function ApprovalDetailDrawer({ approval, onClose, onResolve }) {
             >
               ❌ Reject
             </Button>
-            <Button 
-              onClick={() => onResolve(approval.id, 'approved', ownerNotes)}
+            <Button
+              onClick={async () => {
+                await onResolve(approval.id, 'approved', ownerNotes);
+                // T7.2: If proposal approval → offer invoice creation
+                if (isProposalAction) {
+                  const shouldCreate = window.confirm(
+                    '✅ Proposal approved!\n\nKya aap abhi invoice draft banana chahte hain?\n(Invoice screen pe jaayenge)'
+                  );
+                  if (shouldCreate) {
+                    window.history.pushState({}, '', '/invoices');
+                    window.dispatchEvent(new PopStateEvent('popstate'));
+                  }
+                }
+              }}
               className="py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 shadow-xl"
             >
               ✅ Approve Action
@@ -409,8 +426,45 @@ export default function ApprovalDetailDrawer({ approval, onClose, onResolve }) {
           </div>
         </div>
       ) : (
-        <div className="pt-4 border-t border-white/5 text-center text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-          Closed Safety Record
+        <div className="pt-4 border-t border-white/5 space-y-3">
+          {/* Undo button — visible within 24h undo window */}
+          {approval.undo_deadline && new Date() < new Date(approval.undo_deadline) && (
+            <div className="space-y-2">
+              {undoMessage && (
+                <p className="text-[10px] text-center font-bold" style={{ color: undoMessage.startsWith('✅') ? '#10b981' : '#ef4444' }}>
+                  {undoMessage}
+                </p>
+              )}
+              <Button
+                variant="soft"
+                disabled={undoLoading}
+                className="w-full py-2 rounded-xl text-xs font-bold text-amber-400 hover:text-white border border-amber-500/20 hover:bg-amber-500/80"
+                onClick={async () => {
+                  setUndoLoading(true);
+                  setUndoMessage('');
+                  try {
+                    const { undoApproval } = await import('../../data/db.js');
+                    const result = await undoApproval(approval.id);
+                    if (result.success) {
+                      setUndoMessage('✅ Approval reset to Pending.');
+                      if (onUndo) onUndo(approval.id);
+                    } else {
+                      setUndoMessage(`❌ ${result.reason}`);
+                    }
+                  } catch (err) {
+                    setUndoMessage(`❌ Undo failed: ${err.message}`);
+                  } finally {
+                    setUndoLoading(false);
+                  }
+                }}
+              >
+                {undoLoading ? 'Undoing...' : '↩️ Undo Decision (24h window)'}
+              </Button>
+            </div>
+          )}
+          <div className="text-center text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+            Closed Safety Record
+          </div>
         </div>
       )}
 
@@ -422,7 +476,7 @@ export default function ApprovalDetailDrawer({ approval, onClose, onResolve }) {
         >
           <div 
             className="w-full max-w-4xl max-h-[85vh] p-8 rounded-3xl border border-white/10 flex flex-col relative text-left select-text animate-in zoom-in duration-300 overflow-hidden"
-            style={glassStyle({ glow: 'violet', strong: true })}
+            style={glassStyle({ glow: 'primary', strong: true })}
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-5 flex-shrink-0">

@@ -3,6 +3,7 @@ import Icon from "../Icon";
 import Button from "../Button";
 import { glassStyle } from "../consts";
 import { formatLocalTime } from "../../utils/dateFormatter.js";
+import { getWorkerLabel } from "../../utils/approvalRouting.js";
 
 export default function CriticalApprovalModal({
   approval,
@@ -123,7 +124,7 @@ export default function CriticalApprovalModal({
                 Origin Worker
               </span>
               <p className="text-sm font-semibold text-slate-300">
-                {approval.worker_name || "System Base"}
+                {getWorkerLabel(approval.worker_name)}
               </p>
             </div>
             <div>

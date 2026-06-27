@@ -309,7 +309,7 @@ Return ONLY the test file code as plain text (no JSON wrapper, no markdown fence
         `React Code Module "${moduleName}" for "${projectName}"`,
         'standard',
         projectId,
-        'Developer',
+        'developer',
         JSON.stringify({
           moduleId,
           projectName,

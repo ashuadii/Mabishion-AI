@@ -7,6 +7,7 @@ import {
   getSetting 
 } from '../data/db.js';
 import { WhatsAppService } from './whatsappService.js';
+import { normalizeApprovalStatus, normalizeApprovalType, normalizeWorkerId } from '../utils/approvalRouting.js';
 
 let isIntervalRunning = false;
 
@@ -34,28 +35,48 @@ export const ApprovalEngine = {
    * Primary interface for workers to request approvals
    */
   async requestApproval(title, type, projectId, workerName, requestData) {
-    console.log(`[ApprovalEngine] New Approval Requested: "${title}" | Type: ${type} | Worker: ${workerName}`);
+    const approvalType = normalizeApprovalType(type);
+    const workerId = normalizeWorkerId(workerName);
+    console.log(`[ApprovalEngine] New Approval Requested: "${title}" | Type: ${approvalType} | Worker: ${workerId}`);
     
     const now = new Date();
     // Expiration: 1h for critical, 24h for standard
-    const expirationHours = type === 'critical' ? 1 : 24;
+    const expirationHours = approvalType === 'critical' ? 1 : 24;
     const expiresAt = new Date(now.getTime() + expirationHours * 60 * 60 * 1000).toISOString();
+    // Undo window: 24h from creation for all approvals
+    const undoDeadline = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+    // Cost impact: derive from requestData if available (store in paise)
+    const costImpact = requestData?.amount ? Math.round(Number(requestData.amount) * 100) : null;
+    // Compliance impact note
+    const complianceImpact = approvalType === 'critical' ? 'Requires owner review before external action' : null;
 
     // 1. Save pending approval to SQLite
-    const approvalId = await addApprovalExtended(title, type, projectId, workerName, requestData, expiresAt);
+    const approvalId = await addApprovalExtended(title, approvalType, projectId, workerId, requestData, expiresAt);
+
+    // 1b. Backfill new Tier 1 fields via separate UPDATE (safe — columns added by ALTER)
+    try {
+      const { getDb } = await import('../data/db.js');
+      const db = await getDb();
+      await db.execute(
+        `UPDATE approvals SET cost_impact = $1, compliance_impact = $2, undo_deadline = $3 WHERE id = $4`,
+        [costImpact, complianceImpact, undoDeadline, approvalId]
+      );
+    } catch (fieldErr) {
+      console.warn('[ApprovalEngine] Tier 1 field update skipped (non-blocking):', fieldErr.message);
+    }
 
     // 2. Outbound Alert Dispatch
-    if (type === 'critical') {
+    if (approvalType === 'critical') {
       this.triggerAudioBeep();
-      this.triggerBrowserNotification(title, workerName);
+      this.triggerBrowserNotification(title, workerId);
 
       // Fetch owner's WhatsApp number
-      const phone = await getSetting('whatsapp_owner_phone') || '919876543210';
+      const phone = await getSetting('wa_personal_number') || await getSetting('whatsapp_owner_phone') || '919876543210';
       
       try {
         const amount = requestData?.amount || requestData?.budget || 'N/A';
         await WhatsAppService.sendTemplate(phone, 'CRITICAL', {
-          worker_name: workerName,
+          worker_name: workerId,
           project_name: title,
           amount,
           id: approvalId
@@ -106,7 +127,7 @@ export const ApprovalEngine = {
       return;
     }
 
-    if (approval.status !== 'pending' && approval.status !== 'Pending') {
+    if (normalizeApprovalStatus(approval.status) !== 'pending') {
       const warnMsg = `⚠️ Status Alert: Approval ID "${approvalId}" is already resolved as "${approval.status}".`;
       try {
         await WhatsAppService.sendMessage(phone, warnMsg);
@@ -115,7 +136,7 @@ export const ApprovalEngine = {
     }
 
     // Resolve approval
-    const finalStatus = command === 'APPROVE' ? 'approved' : 'rejected';
+    const finalStatus = normalizeApprovalStatus(command === 'APPROVE' ? 'approved' : 'rejected');
     const notes = `Resolved remotely via Outbound WhatsApp Webhook Command.`;
     
     await updateApprovalStatus(approvalId, finalStatus, notes);

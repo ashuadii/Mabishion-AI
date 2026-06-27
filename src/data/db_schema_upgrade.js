@@ -4,7 +4,7 @@
  * Creates tables if they do not exist. No destructive changes.
  */
 
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 11;
 
 export const CREATE_TABLES_SQL = [
   `CREATE TABLE IF NOT EXISTS clients (
@@ -77,6 +77,111 @@ export const CREATE_TABLES_SQL = [
   `CREATE TABLE IF NOT EXISTS schema_version (
     version INTEGER PRIMARY KEY,
     applied_at INTEGER
+  )`,
+  `CREATE TABLE IF NOT EXISTS execution_spans (
+    id TEXT PRIMARY KEY,
+    worker_name TEXT,
+    provider TEXT,
+    model TEXT,
+    tokens_used INTEGER DEFAULT 0,
+    cost_inr INTEGER DEFAULT 0,
+    start_time TEXT,
+    end_time TEXT,
+    status TEXT DEFAULT 'completed',
+    timestamp TEXT DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_execution_spans_timestamp
+    ON execution_spans(timestamp)`,
+  `CREATE INDEX IF NOT EXISTS idx_execution_spans_provider
+    ON execution_spans(provider)`,
+  `CREATE TABLE IF NOT EXISTS invoices (
+    id TEXT PRIMARY KEY,
+    client_id TEXT,
+    project_id TEXT,
+    invoice_number TEXT,
+    line_items TEXT,
+    subtotal_inr INTEGER DEFAULT 0,
+    gst_rate REAL DEFAULT 18.0,
+    gst_amount_inr INTEGER DEFAULT 0,
+    total_inr INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'draft',
+    issued_date TEXT,
+    due_date TEXT,
+    paid_date TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (client_id) REFERENCES clients(id)
+  )`,
+  `CREATE TABLE IF NOT EXISTS payments (
+    id TEXT PRIMARY KEY,
+    invoice_id TEXT,
+    amount_inr INTEGER DEFAULT 0,
+    payment_method TEXT,
+    payment_date TEXT,
+    reference_number TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (invoice_id) REFERENCES invoices(id)
+  )`,
+  `CREATE TABLE IF NOT EXISTS documents (
+    id TEXT PRIMARY KEY,
+    project_id TEXT,
+    client_id TEXT,
+    doc_type TEXT NOT NULL,
+    title TEXT,
+    content TEXT,
+    version TEXT DEFAULT '1.0',
+    status TEXT DEFAULT 'draft',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES projects(id)
+  )`,
+  `CREATE TABLE IF NOT EXISTS legal_docs (
+    id TEXT PRIMARY KEY,
+    project_id TEXT,
+    client_id TEXT,
+    doc_type TEXT NOT NULL,
+    content TEXT,
+    signed INTEGER DEFAULT 0,
+    signed_at TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES projects(id)
+  )`,
+  `CREATE TABLE IF NOT EXISTS system_metrics (
+    id TEXT PRIMARY KEY,
+    metric_name TEXT NOT NULL,
+    metric_value REAL,
+    unit TEXT,
+    recorded_at TEXT DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE TABLE IF NOT EXISTS file_storage (
+    id TEXT PRIMARY KEY,
+    project_id TEXT,
+    file_name TEXT NOT NULL,
+    file_path TEXT,
+    storage_type TEXT DEFAULT 'local',
+    mime_type TEXT,
+    size_bytes INTEGER DEFAULT 0,
+    checksum TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  )`
+  `CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT 'Ashu',
+    pin_hash TEXT,
+    is_setup INTEGER DEFAULT 0,
+    last_login TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE TABLE IF NOT EXISTS consents (
+    id TEXT PRIMARY KEY,
+    client_id TEXT,
+    consent_type TEXT NOT NULL,
+    granted INTEGER DEFAULT 1,
+    granted_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    revoked_at TEXT,
+    notes TEXT,
+    FOREIGN KEY (client_id) REFERENCES clients(id)
   )`
 ];
 

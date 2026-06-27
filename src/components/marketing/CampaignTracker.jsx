@@ -82,7 +82,7 @@ export default function CampaignTracker({ leads }) {
     <div className="space-y-6">
       {/* Dynamic Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="p-5 rounded-3xl" style={glassStyle({ glow: 'violet' })}>
+        <div className="p-5 rounded-3xl" style={glassStyle({ glow: 'primary' })}>
           <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Total Ad Spend</span>
           <span className="text-2xl font-black text-white font-mono">${totalSpend.toLocaleString()}</span>
           <p className="text-[10px] text-slate-500 mt-2">Active paid acquisition spent</p>
@@ -94,7 +94,7 @@ export default function CampaignTracker({ leads }) {
           <p className="text-[10px] text-slate-500 mt-2">Aggregated all traffic channels</p>
         </div>
 
-        <div className="p-5 rounded-3xl" style={glassStyle({ glow: 'gold' })}>
+        <div className="p-5 rounded-3xl" style={glassStyle({ glow: 'warning' })}>
           <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Average Cost Per Lead (CPL)</span>
           <span className="text-2xl font-black text-white font-mono">${averageCpl}</span>
           <p className="text-[10px] text-slate-500 mt-2">Net cost per customer acquisition</p>

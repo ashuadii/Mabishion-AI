@@ -342,7 +342,7 @@ document.querySelectorAll('.card, .stat-card').forEach(el => {
         `Draft Website Layout for "${projectName}"`,
         'standard',
         projectId,
-        'Website Builder',
+        'website_builder',
         JSON.stringify({
           websiteId,
           projectName,

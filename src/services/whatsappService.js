@@ -1,4 +1,5 @@
 import { getSetting, setSetting, logWhatsAppAttempt } from '../data/db.js';
+import { getWorkerLabel } from '../utils/approvalRouting.js';
 
 let messageListeners = [];
 
@@ -80,16 +81,17 @@ export const WhatsAppService = {
   async sendTemplate(phone, templateName, variables = {}) {
     let message = '';
     const { worker_name, project_name, amount, id, minutes, owner_notes } = variables;
+    const label = getWorkerLabel(worker_name);
 
     switch (templateName) {
       case 'CRITICAL':
-        message = `🔔 CRITICAL: ${worker_name || 'System Worker'} needs approval for ${project_name || 'Mabishion Build'}. Amount: ₹${amount || '0'}. Reply: APPROVE ${id} or REJECT ${id}`;
+        message = `🔔 CRITICAL: ${label || 'System Worker'} needs approval for ${project_name || 'Mabishion Build'}. Amount: ₹${amount || '0'}. Reply: APPROVE ${id} or REJECT ${id}`;
         break;
       case 'REMINDER':
         message = `⏰ REMINDER: Approval ${id} expires in ${minutes || '30'} minutes. ${project_name || 'Mabishion Build'} waiting.`;
         break;
       case 'APPROVED':
-        message = `✅ APPROVED: ${project_name || 'Mabishion Build'} approved. ${worker_name || 'System Worker'} proceeding.`;
+        message = `✅ APPROVED: ${project_name || 'Mabishion Build'} approved. ${label || 'System Worker'} proceeding.`;
         break;
       case 'REJECTED':
         message = `❌ REJECTED: ${project_name || 'Mabishion Build'} rejected. Reason: ${owner_notes || 'No reason provided.'}`;

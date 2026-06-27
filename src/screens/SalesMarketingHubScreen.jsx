@@ -75,7 +75,7 @@ export default function SalesMarketingHubScreen({ onNavigate }) {
       platform: 'Targeted Email Blast',
       copy: "Subject: Your dedicated digital builder is waiting.\n\nHello, you are spending hours drafting agreements. Meet Mickii, your direct AI agency operator. Click to configure now.",
       status: 'Ready',
-      tone: 'violet',
+      tone: 'primary',
       icon: 'mail'
     }
   ];
@@ -245,7 +245,7 @@ export default function SalesMarketingHubScreen({ onNavigate }) {
               </div>
             </div>
 
-            <div className="p-8 rounded-3xl flex flex-col items-center justify-center text-center" style={glassStyle({ glow: 'violet' })}>
+            <div className="p-8 rounded-3xl flex flex-col items-center justify-center text-center" style={glassStyle({ glow: 'primary' })}>
               {isStripeDone ? (
                 <div className="animate-in zoom-in duration-500 space-y-4">
                   <div className="h-12 w-12 rounded-full bg-emerald-500/20 border-2 border-emerald-500/30 flex items-center justify-center mx-auto text-emerald-400">
