@@ -31,11 +31,11 @@
 > These are deliberately deferred. Do NOT implement without owner approval per item.
 
 - [ ] **WK-024** — ⚠️ BLUEPRINT NAMING CONFLICT: AGENT-SYSTEM.md says "Emergency Lockdown"; WORKER-ARCHITECTURE.md says "SecurityAuditor". Resolve Blueprint conflict before implementing.
-- [ ] **AG-CLO system prompt** — Chief Legal Officer agent in cortex.js (5th exec agent)
-- [ ] **AG-COO system prompt** — Chief Operations Officer agent in cortex.js (6th exec agent)
-- [ ] **CRITICAL approval fix** — Remove 1h auto-reject; CRITICAL must wait for human (no timeout, per Blueprint Approval Framework §2.1)
-- [ ] **AUTO-APPROVED tier** — 3rd approval type in approvalEngine.js (log-only, no human gate)
-- [ ] **STANDARD escalation** — After 24h no response → escalate to CRITICAL instead of auto-approving
+- [x] **AG-CLO system prompt** — Chief Legal Officer agent added to cortex.js (2026-06-27)
+- [x] **AG-COO system prompt** — Chief Operations Officer agent added to cortex.js (2026-06-27)
+- [x] **CRITICAL approval fix** — 1h auto-reject removed; CRITICAL stays pending until manual action (2026-06-27)
+- [x] **AUTO-APPROVED tier** — 3rd approval type added in approvalEngine.js + approvalRouting.js (log-only, no human gate) (2026-06-27)
+- [x] **STANDARD escalation** — After 24h no response → escalates to CRITICAL with WhatsApp re-alert (2026-06-27)
 - [ ] **SQLCipher encryption** — AES-256-GCM for mabishion.db (currently plain SQLite, per cronService.js note)
 - [ ] **DPDP Act consent capture** — Active insert logic for `consents` table
 - [ ] **Automated backup route** — cronService.js writes to `_backups/` + DR drill schedule
@@ -1010,3 +1010,21 @@ OWNER DECISIONS PENDING (4 items — cannot be resolved technically):
 Why changed: Full technical investigation to reconcile two conflicting Blueprint worker systems without owner choosing sides. Reconciliation layer produced as evidence base for future owner decisions.
 Status: Working
 Next step: Await owner decisions on the 4 items above. Phase C code changes (approval engine fixes) remain pending separate approval.
+
+[2026-06-27] [Session-4] — [Claude Sonnet 4.6 (1M)] — [src/data/db_schema_upgrade.js, src/services/approvalEngine.js, src/utils/approvalRouting.js, src/engine/cortex.js]
+What changed:
+App code fixes — 5 items implemented and build-verified (✓ built in 6.48s, exit code 0).
+
+F1 — db_schema_upgrade.js line 167: Added missing comma after `file_storage` table closing backtick. Without this comma, the `users` and `consents` tables were never created (JavaScript parsed the array incorrectly — `TypeError: "CREATE TABLE..." is not a function`). Both tables now create correctly on DB init.
+
+C1 — approvalEngine.js: Removed 1h auto-reject for CRITICAL approvals. `expiresAt` is now `null` for CRITICAL type. `runExpiryCheck()` skips items with `null` expires_at. CRITICAL approvals stay pending indefinitely until manually actioned by owner.
+
+C2 — approvalEngine.js + approvalRouting.js: Added AUTO-APPROVED as 3rd approval tier. Workers that pass `type: 'auto_approved'` get logged to DB with `status='auto_approved'` immediately — no WhatsApp alert, no popup, no human gate. `APPROVAL_STATUS.AUTO_APPROVED` and `APPROVAL_TYPE.AUTO_APPROVED` constants added to approvalRouting.js. `normalizeApprovalType()` now recognizes 'auto_approved', 'auto', 'auto-approved'. `normalizeApprovalStatus()` now returns 'auto_approved' for matching inputs.
+
+C3 — approvalEngine.js: Changed STANDARD expiry behavior — after 24h, instead of auto-approving, now escalates to CRITICAL. Escalation does: (a) UPDATE approvals SET type='critical', expires_at=NULL; (b) re-sends WhatsApp CRITICAL template; (c) triggers audio beep + browser notification with [ESCALATED] prefix. Auto-approval of ignored requests is now blocked per Blueprint §2.1.
+
+C4 — cortex.js: Added AG-CLO (Chief Legal Officer) and AG-COO (Chief Operations Officer) system prompt constants. Routing keywords added to Executive Agent injection block (line ~664): legal/contract/nda/compliance/clause/agreement/dpdp/gst/liability → AG_CLO; operations/workflow/pipeline/delivery/bottleneck/blocked/project status/coordination → AG_COO. All 6 executive agents now operational (CEO/CTO/CMO/CFO/CLO/COO).
+
+Why changed: Owner approved Phase C fixes. Database bug fix (F1) was a critical defect preventing users and consents tables from being created. Approval engine fixes (C1/C2/C3) align code with Blueprint Approval Framework §2.1 requirements. Agent additions (C4) complete the 6-agent executive team defined in AGENT-SYSTEM.md §2.1.
+Status: Working — Build verified ✓ 6.48s, exit code 0
+Next step: C5 (WK-024 SecurityAuditor) remains blocked until WK-024 Blueprint naming conflict resolved by owner. 4 pending owner decisions from Session-3 still open.
