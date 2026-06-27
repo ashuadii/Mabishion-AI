@@ -1,10 +1,13 @@
 # UI/UX Architecture Direction — Mabishion AI
 **Version:** 1.0
+**Artifact Type:** Owner Direction Document
 **Status:** Owner-Approved (2026-06-28)
-**Supersedes:** Aspects of MABISHION-AI-UI-UX-SPECIFICATION.md v5.1 where contradicted by this document
-**Authority:** This document is an owner-approved architectural direction. It governs all future UI implementation.
+**Relationship to Blueprint:** This document is an Owner Direction for future implementation. It does not supersede or replace MABISHION-AI-UI-UX-SPECIFICATION.md v5.1. Where differences exist, reconciliation should occur before the Blueprint is formally revised. The current Blueprint remains canonical until that reconciliation is complete and approved.
 
-> **Implementation Rule:** No UI screens should be implemented until the Design System exists and the Navigation Architecture is approved.
+**Document Chain:**
+Current Blueprint (UI/UX Spec v5.1) → This Owner Direction → Future Blueprint Reconciliation → Updated Blueprint (when formally approved)
+
+> **Implementation Rule:** Production UI implementation should not begin until the Design System and Navigation Architecture have been approved. Design exploration (wireframes, mockups, prototypes, UX experiments) remains acceptable before that point.
 
 ---
 
@@ -181,18 +184,24 @@ This is the primary power-user interaction model.
 10. Accessibility
 11. UI Implementation
 
-**Do not proceed to screen implementation until Design System and Navigation Architecture are approved.**
+**Production implementation requires:** Design System approval + Navigation Architecture approval + Blueprint reconciliation + Implementation planning — in that order.
+
+Design exploration (wireframes, mockups, prototypes) may proceed before those approvals.
 
 ---
 
-## Impact on Existing Batch 6 Findings
+## Relationship to Existing Blueprint
 
-This direction document modifies the UI target for future implementation. Batch 6 verification findings (comparing UI/UX Spec v5.1 against current implementation) remain valid as evidence of the current state. Key areas where this direction supersedes UI/UX Spec v5.1:
+Batch 6 verification findings (comparing UI/UX Spec v5.1 against the current implementation) remain valid as documentation of the current state. They are not affected by this direction document.
 
-| Area | UI/UX Spec v5.1 | This Direction |
-|------|----------------|---------------|
-| Design philosophy | Glassmorphism + dark theme | Enterprise Minimalism |
+Where this direction differs from UI/UX Spec v5.1, those differences become inputs for future Blueprint reconciliation — not immediate implementation authority.
+
+| Area | UI/UX Spec v5.1 (Current Blueprint) | This Owner Direction |
+|------|--------------------------------------|---------------------|
+| Design philosophy | Glassmorphism + dark theme | Enterprise Minimalism + AI Workspace |
 | Typography primary | Inter | Geist |
 | Color approach | Glassmorphic dark | 90% Neutral / Clay system |
-| Navigation | 8 items (Dashboard to Settings) | 10 items (Workspace-first) |
-| Implementation order | Screens first | Design System first |
+| Navigation | 8 items (Dashboard-first) | 10 items (Workspace-first) |
+| Implementation order | Screens available now | Design System must be built first |
+
+These differences require formal Blueprint reconciliation before the UI/UX Spec v5.1 is updated.

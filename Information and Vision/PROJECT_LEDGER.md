@@ -1334,20 +1334,22 @@ BRC-1 (worker isolation) still Carry Forward — Batch 9 remaining.
 
 Next step: Batch 8 — Operations Verification (TESTING + DEPLOYMENT + DR + OPS + COST docs).
 
-[2026-06-28] [Owner Decision] — UI/UX Architecture Direction v1.0
-What changed: Owner approved new UI/UX architectural direction (Enterprise Minimalism + AI Workspace). Saved as Information and Vision/UI-UX-ARCHITECTURE-DIRECTION-v1.0.md.
+[2026-06-28] [Owner Direction Document] — UI/UX Architecture Direction v1.0
+Artifact Type: Owner Direction Document (not an ADR, not a Blueprint replacement)
+Saved: Information and Vision/UI-UX-ARCHITECTURE-DIRECTION-v1.0.md
 
-KEY DIRECTION CHANGES from UI/UX Spec v5.1:
-- Philosophy: Glassmorphism → Enterprise Minimalism + AI Workspace
-- Typography: Inter → Geist (primary), Inter (fallback), JetBrains Mono (mono)
-- Color: Glassmorphic dark → 90% Neutral / 8% Enterprise Blue / 2% Clay
-- Navigation: 8 items → 10 items (Workspace, Projects, Agents, Workers, Approvals, Knowledge, Memory, Automation, Analytics, Settings)
-- Layout: Three-panel (Left nav, Center workspace, Right inspector, Bottom status bar)
-- New: Information density modes (Comfortable/Compact/Dense)
-- New: Command palette (keyboard-first interaction model)
-- New: State-driven UI (dynamic, not static dashboard)
-- Implementation Order: Design System → Navigation Architecture → ... → Screens (Design System FIRST, screens last)
+GOVERNANCE CLASSIFICATION: Owner-approved direction for future UI implementation. MABISHION-AI-UI-UX-SPECIFICATION.md v5.1 remains the canonical Blueprint until formal reconciliation occurs. Document chain: Current Blueprint → This Direction → Future Blueprint Reconciliation → Updated Blueprint (when formally approved).
 
-IMPLEMENTATION RULE: No UI screens until Design System is complete and Navigation Architecture is approved.
+KEY DIRECTION POINTS:
+- Philosophy: Enterprise Minimalism + AI Workspace
+- Typography: Geist (primary) / Inter (fallback) / JetBrains Mono (mono)
+- Color: 90% Neutral / 8% Enterprise Blue / 2% Clay (Clay = Mickii identity + approvals)
+- Navigation: Workspace, Projects, Agents, Workers, Approvals, Knowledge, Memory, Automation, Analytics, Settings
+- Layout: Three-panel (Left nav / Center workspace dominant / Right inspector / Bottom status bar)
+- Density: Comfortable / Compact / Dense modes
+- Command palette: keyboard-first interaction
+- State-driven home: "What requires my attention right now?"
 
-BATCH 6 IMPACT: Batch 6 verification findings remain valid (they document current state vs UI/UX Spec v5.1). This direction modifies the TARGET for future implementation. Current implementation (glassmorphism, sidebar) will need revision when UI implementation phase begins.
+IMPLEMENTATION RULE: Production UI implementation requires Design System approval + Navigation Architecture approval + Blueprint reconciliation + Implementation planning. Design exploration (wireframes, mockups, prototypes) is acceptable before those approvals.
+
+BATCH 6 IMPACT: None — Batch 6 verification findings document current state vs UI/UX Spec v5.1 and remain valid. Direction differences from the spec are inputs for future Blueprint reconciliation, not immediate implementation authority.
