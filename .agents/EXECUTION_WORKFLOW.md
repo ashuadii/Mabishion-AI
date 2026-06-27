@@ -9,6 +9,54 @@ description: Step-by-step execution workflow for all IDE Agents. Covers task int
 
 ---
 
+## 0. Blueprint-Driven Engineering (Mandatory — Read This First)
+
+The Enterprise Blueprint Verification Phase is complete (2026-06-28). All engineering is now Blueprint-driven.
+
+### Source-of-Truth Hierarchy
+
+Engineering decisions follow this precedence — highest to lowest:
+
+1. Explicit Product Owner Decisions
+2. Original Enterprise Blueprint Documents (`/home/admin-ubuntu/Documents/MABISHION AI ALL DOCUMENTS/`)
+3. Approved Blueprint Addenda and Blueprint Reconciliations
+4. Enterprise Blueprint Verification Summary (audit navigation and historical findings only)
+5. Current Implementation (implementation evidence, not specification)
+6. Tests and Runtime Validation
+
+**The current implementation is not the specification.** It represents current implementation state. The Original Blueprint is the primary technical specification.
+
+### Mandatory Implementation Workflow
+
+For every implementation task, follow these steps in order:
+
+1. **Identify** the item from the Implementation Backlog (`IMPLEMENTATION-BACKLOG.md`)
+2. **Identify** the affected engineering domain
+3. **Open and read** the relevant original Enterprise Blueprint document(s) — read applicable sections directly. Never implement solely from the Verification Summary, Backlog, or existing code.
+4. **Review** related Product Owner Decisions, Blueprint Reconciliation Findings, and Approved Addenda
+5. **Review** the current implementation as evidence — not as specification
+6. **Synchronize** Blueprint ↔ Code — identify gaps before writing any code
+7. **Implement** the required changes
+8. **Verify** — complete all 7 passes from `SELF_REVIEW_STANDARD.md`
+9. **Update** `PROJECT_LEDGER.md`
+
+### Artifact Responsibilities
+
+| Artifact | Responsibility |
+|----------|---------------|
+| Original Enterprise Blueprint Docs | Primary Technical Specification |
+| Product Owner Decisions | Approved business and architecture decisions |
+| Blueprint Addenda / Reconciliations | Approved specification clarifications |
+| Enterprise Blueprint Verification Summary | Audit record and historical findings — navigation only |
+| Blueprint ↔ Code Synchronization Plan | Specification ↔ Implementation alignment |
+| Implementation Backlog | Engineering work queue |
+| Current Code | Current implementation evidence |
+| Tests | Behaviour verification |
+
+None of these artifacts replaces another.
+
+---
+
 ## 1. Task Intake & Classification
 
 ### Step 1: Parse the Request
