@@ -116,10 +116,10 @@ These are internal Blueprint inconsistencies that must be resolved at the Bluepr
 
 ## 4. Closed Findings
 
-| Finding | Resolution |
-|---------|-----------|
-| BRC-1 (Worker isolation: threads vs async) | Closed — Addendum §Gap 2 provides approved clarification: "Rust-based async workers." Resolves SECURITY-ARCHITECTURE "threads" vs ARCHITECTURE "no threads" inconsistency. |
-| BRC-3 (STANDARD timeout: escalate vs reject) | Effectively resolved — HAF, Operations Manual, and UI-UX §3 all specify escalation. UI-UX §1 table is a within-document error. Reviewed implementation correctly escalates. BRF-2 remains open for Blueprint correction. |
+| Finding | Resolution | Resolution Source | Resolution Type |
+|---------|-----------|------------------|----------------|
+| BRC-1 (Worker isolation: threads vs async) | Addendum §Gap 2 provides an approved clarification: "Rust-based async workers with limited permissions." This clarification resolves the apparent inconsistency between SECURITY-ARCHITECTURE (which used "Rust threads") and ARCHITECTURE.md (which specified "Rust Async, No Threads"). | Addendum v2.0 (Final, Approved for Implementation) | Blueprint Clarification |
+| BRC-3 (STANDARD timeout: escalate vs reject) | HUMAN-APPROVAL-FRAMEWORK.md, OPERATIONS-MANUAL.md, and UI-UX §3 consistently specify escalation to CRITICAL on timeout. One section within UI-UX §1 specifies auto-reject, which is an internal inconsistency within that document. The reviewed implementation escalates to CRITICAL — consistent with the broader Blueprint specification. UI-UX §1 requires a Blueprint correction (tracked as BRF-2). | Multiple Blueprint documents (HAF, OPS, UI-UX §3) + Implementation evidence | Document Reconciliation |
 
 ---
 
@@ -143,6 +143,8 @@ These are internal Blueprint inconsistencies that must be resolved at the Bluepr
 ## 6. Candidate Implementation Work Based on Current Verified Evidence
 
 The following observations are derived from the verified evidence across all 9 batches. Implementation Planning remains responsible for execution order, dependency management, prioritization, scheduling, and resource allocation.
+
+The candidate implementation work listed below represents implementation opportunities identified during verification. It is not intended to be a complete engineering backlog. Implementation Planning may reprioritize, combine, defer, remove, or introduce additional work based on dependencies, engineering constraints, and Product Owner decisions.
 
 **Candidate items with no outstanding owner decisions or Blueprint conflicts:**
 - Activate unrouted screens: add `/clients`, `/workers`, `/login` routes in App.jsx
@@ -191,6 +193,11 @@ Engineering execution should use this document as the authoritative verification
 
 The Enterprise Blueprint Verification Phase is complete.
 
+This document does not authorize implementation by itself. Engineering execution proceeds according to:
+- Approved Implementation Planning
+- Product Owner Decisions (where required)
+- Blueprint Reconciliation outcomes (where required)
+
 Subsequent project activities transition to:
 
 * Blueprint ↔ Code Synchronization
@@ -210,4 +217,31 @@ No additional full-system Blueprint verification is recommended.
 
 ---
 
-*Frozen: 2026-06-28. This is the authoritative verification reference for the current Blueprint baseline.*
+## 10. Implementation Phase Baseline
+
+From this point onward, new engineering work should reference this document as the verification baseline.
+
+Engineering reviews should primarily evaluate:
+- Blueprint ↔ Code synchronization
+- Architecture conformance
+- Code quality
+- Security
+- Testing
+- Production readiness
+
+Verification should be revisited only when new Blueprint documents are introduced, approved Blueprint revisions materially change a verified domain, or new implementation evidence requires targeted re-verification.
+
+---
+
+**Freeze Metadata**
+
+| Field | Value |
+|-------|-------|
+| Status | Frozen |
+| Verification Baseline | Enterprise Blueprint Verification v1.0 |
+| Freeze Date | 2026-06-28 |
+| Governance Version | 1.0 (Locked) |
+| Baseline Scope | Blueprint versions verified during this verification cycle |
+| Future Baseline Changes | Require approved Blueprint revisions or newly verified Blueprint evidence |
+
+The Enterprise Blueprint Verification Phase is formally closed.
