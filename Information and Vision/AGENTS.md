@@ -27,7 +27,7 @@
   - **State:** React Context (`src/context/BuildContext.jsx`) for shared state — Zustand is NOT used
   - **Database:** Local SQLite (`mabishion.db`) accessed via `@tauri-apps/plugin-sql`
   - **Reasoning Engine:** `src/engine/cortex.js` (ReAct loop) + `src/engine/runtime.js`
-  - **Workers:** 23 built + 1 planned (WK-024 SecurityAuditor) — all extend `BaseWorker` in `src/engine/workers/`
+  - **Workers:** 24 built — WK-001 to WK-024 complete (WK-024 = SecurityAuditor, implemented 2026-06-27) — all extend `BaseWorker` in `src/engine/workers/`
   - **File generation:** jsPDF, JSZip (browser‑side)
   - **AI Engine:** Multi‑LLM fallback via `src/services/llmManager.js`
 
