@@ -15,20 +15,8 @@ const API_KEY_SETTINGS = [
   { key: 'exa_api_key',         label: 'Exa (Deep Research)',        minLength: 20 },
 ];
 
-const WORKER_APPROVAL_GATES = [
-  { id: 'proposal_maker',   requiresApproval: true,  severity: 'critical' },
-  { id: 'payment_handler',  requiresApproval: true,  severity: 'critical' },
-  { id: 'packager',         requiresApproval: true,  severity: 'critical' },
-  { id: 'website_builder',  requiresApproval: true,  severity: 'critical' },
-  { id: 'blueprint_maker',  requiresApproval: true,  severity: 'standard' },
-  { id: 'developer',        requiresApproval: true,  severity: 'standard' },
-  { id: 'compliance',       requiresApproval: true,  severity: 'standard' },
-  { id: 'social_scheduler', requiresApproval: false, severity: 'auto_approved' },
-  { id: 'llm_manager',      requiresApproval: false, severity: 'auto_approved' },
-  { id: 'mcp_hub',          requiresApproval: false, severity: 'auto_approved' },
-  { id: 'notification',     requiresApproval: false, severity: 'auto_approved' },
-  { id: 'quality_assurance',requiresApproval: false, severity: 'auto_approved' },
-];
+// No hardcoded approval policy here.
+// Canonical policy is in WORKER_REGISTRY (index.js) — single source of truth.
 
 export class SecurityAuditorWorker extends BaseWorker {
   constructor() {
@@ -256,45 +244,67 @@ export class SecurityAuditorWorker extends BaseWorker {
     const findings = [];
     const passed   = [];
 
-    // Dynamically import registry to avoid circular deps at module load time
-    const { WORKER_REGISTRY } = await import('./index.js').catch(() => ({ WORKER_REGISTRY: null }));
+    // Read canonical policy from WORKER_REGISTRY — no hardcoded list here.
+    // Dynamic import avoids circular dependency at module load time.
+    let WORKER_REGISTRY;
+    try {
+      ({ WORKER_REGISTRY } = await import('./index.js'));
+    } catch (err) {
+      findings.push({
+        severity: 'critical',
+        category: 'Worker Gates',
+        check: 'Registry load',
+        detail: `Could not load WORKER_REGISTRY: ${err.message}`,
+        recommendation: 'Check for syntax errors in index.js.',
+      });
+      return { findings, passed };
+    }
 
-    for (const expected of WORKER_APPROVAL_GATES) {
-      if (!WORKER_REGISTRY) {
-        findings.push({ severity: 'info', category: 'Worker Gates', check: expected.id, detail: 'Could not load worker registry for inspection.' });
-        continue;
-      }
-
-      const entry = WORKER_REGISTRY[expected.id];
-      if (!entry) {
+    for (const [id, entry] of Object.entries(WORKER_REGISTRY)) {
+      // 1. Every registry entry must declare a policy.
+      if (!entry.policy || typeof entry.policy.requiresApproval !== 'boolean') {
         findings.push({
-          severity: 'info',
+          severity: 'critical',
           category: 'Worker Gates',
-          check: expected.id,
-          detail: `Worker "${expected.id}" not found in registry.`,
-          recommendation: 'Verify this worker is registered in index.js.',
+          check: `${id} — missing policy`,
+          detail: `WORKER_REGISTRY["${id}"] has no valid policy.requiresApproval. Approval behavior is undefined.`,
+          recommendation: `Add policy: { requiresApproval: true|false, approvalSeverity: '...' } to WORKER_REGISTRY["${id}"].`,
         });
         continue;
       }
 
-      const worker = new entry.workerClass();
-      const actualApproval  = worker.requiresApproval;
-      const actualSeverity  = worker.approvalSeverity;
-      const expectedApproval = expected.requiresApproval;
+      const { requiresApproval: policyApproval, approvalSeverity: policySeverity } = entry.policy;
 
-      if (actualApproval !== expectedApproval) {
+      // 2. Instantiate worker and compare constructor value vs registry policy.
+      //    Catches cases where a constructor was edited without updating the registry.
+      let worker;
+      try {
+        worker = new entry.workerClass();
+      } catch (err) {
         findings.push({
-          severity: 'critical',
+          severity: 'warning',
           category: 'Worker Gates',
-          check: `${expected.id}.requiresApproval`,
-          detail: `Expected requiresApproval=${expectedApproval} but found ${actualApproval}. This worker's approval gate is misconfigured.`,
-          recommendation: `Set requiresApproval=${expectedApproval} in ${expected.id} constructor.`,
+          check: `${id} — instantiation`,
+          detail: `Worker "${id}" threw during instantiation: ${err.message}`,
+          recommendation: 'Verify constructor has no required arguments.',
+        });
+        continue;
+      }
+
+      const constructorApproval = worker.requiresApproval;
+      if (constructorApproval !== policyApproval) {
+        findings.push({
+          severity: 'warning',
+          category: 'Worker Gates',
+          check: `${id} — constructor vs policy drift`,
+          detail: `Registry policy: requiresApproval=${policyApproval}. Constructor sets: ${constructorApproval}. runWorker() applies registry policy at runtime, but direct instantiation will use the constructor value.`,
+          recommendation: `Align ${id} constructor with registry policy (requiresApproval=${policyApproval}) to remove ambiguity.`,
         });
       } else {
         passed.push({
           category: 'Worker Gates',
-          check: `${expected.id} approval gate`,
-          detail: `requiresApproval=${actualApproval}, severity=${actualSeverity} — correct.`,
+          check: `${id}`,
+          detail: `Policy and constructor agree: requiresApproval=${policyApproval}, severity=${policySeverity}.`,
         });
       }
     }

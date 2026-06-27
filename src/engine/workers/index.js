@@ -56,150 +56,178 @@ import { ImageGenWorker } from './imageGenWorker.js';
 import { QualityAssuranceWorker } from './qualityAssuranceWorker.js';
 import { SecurityAuditorWorker } from './securityAuditorWorker.js';
 
-const WORKER_REGISTRY = {
+// Canonical approval policy source for all workers.
+// Every worker derives requiresApproval and approvalSeverity from this registry.
+// runWorker() applies these values to the worker instance after instantiation.
+// SecurityAuditor reads from here — no duplicate policy definitions anywhere else.
+export const WORKER_REGISTRY = {
   lead_gen: {
     name: 'Lead Copysmith',
     description: 'Autonomous lead magnet writer & acquisition strategist',
     workerClass: LeadGenWorker,
-    defaultConfig: {}
+    defaultConfig: {},
+    policy: { requiresApproval: false, approvalSeverity: 'auto_approved' }
   },
   business_analyst: {
     name: 'Business Analyst',
     description: 'Market research, SWOT analysis, competitor intelligence',
     workerClass: BusinessAnalystWorker,
-    defaultConfig: {}
+    defaultConfig: {},
+    policy: { requiresApproval: true, approvalSeverity: 'standard' }
   },
   proposal_maker: {
     name: 'Proposal Maker',
     description: 'Tailored commercial agreement & pricing models compiler',
     workerClass: ProposalMakerWorker,
-    defaultConfig: {}
+    defaultConfig: {},
+    policy: { requiresApproval: true, approvalSeverity: 'critical' }
   },
   self_promo: {
     name: 'Self Promo',
     description: 'Personal branding posts for LinkedIn, X, Instagram',
     workerClass: SelfPromoWorker,
-    defaultConfig: {}
+    defaultConfig: {},
+    policy: { requiresApproval: true, approvalSeverity: 'standard' }
   },
   service_promo: {
     name: 'Service Promo',
     description: 'Ad copy, landing page text & email sequences for services',
     workerClass: ServicePromoWorker,
-    defaultConfig: {}
+    defaultConfig: {},
+    policy: { requiresApproval: true, approvalSeverity: 'standard' }
   },
   social_scheduler: {
     name: 'Social Scheduler',
     description: 'Content calendar builder with best-time optimization (auto-run)',
     workerClass: SocialSchedulerWorker,
-    defaultConfig: {}
+    defaultConfig: {},
+    policy: { requiresApproval: false, approvalSeverity: 'auto_approved' }
   },
   showcaser: {
     name: 'Showcaser',
     description: 'Portfolio case study writer from project results',
     workerClass: ShowcaserWorker,
-    defaultConfig: {}
+    defaultConfig: {},
+    policy: { requiresApproval: true, approvalSeverity: 'standard' }
   },
   lead_manager: {
     name: 'Lead Manager',
     description: 'Lead scoring engine, 5-email nurturing sequence & follow-up reminders',
     workerClass: LeadManagerWorker,
-    defaultConfig: {}
+    defaultConfig: {},
+    policy: { requiresApproval: true, approvalSeverity: 'standard' }
   },
   client_intake: {
     name: 'Client Intake',
     description: 'Client onboarding kit — welcome email, questionnaire, timeline & communication plan',
     workerClass: ClientIntakeWorker,
-    defaultConfig: {}
+    defaultConfig: {},
+    policy: { requiresApproval: true, approvalSeverity: 'standard' }
   },
   payment_handler: {
     name: 'Payment Handler',
     description: 'CRITICAL — Invoice PDF generation, Stripe/UPI links, payment reminders',
     workerClass: PaymentHandlerWorker,
-    defaultConfig: {}
+    defaultConfig: {},
+    policy: { requiresApproval: true, approvalSeverity: 'critical' }
   },
   blueprint_maker: {
     name: 'Blueprint Maker',
     description: 'PRD, TRD, architecture diagram, DB schema & API endpoint generator',
     workerClass: BlueprintMakerWorker,
-    defaultConfig: {}
+    defaultConfig: {},
+    policy: { requiresApproval: true, approvalSeverity: 'standard' }
   },
   documentor: {
     name: 'Documentor',
     description: 'User manual, admin guide, API docs & README generator (Markdown)',
     workerClass: DocumentorWorker,
-    defaultConfig: {}
+    defaultConfig: {},
+    policy: { requiresApproval: true, approvalSeverity: 'standard' }
   },
   developer: {
     name: 'Developer',
     description: 'Code generation — React components, utilities, unit tests, folder structure',
     workerClass: DeveloperWorker,
-    defaultConfig: {}
+    defaultConfig: {},
+    policy: { requiresApproval: true, approvalSeverity: 'standard' }
   },
   website_builder: {
     name: 'Website Builder',
     description: 'CRITICAL — Full responsive website (HTML/CSS/JS) + Netlify deploy config',
     workerClass: WebsiteBuilderWorker,
-    defaultConfig: {}
+    defaultConfig: {},
+    policy: { requiresApproval: true, approvalSeverity: 'critical' }
   },
   packager: {
     name: 'Packager',
     description: 'CRITICAL — ZIP deliverable bundle (website + docs + code + invoices + README)',
     workerClass: PackagerWorker,
-    defaultConfig: {}
+    defaultConfig: {},
+    policy: { requiresApproval: true, approvalSeverity: 'critical' }
   },
   compliance: {
     name: 'Compliance',
     description: 'Legal docs — T&C, Privacy Policy, Cookie Policy, GDPR, Disclaimer (jurisdiction-aware)',
     workerClass: ComplianceWorker,
-    defaultConfig: {}
+    defaultConfig: {},
+    policy: { requiresApproval: true, approvalSeverity: 'standard' }
   },
   ai_call_product: {
     name: 'AI Call Product',
     description: 'Packaged AI product listing — pricing tiers, sales page, launch checklist',
     workerClass: AiCallProductWorker,
-    defaultConfig: {}
+    defaultConfig: {},
+    policy: { requiresApproval: true, approvalSeverity: 'standard' }
   },
   llm_manager: {
     name: 'LLM Manager',
     description: 'SYSTEM — Quota tracking, key rotation, provider health (no approval)',
     workerClass: LlmManagerWorker,
-    defaultConfig: {}
+    defaultConfig: {},
+    policy: { requiresApproval: false, approvalSeverity: 'auto_approved' }
   },
   mcp_hub: {
     name: 'MCP Hub',
     description: 'SYSTEM — MCP server registry, health checks, tool management (no approval)',
     workerClass: McpHubWorker,
-    defaultConfig: {}
+    defaultConfig: {},
+    policy: { requiresApproval: false, approvalSeverity: 'auto_approved' }
   },
   qa_worker: {
     name: 'QA Validator',
     description: 'SYSTEM — LLM output validation and self-correction loop (no approval)',
     workerClass: QualityAssuranceWorker,
-    defaultConfig: {}
+    defaultConfig: {},
+    policy: { requiresApproval: false, approvalSeverity: 'auto_approved' }
   },
   notification: {
     name: 'Notification',
     description: 'SYSTEM — WhatsApp alerts, in-app toasts, email summaries (no approval)',
     workerClass: NotificationWorker,
-    defaultConfig: {}
+    defaultConfig: {},
+    policy: { requiresApproval: false, approvalSeverity: 'auto_approved' }
   },
   writer: {
     name: 'Content Writer',
     description: 'Blog posts, email sequences, social captions, landing copy, case studies, ad copy',
     workerClass: WriterWorker,
-    defaultConfig: {}
+    defaultConfig: {},
+    policy: { requiresApproval: true, approvalSeverity: 'standard' }
   },
   image_gen: {
     name: 'Image Generator',
     description: 'AI image generation via Pollinations.AI (free) → Hugging Face → fallback',
     workerClass: ImageGenWorker,
-    defaultConfig: {}
+    defaultConfig: {},
+    policy: { requiresApproval: true, approvalSeverity: 'standard' }
   },
   security_auditor: {
     name: 'Security Auditor',
     description: 'WK-024 — Audits API keys, DB encryption, worker approval gates, flags security issues (CRITICAL approval)',
     workerClass: SecurityAuditorWorker,
-    defaultConfig: {}
+    defaultConfig: {},
+    policy: { requiresApproval: true, approvalSeverity: 'critical' }
   }
 };
 
@@ -219,6 +247,11 @@ export async function runWorker(workerName, input, config = {}, hooks = {}) {
 
   const mergedConfig = { ...registry.defaultConfig, ...config };
   const worker = new registry.workerClass(mergedConfig);
+
+  // Apply canonical approval policy from registry — single source of truth.
+  // Overrides any constructor defaults so runtime behavior always matches registry.
+  worker.requiresApproval = registry.policy.requiresApproval;
+  worker.approvalSeverity = registry.policy.approvalSeverity;
 
   // Merge context config parameters (such as requirements_override) with hooks so they reach worker.run()
   const runParams = { ...config, ...hooks };
