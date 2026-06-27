@@ -1120,3 +1120,33 @@ Policy flow is now: WORKER_REGISTRY → runWorker() → worker instance → Secu
 Why changed: Owner-directed architecture decision to eliminate duplicate approval policy definitions and establish a single canonical source.
 Status: Working — Build ✓ 5.84s
 Next step: 3 pending owner decisions from Session-3 still open. SQLCipher is Phase 3 next.
+
+[2026-06-28] [Session-8] — [Claude Sonnet 4.6 (1M)] — [imageGenWorker.js, writerWorker.js, ADR-001-registry-driven-approval-policy.md (NEW)]
+What changed:
+Architecture review follow-up actions completed. Build verified ✓ 5.73s.
+
+REVIEW OUTCOME: Architecture review approved the Session-7 refactor. Two follow-up actions issued.
+
+P1 — CONSTRUCTOR COMPATIBILITY BUG (CONFIRMED AND FIXED):
+Investigation result: `imageGenWorker.js` and `writerWorker.js` both called `super(objectArg)` instead of `super(name, queue, requiresApproval, approvalSeverity)`. BaseWorker expects positional args.
+Runtime impact confirmed:
+- `this.name` was set to the object itself → SQLite inserts stored `[object Object]` as worker_name
+- `this.queue` was `undefined`
+- `this.requiresApproval` was `false` (default, object was ignored) — incorrect for both workers
+- `db.select('... WHERE worker_name = $1', [this.name])` — dynamic prompt rules lookup always returned empty
+
+Fix applied to both files: changed to `super('Image Generator', 'marketing', true, 'standard')` and `super('Content Writer', 'marketing', true, 'standard')`. Writer name corrected from 'Writer' → 'Content Writer' to match WORKER_REGISTRY.
+
+Note: SecurityAuditor now catches this class of bug automatically — `_auditWorkerGates()` checks constructor value vs registry policy and flags mismatch.
+
+TECHNICAL DEBT — RUNTIME MUTATION (LOW PRIORITY, RECORDED):
+Current: `runWorker()` sets `worker.requiresApproval` after instantiation (mutation).
+Target: policy in registry → worker constructor reads registry at init → immutable instance.
+Not addressed now. Tracked here for architecture cleanup phase.
+
+ADR CREATED: `Information and Vision/ADR-001-registry-driven-approval-policy.md`
+Documents: context, previous design, decision, alternatives considered, rationale, consequences, files changed.
+
+Why changed: Architecture review follow-up. P1 constructor bug was a confirmed runtime defect affecting two workers. ADR required per review guidance.
+Status: Working — Build ✓ 5.73s
+Next step: Continue Enterprise Blueprint implementation. No further governance work needed unless a verified architectural issue is found.
