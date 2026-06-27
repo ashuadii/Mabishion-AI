@@ -147,6 +147,28 @@ Use the correct lifecycle state:
 
 These two states coexist. "Complete" is reserved for when both verification AND all governance decisions are resolved (i.e., Approved or Closed).
 
+## Principle 5 — Verification Escalation Rule
+
+Do not escalate cross-domain findings to the Product Owner while dependent Blueprint domains remain unverified.
+
+Follow this sequence for every finding that spans multiple Blueprint domains:
+
+1. Verify the current batch.
+2. Identify all Blueprint domains that materially influence the finding.
+3. Verify those dependent domains (in their scheduled batch order).
+4. After all dependent domains are verified, determine whether the Blueprint is internally consistent:
+   - If Blueprint documents **conflict with each other** → open a Blueprint Reconciliation Finding. Do not escalate to owner yet.
+   - If Blueprint is **internally consistent but conflicts with the implementation** → escalate to Product Owner.
+   - If Blueprint **explains or justifies the implementation** → close the finding.
+5. Only escalate to the Product Owner after all dependent Blueprint evidence has been exhausted.
+
+**Carry-forward findings** must be explicitly tracked:
+- State the finding.
+- State which batch will resolve it.
+- State the resolution criteria (close / reconcile / escalate).
+
+**Why this matters:** Premature escalation burdens the owner with decisions that the Blueprint itself may already resolve. Evidence must be exhausted before requesting architectural decisions.
+
 ---
 
 # Batch Lifecycle

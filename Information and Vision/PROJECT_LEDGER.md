@@ -1260,9 +1260,9 @@ SECURITY — ALL MAJOR ITEMS MISSING OR DEFERRED:
 - DPDP consent: consents table exists, 0 rows, no capture logic
 - Worker isolation (Rust threads): Not implemented (JS classes in WebView — same P0 as Batch 2)
 
-P0 DECISIONS REQUIRED:
-- P0-A: Is Argon2id authentication in MVP scope? (single-user local app)
-- P0-B: Worker isolation model accepted as JS classes? Or Rust thread rewrite?
+CARRY-FORWARD FINDINGS (not yet escalated — dependent domains unverified):
+- CF-3A (Worker Isolation): Blueprint §5.1 specifies Rust thread isolation. Implementation uses JS classes in WebView. Dependent domains: ARCHITECTURE.md + TRD.md (Batch 5). Resolution criteria: if Batch 5 explains implementation → close. If Blueprint consistent but implementation differs → escalate to owner. If Blueprint docs conflict → reconciliation finding.
+- CF-3B (Authentication): Blueprint requires Argon2id + JWT. Implementation has no auth. Dependent domains: Vision + BRD + PRD + SRD (Batch 7). Resolution criteria: same as CF-3A.
 
 Why changed: Batch 3 Enterprise Blueprint Verification.
 Status: Verification complete. Owner Review Required for P0-A and P0-B.
