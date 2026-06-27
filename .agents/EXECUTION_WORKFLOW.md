@@ -40,6 +40,8 @@ For every implementation task, follow these steps in order:
 8. **Verify** — complete all 7 passes from `SELF_REVIEW_STANDARD.md`
 9. **Update** `PROJECT_LEDGER.md`
 
+**Hotfix Exception:** For P0 production bugs blocking the core revenue pipeline, Steps 3–4 (Blueprint read + addenda review) may be scoped to the affected code path only, provided the deviation is approved and justified. Full Blueprint alignment check is required at the next regular engineering session.
+
 ### Artifact Responsibilities
 
 | Artifact | Responsibility |
