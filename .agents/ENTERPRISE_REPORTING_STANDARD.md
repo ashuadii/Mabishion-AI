@@ -1,16 +1,71 @@
 ---
 name: enterprise-reporting-standard
-description: Mandatory three-dimension reporting standard for all Enterprise Blueprint verification reports. Version 1.0.
-version: 1.0
+description: Mandatory reporting and governance standard for all Enterprise Blueprint verification reports. Version 1.1.
+version: 1.1
 ---
 
-# Enterprise Reporting Standard v1.0
+# Enterprise Reporting Standard v1.1
 
-## Scope of This Report
+## Scope of This Standard
 
-This report evaluates the verification performed during the current review process.
+This document is the single canonical source for:
+- Blueprint verification reporting rules
+- Finding status lifecycle
+- Batch lifecycle
+- Recommendation evaluation governance
+- Documentation growth control
 
-It does not, by itself, determine the overall implementation progress or project completion status.
+Other documents should reference this document rather than duplicate its rules.
+
+---
+
+# Recommendation Evaluation
+
+Every recommendation must be evaluated independently of its source.
+
+The source of a recommendation is never evidence.
+
+Evaluate every recommendation against:
+- Verified evidence
+- Blueprint consistency
+- Governance consistency
+- Architecture consistency
+- Implementation impact
+
+Decision outcomes: **Accepted / Accepted with Modification / Deferred / Rejected**
+
+## Governance Record
+
+Only governance or architectural decisions require a formal evaluation record.
+
+| Field | Content |
+|-------|---------|
+| Recommendation | What was proposed |
+| Decision | Accepted / Accepted with Modification / Deferred / Rejected |
+| Evidence | What evidence supports the decision |
+| Alternatives Considered | What other approaches were evaluated |
+| Rationale | Why this decision was made |
+| Impact | What changes as a result |
+
+Minor wording, formatting, or editorial improvements require only a brief rationale — no full record.
+
+## Documentation Growth Control
+
+Do not create new governance artifacts unless they solve a recurring problem or mitigate a high-impact risk.
+
+Prefer extending this document over creating new ones.
+
+Before creating a new document, file, or memory entry, justify why this document cannot absorb the change.
+
+Documentation should evolve deliberately, not accumulate incrementally.
+
+---
+
+# Scope of Each Verification Report
+
+Each report evaluates only the verification performed during the current review process.
+
+It does not determine overall implementation progress or project completion status.
 
 Implementation status requires independent evidence.
 
