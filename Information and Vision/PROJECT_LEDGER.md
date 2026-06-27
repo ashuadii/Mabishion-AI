@@ -1421,3 +1421,67 @@ LIFECYCLE: Owner Direction → Blueprint Reconciliation → Formal Blueprint Rev
 PRODUCTION RULE: Implementation requires Design System approval + Navigation Architecture approval + Blueprint Reconciliation + Implementation Planning. Wireframes, prototypes, and UX exploration acceptable before those gates.
 
 BATCH 6 IMPACT: None — Batch 6 verification findings document current state vs UI/UX Spec v5.1 and remain valid. Direction differences from the spec are inputs for future Blueprint reconciliation, not immediate implementation authority.
+
+[2026-06-28] [Session-19] — [Claude Sonnet 4.6 (1M)] — [.agents/EXECUTION_WORKFLOW.md, .agents/SELF_REVIEW_STANDARD.md (NEW), .agents/ENTERPRISE_REPORTING_STANDARD.md v1.1, memory/feedback_self_review_standard.md (updated), memory/MEMORY.md (updated)]
+
+PHASE: Governance & Engineering Workflow Finalization
+
+WHAT CHANGED:
+1. EXECUTION_WORKFLOW.md: §0 "Blueprint-Driven Engineering" added at the top.
+   - Source-of-Truth Hierarchy (6 levels): Owner Decisions → Original Blueprint Docs → Addenda/Reconciliations → Verification Summary → Current Code → Tests
+   - 9-step mandatory implementation workflow (Blueprint read → verify → implement → 7-pass review → ledger)
+   - Artifact Responsibilities table (8 artifact types, each with defined role)
+   - Principle: "Blueprint-driven, never summary-driven or code-driven"
+
+2. SELF_REVIEW_STANDARD.md: New canonical file. 7-pass mandatory review before any task is declared complete:
+   - Pass 1: Requirements (Blueprint alignment, scope, traceability)
+   - Pass 2: Architecture (no drift, no duplicates, consistent patterns)
+   - Pass 3: Code (logic, error handling, edge cases, security, null checks)
+   - Pass 4: Integration (registry, DB, events, workers, logging)
+   - Pass 5: Verification (build passes, tests if applicable)
+   - Pass 6: Documentation (PROJECT_LEDGER updated, ADR if needed)
+   - Pass 7: Risk (known gaps documented, nothing silently ignored)
+   Completion Statement wording specified. Canonical at `.agents/SELF_REVIEW_STANDARD.md`.
+
+3. ENTERPRISE_REPORTING_STANDARD.md v1.1: Updated with Finding Status lifecycle (all values including Blueprint Reconciliation Candidate), Batch lifecycle states, recommendation evaluation governance, documentation growth control.
+
+4. Memory updated: feedback_self_review_standard.md now includes Blueprint-Driven Engineering rule (read original Blueprint before every implementation task, not summaries).
+
+5. ENTERPRISE BLUEPRINT VERIFICATION PHASE: Formally closed.
+   - All 9 batches verified, 23 Blueprint documents reviewed
+   - ENTERPRISE-BLUEPRINT-VERIFICATION-SUMMARY.md frozen as authoritative verification reference
+   - IMPLEMENTATION-BACKLOG.md: 34 items (P0-P3), 3 open owner decisions, 5 open BRFs
+   - BLUEPRINT-CODE-SYNC-PLAN.md: Tier 1/2/3 sync plan
+
+WHY CHANGED:
+Owner established critical rule: Every implementation must start from original Blueprint documents, never from filtered summaries, backlogs, or existing code alone. Engineering Workflow Refinement absorbed into canonical workflow file.
+
+STATUS: Working — No code changes this session (documentation + governance only)
+
+OPEN OWNER DECISIONS (must resolve before P2 work):
+- CF-3A: Worker runtime (Rust async Blueprint vs JS current implementation)
+- CF-3B: Authentication (JWT+Argon2id Phase 1 P0 per Blueprint vs no active auth)
+- Batch 2 P0: API architecture (Rust IPC commands vs direct SQL plugin)
+
+OPEN BRFs (Blueprint Reconciliation required before BRF-blocked items):
+- BRF-1: State management (Redux Toolkit vs Zustand vs React Context)
+- BRF-2: STANDARD timeout UI/UX §1 internal inconsistency (correction needed in Blueprint doc)
+- BRF-3: Operating modes (5 in Vision vs 4 different in UI/UX Spec)
+- BRF-4: Worker naming authority (missing canonical registry `02_Worker_Registry.md v4.0 FINAL`)
+- BRF-5: Social/email scope (anti-goals in Vision/PRD vs BRD workers WK-012/013)
+
+NEXT STEP: P0 implementation items B01–B10 (no blockers, ready now).
+  Start with B01–B04 (activate 4 unrouted screens: /login, /clients, /workers, /finance/invoices).
+  Workflow: Read UI/UX-SPECIFICATION.md §1.2, §5, §6, §8.2 first → review current App.jsx → implement routes → 7-pass review → ledger entry.
+
+PENDING P0 ITEMS (ALL READY — no owner decisions or BRF blockers):
+  B01: Activate /login route (LoginScreen.jsx exists, not routed)
+  B02: Activate /clients route (ClientsScreen.jsx exists, not routed)
+  B03: Activate /workers route (WorkerMonitorScreen.jsx exists, not routed)
+  B04: Activate /finance/invoices route (InvoicesScreen.jsx exists, not routed)
+  B05: Populate workers table from WORKER_REGISTRY on app startup
+  B06: Write backup metadata to backups DB table on each run
+  B07: Add cost alerts at 80%/90%/100% of daily+monthly limits
+  B08: Add changes_requested as 4th approval status
+  B09: Write approval decisions to audit_logs (basic, no HMAC)
+  B10: DPDP consent capture logic in clientIntakeWorker.js
