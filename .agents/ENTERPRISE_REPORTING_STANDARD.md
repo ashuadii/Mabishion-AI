@@ -135,12 +135,27 @@ Out of scope: [what was NOT reviewed]
 | [component] | Verified | Not Implemented | ❌ Missing | [doc section] |
 | [component] | Verified | Partially Implemented | ⚠️ Conflict | [doc vs code] |
 | [component] | Not Yet Verified | Unknown | ⭕ Unable to Verify | — |
+| [component] | Verified | Implemented | 🔁 Runtime Extension | [file:line] — present in runtime, no Blueprint equivalent |
+
+> **Terminology note:** 🔁 Runtime Extension = table/feature exists in implementation but has no equivalent in the Blueprint. Neutral — does not imply the feature is wrong or extra. May represent intentional product decisions made during implementation.
 
 ## Evidence Summary
 [Exact files read, line numbers, tables checked, queries run]
 
 ## Recommendations
-[Priority — Action — Why]
+
+| Priority | Action | Why | Dependency |
+|----------|--------|-----|-----------|
+| P0 | [action] | [reason] | [blocks or blocked-by] |
+| P1 | [action] | [reason] | [none / Batch N verification / specific table] |
+
+## Implementation Readiness
+
+| Item | Readiness | Blocker (if any) |
+|------|-----------|-----------------|
+| [feature/table] | Ready | — |
+| [feature/table] | Blocked | Depends on [Batch N / table / decision] |
+| [feature/table] | Decision Required | Owner must decide: [question] |
 
 ## Next Action
 [Single next step]

@@ -1204,3 +1204,35 @@ CROSS-DOMAIN DEPENDENCY NOTE: tasks table is the FK anchor for approvals, worker
 Why changed: Batch 1 Enterprise Blueprint Verification per Engineering Direction v1.0.
 Status: Verification complete. No implementation changes made.
 Next step: Batch 2 — API Verification (MABISHION-AI-API-SPECIFICATION.md).
+Batch 1 Status: ✅ APPROVED (2026-06-28) — owner approved findings. Reporting standard updated: Runtime Extension terminology, Dependency column in recommendations, Implementation Readiness section added to ENTERPRISE_REPORTING_STANDARD.md.
+
+[2026-06-28] [Session-11] — [Claude Sonnet 4.6 (1M)] — [Batch 2 API Verification — READ ONLY]
+What changed: API Verification Report produced. No code changes made.
+
+BATCH 2 STATUS: Complete
+Documents reviewed: MABISHION-AI-API-SPECIFICATION.md v1.1 (Locked/Final)
+Implementation verified: src-tauri/src/main.rs (all 26 Rust commands), cortex.js (LLM proxy usage), approvalEngine.js (event emission)
+
+FUNDAMENTAL ARCHITECTURE FINDING:
+Blueprint: Frontend → Rust IPC (v1/* commands) → SQLite
+Implementation: Frontend → @tauri-apps/plugin-sql → SQLite directly
+This is the root cause of most "Missing" findings. It is a design choice, not a defect. Owner decision required (P0).
+
+FINDINGS SUMMARY:
+- IPC Commands (36 Blueprint-defined): 0 implemented as specified, 5 conflicts (functional but different), 31 missing, 7 runtime extensions
+- External API Proxies (5): All 5 implemented ✅ (Ollama, Groq via llm_proxy, Gemini, Serper, Exa)
+- Tauri Events (10 Blueprint): 1 implemented, 1 conflict, 8 missing, 2 runtime extensions
+- API Design Requirements (6): 0 as specified, 2 conflicts, 4 missing
+
+KEY FINDINGS:
+- v1/ prefix: Not implemented on any command
+- Authentication (Argon2id): Not implemented
+- JSON Schema input validation: Not implemented
+- Soft deletes (deleted_at): Not implemented
+- hmac_sign: Uses DefaultHasher (not cryptographically secure) — code comment acknowledges this
+
+CROSS-DOMAIN DEPENDENCIES: 12 IPC commands blocked by missing DB tables (Batch 1). P0 architecture decision (direct SQL vs Rust IPC) must come from Business Requirements verification (Batch 7).
+
+Why changed: Batch 2 Enterprise Blueprint Verification per Engineering Direction v1.0.
+Status: Verification complete. No implementation changes made.
+Next step: Batch 3 — Security & Approval Verification.
