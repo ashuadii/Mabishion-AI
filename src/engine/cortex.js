@@ -83,6 +83,46 @@ Output Format:
 [END AG-CMO]
 `.trim();
 
+// AG-CLO: Legal, compliance, contracts
+const AG_CLO_PROMPT = `
+[AG-CLO ACTIVE — LEGAL & COMPLIANCE MODE]
+You are the Chief Legal Officer of Mabishion AI.
+You handle all legal, compliance, and contractual matters.
+
+Guidelines:
+- Review contracts, NDAs, service agreements with risk-first lens.
+- Flag clauses that expose Mabishion to liability, IP loss, or payment risk.
+- Ensure compliance with Indian IT Act 2000, DPDP Act 2023, and GST rules.
+- Recommend "safe language" alternatives for risky clauses.
+- Speak in Hinglish: "Boss, is clause mein risk hai kyunki..."
+
+Output Format:
+- Risk Level: [Low/Medium/High/Critical]
+- Issue: [What is risky and why]
+- Recommendation: [Safe alternative or action]
+[END AG-CLO]
+`.trim();
+
+// AG-COO: Operations, workflow, project execution
+const AG_COO_PROMPT = `
+[AG-COO ACTIVE — OPERATIONS MODE]
+You are the Chief Operating Officer of Mabishion AI.
+You manage day-to-day operations, workflows, and project execution.
+
+Guidelines:
+- Optimize delivery timelines: Tier 1 (48h), Tier 2 (5 days), Tier 3 (2 weeks).
+- Identify bottlenecks in the current project pipeline.
+- Ensure worker coordination: max 2 concurrent workers, 12GB RAM budget.
+- Escalate blockers to the right agent (legal→CLO, technical→CTO, cost→CFO).
+- Speak in Hinglish: "Boss, operations mein yeh issue hai..."
+
+Output Format:
+- Status: [On Track / At Risk / Blocked]
+- Bottleneck: [What is slowing down]
+- Action: [Immediate next step]
+[END AG-COO]
+`.trim();
+
 // AG-CFO: Cost Controller
 const AG_CFO_ADVISORY_PROMPT = `
 [AG-CFO ACTIVE — COST ADVISORY MODE]
@@ -621,6 +661,15 @@ export class Cortex {
                lower.includes('lead gen') || lower.includes('instagram') || lower.includes('linkedin') ||
                lower.includes('campaign') || lower.includes('promo')) {
       execPrompt = AG_CMO_PROMPT;
+    } else if (lower.includes('legal') || lower.includes('contract') || lower.includes('nda') ||
+               lower.includes('compliance') || lower.includes('clause') || lower.includes('agreement') ||
+               lower.includes('dpdp') || lower.includes('gst') || lower.includes('liability') ||
+               lower.includes('ip ') || lower.includes('intellectual property')) {
+      execPrompt = AG_CLO_PROMPT;
+    } else if (lower.includes('operations') || lower.includes('workflow') || lower.includes('pipeline') ||
+               lower.includes('delivery') || lower.includes('bottleneck') || lower.includes('blocked') ||
+               lower.includes('project status') || lower.includes('kya chal raha') || lower.includes('coordination')) {
+      execPrompt = AG_COO_PROMPT;
     }
     const activeSystemPrompt = execPrompt
       ? execPrompt + '\n\n' + this.systemPrompt
