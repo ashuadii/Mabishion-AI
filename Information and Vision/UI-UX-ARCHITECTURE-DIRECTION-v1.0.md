@@ -2,12 +2,33 @@
 **Version:** 1.0
 **Artifact Type:** Owner Direction Document
 **Status:** Owner-Approved (2026-06-28)
-**Relationship to Blueprint:** This document is an Owner Direction for future implementation. It does not supersede or replace MABISHION-AI-UI-UX-SPECIFICATION.md v5.1. Where differences exist, reconciliation should occur before the Blueprint is formally revised. The current Blueprint remains canonical until that reconciliation is complete and approved.
+**Relationship to Blueprint:** This document establishes the approved implementation direction for future UI work. It does not modify the canonical UI/UX Blueprint by itself. Where differences exist, they should be reconciled before a formal Blueprint revision. The current Blueprint (MABISHION-AI-UI-UX-SPECIFICATION.md v5.1) remains canonical until formally revised.
 
-**Document Chain:**
-Current Blueprint (UI/UX Spec v5.1) → This Owner Direction → Future Blueprint Reconciliation → Updated Blueprint (when formally approved)
+**Artifact Separation:**
+- Owner Direction → Strategic direction (this document)
+- Blueprint → Canonical specification (UI/UX Spec v5.1)
+- Implementation Planning → Engineering execution plan
+- Implementation → Production code
 
-> **Implementation Rule:** Production UI implementation should not begin until the Design System and Navigation Architecture have been approved. Design exploration (wireframes, mockups, prototypes, UX experiments) remains acceptable before that point.
+**Owner Direction Lifecycle:**
+```
+Owner Direction
+      ↓
+Blueprint Reconciliation Process (when affected domain is reached)
+      ↓
+Formal Blueprint Revision (if approved)
+      ↓
+Production Implementation
+```
+Only the formally revised Blueprint becomes the new canonical specification.
+
+> **Production Implementation Rule:** Production UI implementation should not begin until the following have been completed:
+> 1. Design System approval
+> 2. Navigation Architecture approval
+> 3. Blueprint Reconciliation (where required)
+> 4. Implementation Planning
+>
+> Wireframes, prototypes, UX exploration, and design validation may occur before this stage.
 
 ---
 

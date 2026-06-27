@@ -1316,6 +1316,24 @@ Next step: Batch 7 — Business Requirements (Vision + BRD + PRD + SRD).
 
 [2026-06-28] [Session-15] — [Claude Sonnet 4.6 (1M)] — [Batch 7 Business Requirements Verification — READ ONLY]
 BATCH 7 STATUS: Verification Status = Verified | Batch Status = Verified
+[See Session-15 entry above]
+
+[2026-06-28] [Session-16] — [Claude Sonnet 4.6 (1M)] — [Batch 8 Operations Verification — READ ONLY]
+BATCH 8 STATUS: Verification Status = Verified | Batch Status = Verified
+
+Documents: TESTING-STRATEGY v5.1, DEPLOYMENT-GUIDE v5.1, DISASTER-RECOVERY v5.1, OPERATIONS-MANUAL v5.1, COST-GOVERNANCE-FRAMEWORK v5.1 (all Locked/Draft-Pending-Approval)
+
+CONFIRMED: ₹150/day + ₹1,500/month enforcement ✅, AG-CFO ✅, Tauri v2 build pipeline ✅, Jest + Playwright ✅, daily backup schedule ✅, STANDARD gate escalation strengthened (OPS MANUAL §2.1 confirms escalate-not-reject — BRC-3 further confirmed)
+
+GAPS FOUND:
+- Cost: No 80%/90%/100% cost alerts, no per-worker cost limits, execution_spans used differently than Blueprint
+- Backup: backups DB table has 0 rows (runs don't persist metadata), no hourly incremental, no SQLCipher encryption, no 7-year retention
+- Testing: Test suite in Test ke liye/ not integrated into build, no traceability matrix, no OWASP ZAP
+- Deployment: No Mickii CLI, no pre-deployment checklist
+- HMAC audit trail: Not implemented (confirmed again from Batch 3)
+
+CF-3A and BRC-1 still Carry Forward — Batch 8 documents don't govern worker runtime choice.
+Next step: Batch 9 — Planning Validation (MVP-BUILD-ORDER + DEVELOPMENT-ROADMAP + IMPLEMENTATION-PLAN + ADDENDUM).
 
 Documents reviewed: Vision v1.1 (Locked/Final), BRD v1.4 (Locked/Final), PRD v5.1 (Locked/Pending Approval), SRD v1.1 (Locked/Final)
 
@@ -1350,6 +1368,7 @@ KEY DIRECTION POINTS:
 - Command palette: keyboard-first interaction
 - State-driven home: "What requires my attention right now?"
 
-IMPLEMENTATION RULE: Production UI implementation requires Design System approval + Navigation Architecture approval + Blueprint reconciliation + Implementation planning. Design exploration (wireframes, mockups, prototypes) is acceptable before those approvals.
+LIFECYCLE: Owner Direction → Blueprint Reconciliation → Formal Blueprint Revision (if approved) → Production Implementation. Only a formally revised Blueprint becomes the new canonical spec.
+PRODUCTION RULE: Implementation requires Design System approval + Navigation Architecture approval + Blueprint Reconciliation + Implementation Planning. Wireframes, prototypes, and UX exploration acceptable before those gates.
 
 BATCH 6 IMPACT: None — Batch 6 verification findings document current state vs UI/UX Spec v5.1 and remain valid. Direction differences from the spec are inputs for future Blueprint reconciliation, not immediate implementation authority.
