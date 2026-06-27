@@ -164,7 +164,7 @@ export const CREATE_TABLES_SQL = [
     size_bytes INTEGER DEFAULT 0,
     checksum TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
-  )`
+  )`,
   `CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL DEFAULT 'Ashu',

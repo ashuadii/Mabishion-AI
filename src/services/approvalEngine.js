@@ -27,7 +27,7 @@ export const ApprovalEngine = {
         this.runExpiryCheck();
       }, 30000);
       isIntervalRunning = true;
-      console.log('[ApprovalEngine] Automated 24h auto-approve background scanner started.');
+      console.log('[ApprovalEngine] Expiry scanner started: STANDARD→CRITICAL escalation after 24h. CRITICAL: no timeout.');
     }
   },
 
@@ -39,10 +39,18 @@ export const ApprovalEngine = {
     const workerId = normalizeWorkerId(workerName);
     console.log(`[ApprovalEngine] New Approval Requested: "${title}" | Type: ${approvalType} | Worker: ${workerId}`);
     
+    // C2: AUTO-APPROVED tier — log-only, no human gate required
+    if (approvalType === 'auto_approved') {
+      const approvalId = await addApprovalExtended(title, 'auto_approved', projectId, workerId, requestData, null);
+      await updateApprovalStatus(approvalId, 'auto_approved', 'System auto-approved — no human gate required.');
+      console.log(`[ApprovalEngine] Auto-approved (log-only): "${title}" | Worker: ${workerId}`);
+      return approvalId;
+    }
+
     const now = new Date();
-    // Expiration: 1h for critical, 24h for standard
-    const expirationHours = approvalType === 'critical' ? 1 : 24;
-    const expiresAt = new Date(now.getTime() + expirationHours * 60 * 60 * 1000).toISOString();
+    // C1: CRITICAL has no timeout (null = stays pending until owner acts)
+    // STANDARD expires after 24h then escalates to CRITICAL (C3)
+    const expiresAt = approvalType === 'critical' ? null : new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
     // Undo window: 24h from creation for all approvals
     const undoDeadline = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
     // Cost impact: derive from requestData if available (store in paise)
@@ -160,8 +168,9 @@ export const ApprovalEngine = {
   },
 
   /**
-   * Background cron auto-expiration task
-   * Scrapes pending standard approvals and auto-approves them after 24h
+   * Background cron expiration task
+   * C1: CRITICAL has no expiry (expires_at = null) — never auto-rejected
+   * C3: STANDARD after 24h escalates to CRITICAL, does NOT auto-approve
    */
   async runExpiryCheck() {
     try {
@@ -169,15 +178,38 @@ export const ApprovalEngine = {
       const now = new Date();
 
       for (const app of pendings) {
+        // C1: Skip items with no expiry (CRITICAL approvals)
+        if (!app.expires_at) continue;
+
         const expiresAt = new Date(app.expires_at);
-        if (now > expiresAt) {
-          if (app.type === 'standard') {
-            console.log(`[ApprovalEngine Expiry Scanner] Auto-approving standard item: ID=${app.id} ("${app.title}")`);
-            await updateApprovalStatus(app.id, 'approved', 'System Auto-Approved after 24 hours of safety pending state.');
-          } else {
-            console.log(`[ApprovalEngine Expiry Scanner] Critical item ID=${app.id} expired. Tagging as expired/rejected.`);
-            await updateApprovalStatus(app.id, 'rejected', 'Critical Approval Gate timed out (1 hour maximum limit).');
+        if (now > expiresAt && app.type === 'standard') {
+          // C3: Escalate STANDARD → CRITICAL instead of auto-approving
+          console.log(`[ApprovalEngine Expiry Scanner] Escalating STANDARD→CRITICAL: ID=${app.id} ("${app.title}")`);
+          try {
+            const { getDb } = await import('../data/db.js');
+            const db = await getDb();
+            await db.execute(
+              `UPDATE approvals SET type = 'critical', expires_at = NULL WHERE id = $1`,
+              [app.id]
+            );
+          } catch (dbErr) {
+            console.error('[ApprovalEngine Expiry Scanner] Escalation DB update failed:', dbErr);
+            continue;
           }
+          // Re-alert owner via WhatsApp as CRITICAL
+          const phone = await getSetting('wa_personal_number') || await getSetting('whatsapp_owner_phone') || '919876543210';
+          try {
+            await WhatsAppService.sendTemplate(phone, 'CRITICAL', {
+              worker_name: app.worker_name || app.worker_id,
+              project_name: app.title,
+              amount: 'Escalated from STANDARD — requires immediate action',
+              id: app.id
+            });
+          } catch (waErr) {
+            console.warn('[ApprovalEngine Expiry Scanner] WhatsApp escalation alert failed (in-app only):', waErr);
+          }
+          this.triggerAudioBeep();
+          this.triggerBrowserNotification(`[ESCALATED] ${app.title}`, app.worker_name || app.worker_id);
         }
       }
     } catch (err) {

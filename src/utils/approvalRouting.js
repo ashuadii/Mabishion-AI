@@ -2,7 +2,14 @@ export const APPROVAL_STATUS = {
   PENDING: 'pending',
   APPROVED: 'approved',
   REJECTED: 'rejected',
-  EXPIRED: 'expired'
+  EXPIRED: 'expired',
+  AUTO_APPROVED: 'auto_approved'
+};
+
+export const APPROVAL_TYPE = {
+  CRITICAL: 'critical',
+  STANDARD: 'standard',
+  AUTO_APPROVED: 'auto_approved'
 };
 
 const WORKER_ID_ALIASES = {
@@ -85,7 +92,10 @@ export function getWorkerLabel(workerId) {
 }
 
 export function normalizeApprovalType(type) {
-  return String(type || 'standard').toLowerCase() === 'critical' ? 'critical' : 'standard';
+  const t = String(type || 'standard').toLowerCase();
+  if (t === 'critical') return APPROVAL_TYPE.CRITICAL;
+  if (t === 'auto_approved' || t === 'auto' || t === 'auto-approved') return APPROVAL_TYPE.AUTO_APPROVED;
+  return APPROVAL_TYPE.STANDARD;
 }
 
 export function normalizeApprovalStatus(status) {
@@ -93,5 +103,6 @@ export function normalizeApprovalStatus(status) {
   if (normalized === APPROVAL_STATUS.APPROVED) return APPROVAL_STATUS.APPROVED;
   if (normalized === APPROVAL_STATUS.REJECTED) return APPROVAL_STATUS.REJECTED;
   if (normalized === APPROVAL_STATUS.EXPIRED) return APPROVAL_STATUS.EXPIRED;
+  if (normalized === APPROVAL_STATUS.AUTO_APPROVED) return APPROVAL_STATUS.AUTO_APPROVED;
   return APPROVAL_STATUS.PENDING;
 }
