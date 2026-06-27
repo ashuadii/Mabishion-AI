@@ -30,7 +30,7 @@
 
 > These are deliberately deferred. Do NOT implement without owner approval per item.
 
-- [ ] **WK-024** — ⚠️ BLUEPRINT NAMING CONFLICT: AGENT-SYSTEM.md says "Emergency Lockdown"; WORKER-ARCHITECTURE.md says "SecurityAuditor". Resolve Blueprint conflict before implementing.
+- [ ] **WK-024 = SecurityAuditor** — ✅ Blueprint conflict RESOLVED (2026-06-27, owner-approved). Implementation pending: create `securityAuditorWorker.js` + register in `index.js`. Legal Policy → merged into WK-016. Emergency Lockdown → Runtime/Cortex layer.
 - [x] **AG-CLO system prompt** — Chief Legal Officer agent added to cortex.js (2026-06-27)
 - [x] **AG-COO system prompt** — Chief Operations Officer agent added to cortex.js (2026-06-27)
 - [x] **CRITICAL approval fix** — 1h auto-reject removed; CRITICAL stays pending until manual action (2026-06-27)
@@ -1028,3 +1028,39 @@ C4 — cortex.js: Added AG-CLO (Chief Legal Officer) and AG-COO (Chief Operation
 Why changed: Owner approved Phase C fixes. Database bug fix (F1) was a critical defect preventing users and consents tables from being created. Approval engine fixes (C1/C2/C3) align code with Blueprint Approval Framework §2.1 requirements. Agent additions (C4) complete the 6-agent executive team defined in AGENT-SYSTEM.md §2.1.
 Status: Working — Build verified ✓ 6.48s, exit code 0
 Next step: C5 (WK-024 SecurityAuditor) remains blocked until WK-024 Blueprint naming conflict resolved by owner. 4 pending owner decisions from Session-3 still open.
+
+[2026-06-27] [Session-5] — [Claude Sonnet 4.6 (1M)] — [VISION_LOCK.md, MASTER_RULES.md, canonical-worker-registry.md, PROJECT_LEDGER.md]
+What changed:
+Owner-approved architecture decision — WK-024 Blueprint conflict resolved. Documentation updated across 4 files.
+
+**ARCHITECTURE DECISION RECORDED:**
+WK-024 = **SecurityAuditor** (canonical, final, permanent)
+- Category: Enterprise
+- Approval Gate: CRITICAL
+- Function: Audits API key configuration, DB encryption status, worker permission settings, flags suspicious patterns
+- Implementation: Phase 3 pending — `securityAuditorWorker.js` to be created + registered in `src/engine/workers/index.js`
+
+**RECLASSIFICATIONS (same decision):**
+- "Legal Policy Worker" (BRD WK-024): Consolidated into WK-016 (complianceWorker). Compliance Worker scope extended to cover legal policy responsibilities where appropriate. No new worker created.
+- "Emergency Lockdown" (AGENT-SYSTEM.md WK-024): Reclassified as Core Runtime Capability in the Cortex/Runtime layer. Not a business worker. Removed from Worker Registry. Will be implemented as a system-level Kill Switch in `cortex.js` / `runtime.js` when needed.
+
+**DOCUMENTS UPDATED:**
+1. VISION_LOCK.md: WK-024 conflict note replaced with "SecurityAuditor — owner-approved 2026-06-27". Reclassification decisions recorded under WK-024 entry.
+2. MASTER_RULES.md: WK-024 tracked conflict entry marked "RESOLVED". Decision documented.
+3. canonical-worker-registry.md: Section 2 WK-024 row updated. Section 5 WK-024 removed. Section 6 Decision 1 marked RESOLVED with full decision text. Evidence Appendix A WK-024 row updated.
+4. PROJECT_LEDGER.md Phase 3 checklist: WK-024 item updated with resolution note and implementation task.
+
+**IMPLEMENTATION IMPACT:**
+- C5 (WK-024 code implementation) is now UNBLOCKED. Can proceed when owner gives go-ahead.
+- No existing workers changed. No WK-IDs changed. No other worker identities touched.
+- complianceWorker.js: No code change yet. Legal Policy scope merge is a future consideration for Phase 3.
+- cortex.js / runtime.js: No Emergency Lockdown added yet. Will be a separate implementation task.
+
+**PENDING OWNER DECISIONS (from Session-3, still open):**
+- Decision 2: Five code-only workers — formally add to Blueprint scope?
+- Decision 3: QA Testing gap — separate worker or revised scope?
+- Decision 4: Backend development — in current product scope?
+
+Why changed: Owner approved resolution of WK-024 three-way Blueprint naming conflict. Decision recorded as permanent architecture baseline.
+Status: Working — documentation only, no code changed
+Next step: Implement WK-024 SecurityAuditor worker (C5) on owner go-ahead.

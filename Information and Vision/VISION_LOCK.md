@@ -65,7 +65,8 @@ Client must not see:
 
 ## Final Worker List
 
-> **Status (2026-06-27):** 23 workers built (WK-001 to WK-023). WK-024 is planned for Phase 3 but has a Blueprint naming conflict — see note below.
+> **Status (2026-06-27):** 23 workers built (WK-001 to WK-023). WK-024 = **SecurityAuditor** — owner-approved architecture decision (2026-06-27). Implementation pending (Phase 3).
+
 
 **Built — Phase 1 & 2 (23 workers):**
 
@@ -93,12 +94,13 @@ Client must not see:
 22. image_gen
 23. quality_assurance [system]
 
-**Planned — Phase 3 (1 worker — BLUEPRINT CONFLICT, do not implement yet):**
+**Planned — Phase 3 (1 worker):**
 
-24. WK-024 — ⚠️ Naming conflict between Blueprint documents:
-    - `MABISHION-AI-AGENT-SYSTEM.md` v5.1: WK-024 = **Emergency Lockdown** (Security, CRITICAL, 0 retries, 10s timeout)
-    - `MABISHION-AI-WORKER-ARCHITECTURE.md` v5.1: WK-024 = **SecurityAuditor** (Enterprise, CRITICAL)
-    - Owner decision (2026-06-27): Resolve Blueprint conflict first, then implement.
+24. WK-024 = **SecurityAuditor** [Enterprise, CRITICAL] — owner-approved 2026-06-27.
+    - Audits API key configuration, DB encryption status, worker permission settings, and flags suspicious patterns.
+    - **Reclassification decisions (same date):**
+      - "Legal Policy Worker" (BRD) → consolidated into WK-016 (complianceWorker). No separate worker.
+      - "Emergency Lockdown" (AGENT-SYSTEM.md) → reclassified as a Core Runtime Capability in the Cortex/Runtime layer. Not a business worker. Not in the Worker Registry.
 
 ## Required Advanced Features
 

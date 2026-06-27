@@ -127,9 +127,9 @@ When conflicts exist between the current implementation and the Enterprise Bluep
 5. If docs within the Blueprint conflict with each other (e.g., two docs defining WK-024 differently), record the conflict and wait for resolution before implementing.
 
 **Current tracked conflicts (verify before acting):**
-- **WK-024 naming conflict:** `MABISHION-AI-WORKER-ARCHITECTURE.md` calls WK-024 "SecurityAuditor"; `MABISHION-AI-AGENT-SYSTEM.md` calls WK-024 "Emergency Lockdown". Do not implement WK-024 until all Blueprint documents agree on the name.
+- **WK-024 — RESOLVED (2026-06-27):** Owner-approved architecture decision. WK-024 = SecurityAuditor. "Legal Policy Worker" consolidated into WK-016 (complianceWorker). "Emergency Lockdown" reclassified as Runtime/Cortex capability, removed from Worker Registry. Implementation of SecurityAuditor worker pending (Phase 3 code work).
 - **Code workers vs Blueprint workers:** The 23 code workers (`lead_gen`, `business_analyst`, etc.) use a different naming system than the Blueprint's WK-001 MaxCore system. Code workers are canonical implementation. Blueprint workers are target architecture. Do not migrate without an explicit approved migration plan.
-- **CRITICAL approval timeout:** Blueprint requires no timeout; code has 1h auto-reject. Code fix pending (Phase C1 — separate owner approval required).
+- **CRITICAL approval timeout — RESOLVED (2026-06-27):** Code fixed (Session-4, C1). CRITICAL approvals now have no timeout — stay pending until manually actioned.
 
 ## 8. Current Verified Reality Rules
 
