@@ -137,50 +137,82 @@ Instead, describe the divergence neutrally and invite an open decision:
 >
 > Use: "Blueprint and the reviewed implementation differ regarding [specific aspect]. Please confirm the intended target architecture. Possible solutions remain open until an architectural decision is made."
 
-## Principle 4 — Batch Lifecycle Accuracy
+## Principle 4 — Batch Status Tracks Verification Progress Only
 
-Never declare a batch "Complete" when owner review is pending.
+Batch Status reflects the progress of the verification process — not the state of open findings.
 
-Use the correct lifecycle state:
-- **Verification Status:** Verified (technical work is done)
-- **Batch Status:** Owner Review Required (governance decision outstanding)
+A batch that has completed its evidence collection and difference analysis is **Verified**, even if it contains open findings that need resolution in later batches.
 
-These two states coexist. "Complete" is reserved for when both verification AND all governance decisions are resolved (i.e., Approved or Closed).
+| Batch Status | Meaning |
+|-------------|---------|
+| Not Started | Verification has not begun |
+| In Progress | Verification is active in current session |
+| Verified | Evidence collection, Blueprint review, and difference analysis complete |
+| Approved | Owner has reviewed and accepted the batch |
+| Closed | No further action required |
 
-## Principle 5 — Verification Escalation Rule
+**Open findings do not change Batch Status.** Findings are tracked independently.
+
+## Principle 5 — Finding Status
+
+Every finding that cannot be fully resolved in the current batch carries its own status, tracked independently of the batch:
+
+| Finding Status | Meaning |
+|---------------|---------|
+| Implementation Finding | Resolved within the current batch — gap, conflict, or alignment confirmed |
+| Carry Forward | Cannot be resolved in current batch. Requires verification of additional Blueprint domains |
+| Dependency Verification Pending | Carry Forward finding. The specific Blueprint domains that materially influence it have not yet been determined or verified. Assigned during later batches as evidence accumulates |
+| Blueprint Reconciliation Finding | Blueprint documents are internally inconsistent on this point. Requires document-level resolution before escalation |
+| Product Owner Decision Required | All relevant Blueprint evidence has been verified. Blueprint is internally consistent. Implementation still differs. Owner must decide |
+| Closed | Finding resolved — either by later evidence or owner decision |
+
+## Principle 6 — Verification Escalation Rule
 
 Do not escalate cross-domain findings to the Product Owner while dependent Blueprint domains remain unverified.
 
-Follow this sequence for every finding that spans multiple Blueprint domains:
+**Escalation flow for every unresolved finding:**
 
-1. Verify the current batch.
-2. Identify all Blueprint domains that materially influence the finding.
-3. Verify those dependent domains (in their scheduled batch order).
-4. After all dependent domains are verified, determine whether the Blueprint is internally consistent:
-   - If Blueprint documents **conflict with each other** → open a Blueprint Reconciliation Finding. Do not escalate to owner yet.
-   - If Blueprint is **internally consistent but conflicts with the implementation** → escalate to Product Owner.
-   - If Blueprint **explains or justifies the implementation** → close the finding.
-5. Only escalate to the Product Owner after all dependent Blueprint evidence has been exhausted.
+```
+Current Batch Verified
+        ↓
+  Carry Forward
+        ↓
+Dependency Verification Pending
+        ↓
+Verify all materially relevant Blueprint domains
+        ↓
+  Blueprint internally consistent?
+      /         \
+    No           Yes
+     ↓             ↓
+Blueprint      Implementation still differs?
+Reconciliation     /         \
+Finding          Yes           No
+                  ↓             ↓
+             Product Owner   Close Finding
+             Decision Required
+```
 
-**Carry-forward findings** must be explicitly tracked:
-- State the finding.
-- State which batch will resolve it.
-- State the resolution criteria (close / reconcile / escalate).
+**Rules:**
+- Do not assign a specific future batch as the dependency. Mark as `Dependency Verification Pending`.
+- During later batches, determine if those Blueprint documents materially influence the finding. If yes, associate the finding. If no, remove the dependency.
+- Only escalate after all relevant Blueprint evidence is exhausted.
 
-**Why this matters:** Premature escalation burdens the owner with decisions that the Blueprint itself may already resolve. Evidence must be exhausted before requesting architectural decisions.
+**Why:** Blueprint may already resolve what looks like a conflict. Premature escalation wastes owner time on questions the Blueprint answers itself.
 
 ---
 
 # Batch Lifecycle
 
-Every batch moves through the following states in order:
+Batch lifecycle tracks verification process only. Open findings do not change batch status.
 
 | State | Meaning |
 |-------|---------|
 | Not Started | Verification has not begun |
 | In Progress | Verification is active in current session |
-| Verified | Blueprint review, implementation review, evidence collection, and difference analysis are complete |
-| Owner Review Required | Verification is complete but one or more P0/P1 governance or architectural decisions are outstanding and require Product Owner input before implementation may proceed |
+| Verified | Evidence collection, Blueprint review, and difference analysis complete. May contain open findings tracked separately |
+| Approved | Owner has reviewed and accepted the batch |
+| Closed | No further action required |
 | Approved | Owner has reviewed and approved the batch findings and any pending decisions |
 | Closed | No further action required for this batch |
 
@@ -199,7 +231,7 @@ Every batch moves through the following states in order:
 **Date:** YYYY-MM-DD
 **Session:** [Agent ID / Session]
 **Verification Status:** Verified / Partially Verified / Not Yet Verified
-**Batch Status:** Not Started / In Progress / Verified / Owner Review Required / Approved / Closed
+**Batch Status:** Not Started / In Progress / Verified / Approved / Closed
 
 ## Scope
 Documents reviewed: [list]
@@ -213,15 +245,23 @@ Out of scope: [what was NOT reviewed]
 
 ## Findings
 
-| Component | Verification Status | Implementation Status | Finding | Evidence |
-|-----------|--------------------|-----------------------|---------|----------|
-| [component] | Verified | Implemented | ✅ Existing | [file:line] |
-| [component] | Verified | Not Implemented | ❌ Missing | [doc section] |
-| [component] | Verified | Partially Implemented | ⚠️ Conflict | [doc vs code] |
-| [component] | Not Yet Verified | Unknown | ⭕ Unable to Verify | — |
-| [component] | Verified | Implemented | 🔁 Runtime Extension | [file:line] — present in runtime, no Blueprint equivalent |
+| Component | Verification Status | Implementation Status | Classification | Finding Status | Evidence |
+|-----------|--------------------|-----------------------|---------------|---------------|----------|
+| [component] | Verified | Found in reviewed implementation | ✅ Existing | Implementation Finding | [file:line] |
+| [component] | Verified | Not found in reviewed implementation | ❌ Missing | Implementation Finding | [doc section] |
+| [component] | Verified | Partially found in reviewed implementation | ⚠️ Conflict | Implementation Finding | [doc vs code] |
+| [component] | Not Yet Verified | Unable to verify within reviewed scope | ⭕ Unable to Verify | Implementation Finding | — |
+| [component] | Verified | Found in reviewed implementation | 🔁 Runtime Extension | Implementation Finding | [file:line] |
+| [component] | Verified | Not found in reviewed implementation | ⚠️ Conflict | Carry Forward — Dependency Verification Pending | Cross-domain — dependent Blueprint domains not yet verified |
 
-> **Terminology note:** 🔁 Runtime Extension = table/feature exists in implementation but has no equivalent in the Blueprint. Neutral — does not imply the feature is wrong or extra. May represent intentional product decisions made during implementation.
+> **Classification symbols:**
+> - ✅ Existing — Blueprint requirement found in reviewed implementation
+> - ❌ Missing — Blueprint requirement not found in reviewed implementation
+> - ⚠️ Conflict — Found but diverges from Blueprint specification
+> - 🔁 Runtime Extension — In implementation, no Blueprint equivalent
+> - ⭕ Unable to Verify — Insufficient evidence in reviewed scope
+>
+> **Finding Status values:** Implementation Finding / Carry Forward — Dependency Verification Pending / Blueprint Reconciliation Finding / Product Owner Decision Required / Closed
 
 ## Evidence Summary
 [Exact files read, line numbers, tables checked, queries run]

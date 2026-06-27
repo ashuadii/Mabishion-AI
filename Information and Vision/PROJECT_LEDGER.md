@@ -1241,7 +1241,7 @@ Batch 2 Batch Status: Owner Review Required — P0 architectural decision pendin
 [2026-06-28] [Session-12] — [Claude Sonnet 4.6 (1M)] — [Batch 3 Security & Approval Verification — READ ONLY]
 What changed: Security & Approval Verification Report produced. No code changes made. Lifecycle refinement applied: ENTERPRISE_REPORTING_STANDARD.md updated with full batch lifecycle states (Not Started → In Progress → Verified → Owner Review Required → Approved → Closed).
 
-BATCH 3 STATUS: Verification Status = Verified | Batch Status = Owner Review Required
+BATCH 3 STATUS: Verification Status = Verified | Batch Status = Verified
 
 Documents reviewed: MABISHION-AI-SECURITY-ARCHITECTURE.md v5.1 (Locked/Draft), MABISHION-AI-HUMAN-APPROVAL-FRAMEWORK.md v5.1 (Locked/Draft)
 Implementation verified: Cargo.toml (no crypto deps), main.rs hmac_sign (DefaultHasher — not cryptographic), cronService.js (SQLCipher deferral confirmed), runtime audit_logs (0 rows), runtime consents (0 rows), approvalEngine.js (C1/C2/C3 confirmed)
@@ -1260,9 +1260,9 @@ SECURITY — ALL MAJOR ITEMS MISSING OR DEFERRED:
 - DPDP consent: consents table exists, 0 rows, no capture logic
 - Worker isolation (Rust threads): Not implemented (JS classes in WebView — same P0 as Batch 2)
 
-CARRY-FORWARD FINDINGS (not yet escalated — dependent domains unverified):
-- CF-3A (Worker Isolation): Blueprint §5.1 specifies Rust thread isolation. Implementation uses JS classes in WebView. Dependent domains: ARCHITECTURE.md + TRD.md (Batch 5). Resolution criteria: if Batch 5 explains implementation → close. If Blueprint consistent but implementation differs → escalate to owner. If Blueprint docs conflict → reconciliation finding.
-- CF-3B (Authentication): Blueprint requires Argon2id + JWT. Implementation has no auth. Dependent domains: Vision + BRD + PRD + SRD (Batch 7). Resolution criteria: same as CF-3A.
+CARRY-FORWARD FINDINGS (Finding Status: Carry Forward — Dependency Verification Pending):
+- CF-3A (Worker Isolation): Blueprint SECURITY-ARCHITECTURE.md §5.1 specifies Rust thread isolation, air-gapped network. Reviewed implementation uses JS classes in WebView with network access via proxy commands. Finding Status: Carry Forward — Dependency Verification Pending. Blueprint domains that may materially influence this finding have not yet been verified. Resolution: determined during subsequent batches per Verification Escalation Rule.
+- CF-3B (Authentication): Blueprint requires Argon2id + JWT session tokens. Reviewed implementation has no authentication layer. Finding Status: Carry Forward — Dependency Verification Pending. Resolution: same process.
 
 Why changed: Batch 3 Enterprise Blueprint Verification.
 Status: Verification complete. Owner Review Required for P0-A and P0-B.
