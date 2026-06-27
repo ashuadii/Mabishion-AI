@@ -1089,3 +1089,34 @@ WK-024 SecurityAuditor worker implemented and registered. Build verified ✓ 6.3
 Why changed: C5 — WK-024 SecurityAuditor implementation. Blueprint scope now fully implemented (24/24 workers).
 Status: Working — Build ✓ 6.35s
 Next step: 3 pending owner decisions from Session-3 remain open (code-only workers in Blueprint scope, QA gap, backend scope). SQLCipher encryption is Phase 3 next major item.
+
+[2026-06-27] [Session-7] — [Claude Sonnet 4.6 (1M)] — [src/engine/workers/index.js, src/engine/workers/securityAuditorWorker.js]
+What changed:
+Approval policy refactor — single canonical source introduced. Build verified ✓ 5.84s.
+
+PROBLEM RESOLVED: `securityAuditorWorker.js` had a hardcoded `WORKER_APPROVAL_GATES` array that duplicated approval policy already defined in each worker's constructor. This created two independent policy sources that could silently drift.
+
+INVESTIGATION RESULT: No existing canonical approval policy source existed. `WORKER_REGISTRY` in `index.js` was identified as the correct location — it is already the central metadata hub for all 24 workers.
+
+CANONICAL POLICY SOURCE: `WORKER_REGISTRY` in `src/engine/workers/index.js`
+- `policy: { requiresApproval, approvalSeverity }` added to all 24 registry entries
+- Values set from verified evidence (grep of all worker constructors, checked 2026-06-27)
+- `WORKER_REGISTRY` changed from `const` to `export const` so SecurityAuditor can read it
+
+RUNTIME ENFORCEMENT: `runWorker()` in `index.js` now applies registry policy to every worker instance after instantiation:
+  `worker.requiresApproval = registry.policy.requiresApproval`
+  `worker.approvalSeverity = registry.policy.approvalSeverity`
+This means changing policy in WORKER_REGISTRY automatically propagates to all workers at runtime. Worker constructors become fallback defaults only.
+
+SECURITY AUDITOR REFACTOR: `_auditWorkerGates()` in `securityAuditorWorker.js`
+- `WORKER_APPROVAL_GATES` constant removed entirely
+- Now dynamically imports `WORKER_REGISTRY` at audit time (avoids circular dep at module load)
+- Iterates all 24 registry entries — no hardcoded worker list
+- Two checks per worker: (1) policy field exists and is valid boolean, (2) constructor value matches registry policy (catches silent drift if constructor edited without updating registry)
+- Any new worker added to registry is automatically audited — zero maintenance required
+
+Policy flow is now: WORKER_REGISTRY → runWorker() → worker instance → SecurityAuditor validation
+
+Why changed: Owner-directed architecture decision to eliminate duplicate approval policy definitions and establish a single canonical source.
+Status: Working — Build ✓ 5.84s
+Next step: 3 pending owner decisions from Session-3 still open. SQLCipher is Phase 3 next.
