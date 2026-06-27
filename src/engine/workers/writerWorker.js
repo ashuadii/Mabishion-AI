@@ -11,14 +11,8 @@ import { executeLlmWithFallback } from '../../services/llmManager.js';
 import { getDb } from '../../data/db.js';
 
 export class WriterWorker extends BaseWorker {
-  constructor(config = {}) {
-    super({
-      name: 'Writer',
-      queue: 'marketing',
-      requires_approval: true,
-      approval_severity: 'standard',
-      ...config
-    });
+  constructor() {
+    super('Content Writer', 'marketing', true, 'standard');
   }
 
   /**

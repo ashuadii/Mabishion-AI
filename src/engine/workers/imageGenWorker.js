@@ -10,14 +10,8 @@ import { BaseWorker } from './baseWorker.js';
 import { getDb, getSetting } from '../../data/db.js';
 
 export class ImageGenWorker extends BaseWorker {
-  constructor(config = {}) {
-    super({
-      name: 'Image Generator',
-      queue: 'marketing',
-      requires_approval: true,
-      approval_severity: 'standard',
-      ...config
-    });
+  constructor() {
+    super('Image Generator', 'marketing', true, 'standard');
   }
 
   /**
