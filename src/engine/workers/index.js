@@ -54,6 +54,7 @@ import { NotificationWorker } from './notificationWorker.js';
 import { WriterWorker } from './writerWorker.js';
 import { ImageGenWorker } from './imageGenWorker.js';
 import { QualityAssuranceWorker } from './qualityAssuranceWorker.js';
+import { SecurityAuditorWorker } from './securityAuditorWorker.js';
 
 const WORKER_REGISTRY = {
   lead_gen: {
@@ -192,6 +193,12 @@ const WORKER_REGISTRY = {
     name: 'Image Generator',
     description: 'AI image generation via Pollinations.AI (free) → Hugging Face → fallback',
     workerClass: ImageGenWorker,
+    defaultConfig: {}
+  },
+  security_auditor: {
+    name: 'Security Auditor',
+    description: 'WK-024 — Audits API keys, DB encryption, worker approval gates, flags security issues (CRITICAL approval)',
+    workerClass: SecurityAuditorWorker,
     defaultConfig: {}
   }
 };
