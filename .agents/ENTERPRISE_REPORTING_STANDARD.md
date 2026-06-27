@@ -5,6 +5,8 @@ version: 1.1
 ---
 
 # Enterprise Reporting Standard v1.1
+**Governance Version:** 1.0 (Locked 2026-06-28)
+**Governance changes permitted only when:** verified implementation/governance problem exists AND existing canonical docs cannot absorb it AND measurable long-term benefit outweighs maintenance cost.
 
 ## Scope of This Standard
 
