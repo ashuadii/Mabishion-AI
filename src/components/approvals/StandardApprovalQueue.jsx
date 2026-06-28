@@ -134,6 +134,21 @@ export default function StandardApprovalQueue({ approvals, onSelectApproval, onR
                   <span>·</span>
                   <span>Requested: {formatLocalTime(app.created_at)}</span>
                 </div>
+                {/* B25: Escalation countdown for pending STANDARD approvals */}
+                {isPending && !isCritical && app.expires_at && (() => {
+                  const msLeft = new Date(app.expires_at + (app.expires_at.endsWith('Z') ? '' : 'Z')) - Date.now();
+                  if (msLeft <= 0) return (
+                    <p className="text-[10px] font-semibold text-orange-400 mt-1">⚠️ Escalating to CRITICAL…</p>
+                  );
+                  const hoursLeft = Math.floor(msLeft / 3600000);
+                  const minsLeft = Math.floor((msLeft % 3600000) / 60000);
+                  const urgent = hoursLeft < 4;
+                  return (
+                    <p className={`text-[10px] font-semibold mt-1 ${urgent ? 'text-orange-400' : 'text-slate-400'}`}>
+                      {urgent ? '⚠️ ' : '⏱ '}Escalates to CRITICAL in {hoursLeft}h {minsLeft}m
+                    </p>
+                  );
+                })()}
               </div>
 
               {/* Quick Actions Inline (For pending items) */}

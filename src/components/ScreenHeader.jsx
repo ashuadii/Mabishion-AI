@@ -15,6 +15,7 @@ export default function ScreenHeader({ title, pageTitle, subtitle, index, badgeL
   const [logs, setLogs] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [hasNewNotifications, setHasNewNotifications] = useState(false);
+  const [costAlert, setCostAlert] = useState(null); // B33: cost threshold alert
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -51,10 +52,16 @@ export default function ScreenHeader({ title, pageTitle, subtitle, index, badgeL
     });
 
     const interval = setInterval(fetchLogs, 5000);
+
+    // B33: cost threshold alert listener (80% / 90% / 100%)
+    const handleCostAlert = (e) => setCostAlert(e.detail);
+    window.addEventListener('nexious_cost_alert', handleCostAlert);
+
     return () => {
       active = false;
       clearInterval(interval);
       if (unlistenLogs) unlistenLogs();
+      window.removeEventListener('nexious_cost_alert', handleCostAlert);
     };
   }, []);
 
@@ -138,6 +145,22 @@ export default function ScreenHeader({ title, pageTitle, subtitle, index, badgeL
 
   return (
     <>
+      {/* B33: Cost threshold alert banner (80% / 90% / 100%) */}
+      {costAlert && (
+        <div className={`flex items-center justify-between gap-3 px-5 py-2 text-xs font-semibold rounded-xl mb-2 ${
+          costAlert.level === 'critical' ? 'bg-red-500/20 text-red-300 border border-red-500/40' :
+          costAlert.level === 'high'     ? 'bg-orange-500/20 text-orange-300 border border-orange-500/40' :
+                                           'bg-yellow-500/10 text-yellow-300 border border-yellow-500/30'
+        }`}>
+          <span>
+            {costAlert.level === 'critical' ? '🚨' : costAlert.level === 'high' ? '⚠️' : '💡'}
+            {' '}AI Cost {costAlert.level === 'critical' ? 'Limit Reached' : `Alert — ${Math.round(costAlert.percent)}%`}
+            {' '}({costAlert.period === 'daily' ? 'Today' : 'This Month'}:{' '}
+            ₹{((costAlert.cost || 0) / 100).toFixed(2)} / ₹{((costAlert.limit || 0) / 100).toFixed(0)})
+          </span>
+          <button onClick={() => setCostAlert(null)} className="opacity-60 hover:opacity-100 transition-opacity">✕</button>
+        </div>
+      )}
       <header className="mb-5 flex items-center justify-between gap-4 px-5 py-3 relative z-50" style={glassStyle()}>
         <div className="flex min-w-0 items-center gap-3">
           <div className="min-w-0">

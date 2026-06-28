@@ -150,7 +150,7 @@ export const WORKER_REGISTRY = {
     description: 'Code generation — React components, utilities, unit tests, folder structure',
     workerClass: DeveloperWorker,
     defaultConfig: {},
-    policy: { requiresApproval: true, approvalSeverity: 'standard' }
+    policy: { requiresApproval: true, approvalSeverity: 'critical' }
   },
   website_builder: {
     name: 'Website Builder',

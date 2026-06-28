@@ -7,7 +7,7 @@ import { ComplexityAnalyzer } from '../orchestrator/complexityAnalyzer.js';
 
 export class DeveloperWorker extends BaseWorker {
   constructor() {
-    super('Developer', 'development', true, 'standard');
+    super('Developer', 'development', true, 'critical');
   }
 
   /**
