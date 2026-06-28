@@ -65,8 +65,7 @@ Rust async workers consistently specified. ADDENDUM v2.0 §Gap 2 (approved for i
 | Status | Awaiting |
 | Decision | |
 | Rationale | |
-| Implementation Batch | |
-| Implementation Status | Not Started |
+| Approved Implementation Batch | |
 | Decision Date | |
 | Project Ledger Reference | |
 
@@ -112,8 +111,7 @@ JWT provides limited immediate MVP value for a local-first desktop application, 
 | Status | Awaiting |
 | Decision | (Option A / Option B / Option C) |
 | Rationale | |
-| Implementation Batch | |
-| Implementation Status | Not Started |
+| Approved Implementation Batch | |
 | Decision Date | |
 | Project Ledger Reference | |
 
@@ -165,8 +163,7 @@ High effort, high regression risk. Architecturally sound and Blueprint-aligned. 
 | Status | Awaiting |
 | Decision | (Approve / Defer) |
 | Rationale | |
-| Implementation Batch | |
-| Implementation Status | Not Started |
+| Approved Implementation Batch | |
 | Decision Date | |
 | Project Ledger Reference | |
 
@@ -177,11 +174,10 @@ High effort, high regression risk. Architecturally sound and Blueprint-aligned. 
 | Status | Awaiting |
 | Decision | (Phase 3 / Approve now / Defer) |
 | Rationale | |
-| Implementation Batch | |
-| Implementation Status | Not Started |
+| Approved Implementation Batch | |
 | Decision Date | |
 | Project Ledger Reference | |
 
 ---
 
-Awaiting Product Owner Decisions. Engineering implementation will begin only after approved decisions are recorded in the Project Ledger.
+Engineering implementation may begin only after Product Owner decisions have been approved and recorded in the Project Ledger.
