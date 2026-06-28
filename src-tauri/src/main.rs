@@ -998,3 +998,92 @@ fn main() {
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
+
+// ============================================
+// UNIT TESTS — E5 Runtime Verification
+// cargo test -- --test-output immediate
+// ============================================
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // CF-3B: Argon2id — hash format
+    #[test]
+    fn test_hash_pin_produces_argon2id_phc_string() {
+        let hash = hash_pin("123456".to_string()).expect("hash_pin failed");
+        assert!(hash.starts_with("$argon2id$"), "Expected PHC string starting with $argon2id$, got: {}", hash);
+    }
+
+    // CF-3B: Argon2id — unique salts
+    #[test]
+    fn test_hash_pin_produces_unique_hashes() {
+        let h1 = hash_pin("123456".to_string()).unwrap();
+        let h2 = hash_pin("123456".to_string()).unwrap();
+        assert_ne!(h1, h2, "Same PIN must produce different hashes due to unique salt");
+    }
+
+    // CF-3B: Argon2id — correct PIN accepted
+    #[test]
+    fn test_verify_pin_argon2_accepts_correct_pin() {
+        let hash = hash_pin("mypin123".to_string()).unwrap();
+        let valid = verify_pin_argon2("mypin123".to_string(), hash).expect("verify_pin_argon2 failed");
+        assert!(valid, "Correct PIN must be accepted");
+    }
+
+    // CF-3B: Argon2id — wrong PIN rejected (security verification)
+    #[test]
+    fn test_verify_pin_argon2_rejects_wrong_pin() {
+        let hash = hash_pin("mypin123".to_string()).unwrap();
+        let valid = verify_pin_argon2("wrongpin".to_string(), hash).expect("verify_pin_argon2 failed");
+        assert!(!valid, "Wrong PIN must be rejected");
+    }
+
+    // CF-3B: Migration — legacy SHA-256 hash detection heuristic
+    // The JS _isLegacyHash regex (/^[0-9a-f]{64}$/) correctly identifies SHA-256 hex output.
+    // Argon2id PHC strings begin with "$argon2id$" and never match the hex pattern.
+    #[test]
+    fn test_argon2_hash_does_not_look_like_legacy_sha256() {
+        let hash = hash_pin("123456".to_string()).unwrap();
+        let is_64_hex = hash.len() == 64 && hash.chars().all(|c| c.is_ascii_hexdigit());
+        assert!(!is_64_hex, "Argon2id hash must not match SHA-256 hex pattern; got: {}", hash);
+    }
+
+    // Decision A: switch_mode — valid mode accepted
+    #[test]
+    fn test_switch_mode_valid() {
+        let result = switch_mode(1);
+        assert_eq!(result["success"], true);
+        assert_eq!(result["current_mode"], 1);
+    }
+
+    // Decision A: switch_mode — invalid mode rejected
+    #[test]
+    fn test_switch_mode_invalid() {
+        let result = switch_mode(99);
+        assert_eq!(result["success"], false);
+        assert_eq!(result["error"], "INVALID_MODE_ID");
+    }
+
+    // Decision A: get_mode_workers — returns structured response
+    #[test]
+    fn test_get_mode_workers_returns_structure() {
+        let result = get_mode_workers(Some(2));
+        assert_eq!(result["mode_id"], 2);
+        assert!(result["workers"].is_array());
+    }
+
+    // Decision A: get_error_logs — returns limit-capped response
+    #[test]
+    fn test_get_error_logs_caps_limit() {
+        let result = get_error_logs(Some(200)); // request 200, cap is 100
+        assert_eq!(result["limit"], 100);
+        assert!(result["errors"].is_array());
+    }
+
+    // Decision A: get_error_logs — default limit
+    #[test]
+    fn test_get_error_logs_default_limit() {
+        let result = get_error_logs(None);
+        assert_eq!(result["limit"], 20);
+    }
+}
