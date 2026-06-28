@@ -2085,3 +2085,62 @@ The following scenarios require the owner to launch the app from a native (non-s
 
 Status: Unit test and build verification complete. Runtime verification requires owner action from native terminal.
 Next step: Owner launches app from native terminal and verifies PIN flow + IPC commands. Once confirmed, E5 is complete.
+
+[2026-06-28] [Engineering Batch E5 — Extended Verification] — [Claude Sonnet 4.6 (1M)] — [src/tests/unit.test.js, Information and Vision/E5-RUNTIME-VERIFICATION-SCRIPT.md]
+
+## EXTENDED VERIFICATION EVIDENCE
+
+### JS Layer — Vitest Tests (E5 Auth Migration) — VERIFIED ✅
+10 new tests added to `src/tests/unit.test.js` covering the JS-layer auth migration logic.
+All 34 tests pass (24 pre-existing + 10 new E5). Pre-build gate confirms all pass before build.
+
+| Test | Scenario | Result |
+|------|----------|--------|
+| detects SHA-256 hex as legacy | 64-char lowercase hex → isLegacyHash=true | ✅ PASS |
+| Argon2id PHC not treated as legacy | $argon2id$... → isLegacyHash=false | ✅ PASS |
+| Short strings not treated as legacy | 'abc123' → isLegacyHash=false | ✅ PASS |
+| Non-hex 64-char not treated as legacy | 'g'×64 → isLegacyHash=false | ✅ PASS |
+| null/undefined not treated as legacy | null/undefined → isLegacyHash=false | ✅ PASS |
+| SHA-256 hash routes to migration path | sha256 → 'sha256-migrate' | ✅ PASS |
+| Argon2id hash routes to verify path | $argon2id$... → 'argon2id-verify' | ✅ PASS |
+| Unknown format routes to unknown (no silent fallback) | 'not-a-valid-hash' → 'unknown' | ✅ PASS |
+| Uppercase hex not treated as legacy | 'A'×64 → isLegacyHash=false | ✅ PASS |
+| Mixed-case not treated as legacy | mixed → isLegacyHash=false | ✅ PASS |
+
+**Pre-build gate: 34 passed (34) — 214ms**
+**Build: exit code 0 — 5.91s**
+
+### Tauri App Launch — ENVIRONMENT CONSTRAINT (Documented)
+Claude Code runs inside VS Code snap package (SNAP_REVISION=247). Snap mounts core20 glibc at the OS namespace level — libpthread.so.0 from core20 is injected at runtime regardless of LD_LIBRARY_PATH or environment variable stripping. This is a snap namespace issue, not a code defect.
+
+Evidence that this is pre-existing and unrelated to E5:
+- ldd confirms binary links to `/lib/x86_64-linux-gnu/` (system path) — binary is correct
+- Previous sessions (see ledger 2026-05-20 dry-run) launched from native terminal successfully
+- Rust `cargo check` and `cargo test` both pass in this environment (Rust doesn't use GTK/snap libs)
+
+### Runtime Verification Script Created
+`Information and Vision/E5-RUNTIME-VERIFICATION-SCRIPT.md` — ready for owner execution.
+Contains: 5 auth scenarios, 6 IPC console commands, regression check table, result recording template.
+
+## UPDATED VERIFICATION EVIDENCE SUMMARY
+
+| Category | Status | Evidence |
+|----------|--------|----------|
+| Rust unit tests — Argon2id (10 tests) | ✅ Verified | cargo test: 10/10 pass, 1.23s |
+| JS unit tests — migration logic (10 tests) | ✅ Verified | vitest: 34/34 pass, 214ms |
+| Argon2id PHC format | ✅ Verified | Rust test: hash starts with $argon2id$ |
+| Unique salt per hash | ✅ Verified | Rust test: same PIN → different hashes |
+| Correct PIN accepted | ✅ Verified | Rust test |
+| Wrong PIN rejected | ✅ Verified | Rust test |
+| Legacy hash detection accuracy | ✅ Verified | Vitest: all edge cases pass |
+| Migration path routing | ✅ Verified | Vitest: correct path per hash format |
+| switch_mode input validation | ✅ Verified | Rust test |
+| IPC command response structure | ✅ Verified | Rust test |
+| Frontend build | ✅ Verified | exit code 0, 5.91s |
+| App launch (Tauri runtime) | ⏳ Pending owner | See E5-RUNTIME-VERIFICATION-SCRIPT.md |
+| End-to-end PIN flow in app | ⏳ Pending owner | Scenario A-D in script |
+| IPC invocation from frontend | ⏳ Pending owner | Step 3 in script |
+| Regression verification | ⏳ Pending owner | Step 4 in script |
+
+Status: All automated verification complete. Owner runtime verification pending.
+Next step: Owner executes E5-RUNTIME-VERIFICATION-SCRIPT.md from native terminal and reports results.
