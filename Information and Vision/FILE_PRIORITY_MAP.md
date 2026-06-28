@@ -56,13 +56,17 @@ Read these next:
 
 1. `VISION_LOCK.md`
 2. `AGENTS.md`
+3. `GOVERNANCE_RULES.md`
 
 Purpose:
 
 - product identity,
 - owner constraints,
 - architecture direction,
-- worker/approval intent.
+- worker/approval intent,
+- source of truth hierarchy,
+- frozen artifact handling rule,
+- AI conflict resolution rule.
 
 ### Level 3: Canonical Workspace Execution
 

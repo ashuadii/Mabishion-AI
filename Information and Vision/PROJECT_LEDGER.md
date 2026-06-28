@@ -1864,3 +1864,15 @@ P0 BATCH (E2) — COMPLETE:
   B09: [x] Approval decisions written to audit_logs — logAudit() in updateApprovalStatus(), covers all paths
   B10: [x] DPDP consent INSERT in clientIntakeWorker.js — type='data_collection_storage_processing', BRD §15.2
   Build: Exit code 0 — 5.72s
+
+[2026-06-28] [Governance] — [Claude Sonnet 4.6 (1M)] — [Information and Vision/GOVERNANCE_RULES.md (NEW), Information and Vision/MASTER_RULES.md, Information and Vision/FILE_PRIORITY_MAP.md]
+What changed: Enterprise Governance Rules established by Product Owner. Three rules recorded:
+1. Source of Truth Hierarchy — 8-level precedence order. AI conversation context is lowest. Frozen artifacts supersede working documents.
+2. Governance Reopening Rule — Frozen artifacts remain immutable until at least one of 6 approved conditions is met (Owner Change Request, ACR, material evidence contradiction, security finding, compliance requirement, verified defect).
+3. AI Conflict Resolution Rule — Conflicts resolved by hierarchy precedence. If hierarchy does not resolve, escalate to Product Owner. Silent merging of conflicting governance is prohibited.
+GOVERNANCE_RULES.md created as new canonical file at position 5 in Source of Truth Hierarchy.
+MASTER_RULES.md updated: GOVERNANCE_RULES.md added at step 5 of canonical read order (existing steps renumbered).
+FILE_PRIORITY_MAP.md updated: GOVERNANCE_RULES.md added to Level 2 canonical project intent.
+Why changed: Product Owner established permanent enterprise governance rules. Rules are now canonical repository artifacts.
+Status: Working — documentation only, no code changed
+Next step: Awaiting Product Owner decisions for CF-3A, CF-3B, Batch 2 P0 Decision A, Batch 2 P0 Decision B per frozen [E5-PRODUCT-OWNER-DECISIONS.md].

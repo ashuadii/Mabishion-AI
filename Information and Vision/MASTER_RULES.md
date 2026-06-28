@@ -36,11 +36,12 @@ All LLMs, AIs, and agents must read in this sequence:
 2. `FILE_PRIORITY_MAP.md`
 3. `VISION_LOCK.md`
 4. `AGENTS.md`
-5. `WORKSPACE_MAP.md`
-6. `workspacerules.md`
-7. Task-specific docs when relevant: `SKILLgod.md` (code patterns), `review.md` (feature lifecycle), `.agents/EXECUTION_WORKFLOW.md` (execution playbook). Historical migration docs are archived in `Information and Vision/archive/`.
-8. `PROJECT_LEDGER.md` for recent history only
-9. The active source code in `/home/admin-ubuntu/Desktop/Nexious-AI/Nexious Mickii/nexious-ai-starter`
+5. `GOVERNANCE_RULES.md` — Source of Truth Hierarchy, Frozen Artifact Rule, AI Conflict Resolution Rule
+6. `WORKSPACE_MAP.md`
+7. `workspacerules.md`
+8. Task-specific docs when relevant: `SKILLgod.md` (code patterns), `review.md` (feature lifecycle), `.agents/EXECUTION_WORKFLOW.md` (execution playbook). Historical migration docs are archived in `Information and Vision/archive/`.
+9. `PROJECT_LEDGER.md` for recent history only
+10. The active source code in `/home/admin-ubuntu/Desktop/Nexious-AI/Nexious Mickii/nexious-ai-starter`
 
 This is the canonical doc priority list unless the user explicitly narrows scope.
 
