@@ -2332,11 +2332,28 @@ Verification procedure: Information and Vision/E5-RUNTIME-VERIFICATION-SCRIPT.md
 
 Evidence source: Native runtime screen recording, Product Owner observation.
 
-## EVIDENCE GAP RESOLUTION
+## EVIDENCE BASIS — AUTHENTICATION MIGRATION
 
-**SHA-256 → Argon2id migration:** A3 PASS (login succeeded against legacy SHA-256 hash confirmed in pre-acceptance DB query) + engineering verification (Rust 10/10, Vitest 34/34, auth integration 9/9 with real DB hash). Verified.
+**What is directly verified:**
+- Pre-acceptance DB query: `users.pin_hash = '61e7cfb3...'` (64-char hex, SHA-256 format) confirmed legacy hash present before acceptance session.
+- Rust unit tests (10/10): `hash_pin` generates `$argon2id$` PHC string; `verify_pin_argon2` accepts correct PIN and rejects wrong PIN.
+- Vitest (34/34): `_isLegacyHash('61e7cfb3...')` → `true`; Argon2id PHC → `false`; migration path routing correct per engineering tests with real DB hash.
+- Auth integration binary (9/9): full migration logic verified against real DB hash value.
+- A3 PASS: login observed as successful in acceptance session.
 
-**End-to-end IPC invocation:** A4/A5 PASS (Dashboard + navigation with live SQLite data) + all 7 commands confirmed in binary dispatch table + Rust unit tests. Verified.
+**What is not independently confirmed:**
+- Post-login DB query was not performed. `pin_hash` column update from SHA-256 to Argon2id was not directly observed after A3 login.
+- Migration execution is supported by engineering verification of the migration logic; live execution of the migration write path was not independently observed.
+
+## EVIDENCE BASIS — END-TO-END IPC (5 NEW COMMANDS)
+
+**What is directly verified:**
+- Binary strings inspection: all 7 new commands (`switch_mode`, `get_mode_workers`, `get_api_keys`, `set_api_key`, `get_error_logs`, `hash_pin`, `verify_pin_argon2`) confirmed in Tauri dispatch table.
+- Rust unit tests (10/10): each command's logic verified in isolation.
+- A2/A4/A5 PASS: app stable throughout session; Dashboard loaded with live SQLite data; no crash or error from new command registrations.
+
+**What is not independently confirmed:**
+- Live invocation of the 5 new Blueprint IPC commands was not observed during the acceptance session. A4 PASS demonstrates existing IPC paths (SQLite plugin, pre-existing 26 commands) operated correctly. It does not confirm the new commands were called end-to-end from the React frontend through the Tauri IPC bridge.
 
 ## ENGINEERING BATCH E5 — CLOSED ✅
 
