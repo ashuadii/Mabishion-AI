@@ -2357,7 +2357,7 @@ Next: Engineering Batch E6-B authorized to begin.
 |------|-----------------|---------------|
 | B17 — developer CRITICAL gate | AGENT-SYSTEM.md line 99 + WORKER-ARCH.md line 85: Development worker = CRITICAL | developerWorker.js constructor + WORKER_REGISTRY policy updated |
 | B25 — STANDARD escalation countdown | UI/UX-SPEC §3 lines 1435–1436: STANDARD timeout → auto-escalate with notification | StandardApprovalQueue.jsx: countdown display from expires_at column |
-| B33 — Cost threshold alert UI | CGF §1.3 line 46: real-time alerts at 80%, 90%, 100% | ScreenHeader.jsx: nexious_cost_alert event listener + dismissible banner |
+| B33 — Cost threshold alert UI | CGF §1.3 line 46; Backlog ID B33 (Phase 3); Dependency: B07 complete (event emission verified E2); Acceptance: banner visible at 80%/90%/100% thresholds with correct period and cost values, dismissal removes banner | ScreenHeader.jsx: nexious_cost_alert event listener + dismissible banner |
 
 ## SCOPE VERIFICATION
 ✓ B17: developerWorker.js constructor 'standard' → 'critical'
@@ -2374,6 +2374,24 @@ Pre-existing bundle-size warning unchanged
 - B25 countdown: updates on re-render only (no live tick); accurate when page is navigated to or re-rendered
 - B33 alert: clears on page refresh (in-memory state); next cron job (30 min interval) re-fires if still above threshold
 - Runtime verification: pending native launch
+
+## RUNTIME VERIFICATION EVIDENCE
+
+| Item | Method | Result |
+|------|--------|--------|
+| B17 — WORKER_REGISTRY developer policy | Code inspection via Node.js | PASS — `approvalSeverity: 'critical'` confirmed |
+| B17 — developerWorker constructor | Code inspection via Node.js | PASS — `super('Developer', 'development', true, 'critical')` confirmed |
+| B17 — registry/constructor consistency | Cross-check | PASS — both sources consistent |
+| B25 — countdown string in bundle | Bundle inspection | PASS — "Escalates to CRITICAL in" present |
+| B25 — escalating string in bundle | Bundle inspection | PASS — "Escalating to CRITICAL…" present |
+| B25 — time calculation constants (36e5/6e4) | Bundle inspection | PASS — minified constants confirmed |
+| B33 — 80% warning banner visible | Playwright event injection | PASS — screenshot: e6b-cost-warning.png |
+| B33 — 100% critical banner visible | Playwright event injection | PASS — screenshot: e6b-cost-critical.png |
+| B33 — dismiss clears banner | Playwright click | PASS |
+| B33 — no new JS errors | Playwright error capture | PASS |
+| Regression — Lead CRM, Approvals, Projects, Finance Hub | Playwright navigation | PASS — all 4 screens render |
+| Regression — Dashboard | Playwright | PASS |
+| Regression — Header bell | Playwright | PASS — no crash |
 
 ## APPROVAL STATUS
 Pending Product Owner acceptance
