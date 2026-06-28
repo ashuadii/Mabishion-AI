@@ -189,3 +189,73 @@ describe('Hallucination Detection', () => {
     expect(detectHallucination(null)).toBe(false);
   });
 });
+
+// ── E5 CF-3B: Auth Migration Logic ────────────────────────────────────────────
+// Replicated from db.js (pure logic — no Tauri IPC needed for unit testing)
+// Tests the JS-layer migration decision: which hash format triggers which path.
+
+function _isLegacyHash(hash) {
+  return typeof hash === 'string' && /^[0-9a-f]{64}$/.test(hash);
+}
+
+// Simulates the migration decision in verifyPin()
+function determineMigrationPath(storedHash) {
+  if (_isLegacyHash(storedHash)) return 'sha256-migrate';
+  if (typeof storedHash === 'string' && storedHash.startsWith('$argon2')) return 'argon2id-verify';
+  return 'unknown';
+}
+
+// Representative SHA-256 hex hash (64 hex chars)
+const SAMPLE_SHA256_HASH = 'a' + '0'.repeat(62) + 'f'; // 64 hex chars
+
+// Representative Argon2id PHC string (format: $argon2id$v=19$...)
+const SAMPLE_ARGON2_HASH = '$argon2id$v=19$m=19456,t=2,p=1$c29tZXNhbHQ$RdescudvJCsgt3ub+b+dWQ';
+
+describe('E5 CF-3B — Auth Migration Logic', () => {
+  // Legacy hash detection
+  it('detects SHA-256 hex string as legacy', () => {
+    expect(_isLegacyHash(SAMPLE_SHA256_HASH)).toBe(true);
+  });
+
+  it('does not treat Argon2id PHC string as legacy', () => {
+    expect(_isLegacyHash(SAMPLE_ARGON2_HASH)).toBe(false);
+  });
+
+  it('does not treat short strings as legacy', () => {
+    expect(_isLegacyHash('abc123')).toBe(false);
+  });
+
+  it('does not treat 64-char non-hex string as legacy', () => {
+    const nonHex = 'g'.repeat(64); // 'g' is not a valid hex char
+    expect(_isLegacyHash(nonHex)).toBe(false);
+  });
+
+  it('does not treat null/undefined as legacy', () => {
+    expect(_isLegacyHash(null)).toBe(false);
+    expect(_isLegacyHash(undefined)).toBe(false);
+  });
+
+  // Migration path routing
+  it('routes SHA-256 hash to migration path', () => {
+    expect(determineMigrationPath(SAMPLE_SHA256_HASH)).toBe('sha256-migrate');
+  });
+
+  it('routes Argon2id hash to verify path', () => {
+    expect(determineMigrationPath(SAMPLE_ARGON2_HASH)).toBe('argon2id-verify');
+  });
+
+  it('routes unknown format to unknown path (no silent fallback)', () => {
+    expect(determineMigrationPath('not-a-valid-hash')).toBe('unknown');
+  });
+
+  // Security: 64-char hex is the only legacy trigger — uppercase or mixed must not match
+  it('does not treat uppercase hex as legacy (SHA-256 output is lowercase)', () => {
+    const upperHex = 'A'.repeat(64);
+    expect(_isLegacyHash(upperHex)).toBe(false);
+  });
+
+  it('does not treat mixed-case 64-char string as legacy', () => {
+    const mixedCase = ('aAbBcC1122').repeat(6) + '0000';
+    expect(_isLegacyHash(mixedCase)).toBe(false); // contains uppercase chars
+  });
+});
