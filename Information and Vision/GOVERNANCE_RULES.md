@@ -70,6 +70,63 @@ If an AI assistant detects a conflict between repository documents, implementati
 
 ---
 
-## 4. Governance Change Control
+## 4. Decision Authority Matrix
+
+### Product Owner Authority
+
+Requires explicit Product Owner approval before execution:
+
+- Repository structure changes
+- Canonical document creation or removal
+- Governance hierarchy changes
+- Source of Truth hierarchy changes
+- Architecture baseline changes
+- Blueprint modifications
+- Scope changes
+- Feature prioritization
+- Business rule changes
+- Acceptance criteria changes
+
+### Engineering Authority
+
+May be performed without additional Product Owner approval when already within approved scope:
+
+- Code implementation
+- Bug fixes
+- Refactoring
+- Test implementation
+- Runtime verification
+- Performance improvements
+- Documentation corrections (non-governance)
+- Internal implementation details
+- Build and deployment improvements
+
+Engineering recommendations remain subject to Product Owner approval whenever they affect governance, repository architecture, or project scope.
+
+### Decision Escalation Rule
+
+When uncertain about authority:
+
+Do not execute. Instead:
+
+1. Identify the proposed change.
+2. Classify the change category.
+3. Determine the required authority.
+4. If Product Owner authority is required, present a recommendation and await approval.
+5. Execute only after approval.
+
+### Governance Principle
+
+Engineering owns implementation.
+
+The Product Owner owns project intent.
+
+Repository architecture and governance are expressions of project intent.
+
+Therefore, repository architecture and governance remain under Product Owner authority.
+
+---
+
+## 5. Governance Change Control
 
 Modifications to this document require Product Owner approval and must be recorded in PROJECT_LEDGER.md with date, change description, and approving authority.

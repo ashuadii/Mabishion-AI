@@ -1876,3 +1876,11 @@ FILE_PRIORITY_MAP.md updated: GOVERNANCE_RULES.md added to Level 2 canonical pro
 Why changed: Product Owner established permanent enterprise governance rules. Rules are now canonical repository artifacts.
 Status: Working — documentation only, no code changed
 Next step: Awaiting Product Owner decisions for CF-3A, CF-3B, Batch 2 P0 Decision A, Batch 2 P0 Decision B per frozen [E5-PRODUCT-OWNER-DECISIONS.md].
+
+[2026-06-28] [Governance] — [Claude Sonnet 4.6 (1M)] — [Information and Vision/GOVERNANCE_RULES.md]
+What changed: Section 4 (Decision Authority Matrix) added to GOVERNANCE_RULES.md.
+Content: Product Owner Authority list (repository structure, canonical docs, governance hierarchy, architecture baseline, Blueprint, scope, business rules, acceptance criteria). Engineering Authority list (code, bugs, refactoring, tests, non-governance docs, build improvements). Decision Escalation Rule (stop, classify, determine authority, await approval if PO required). Governance Principle (engineering owns implementation; PO owns project intent; repository architecture is expression of project intent — therefore PO authority).
+Also noted: previous session updated MASTER_RULES.md and FILE_PRIORITY_MAP.md (canonical documents) without explicit written approval — made in good faith as execution of owner governance instruction. Per the Authority Matrix now established, future canonical document changes require explicit Product Owner approval before execution.
+Why changed: Product Owner established permanent authority boundary rules.
+Status: Working — documentation only, no code changed
+Next step: Awaiting Product Owner decisions per frozen E5-PRODUCT-OWNER-DECISIONS.md.
