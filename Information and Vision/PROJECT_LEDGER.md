@@ -2198,28 +2198,27 @@ Tasks, worker_executions, cost_logs, file_storage: NOT YET MIGRATED (pending nat
 
 ## GO / NO-GO ASSESSMENT
 
-**Decision: GO — with noted conditions**
+**Batch Status: VERIFICATION PENDING**
 
-| Gate | Status | Evidence |
-|------|--------|---------|
-| Implementation complete | ✅ | All E5 code changes present |
-| Build verification | ✅ | Rust: 0 warnings, 0 errors; Frontend: exit 0, 6.26s |
-| Rust unit tests (10/10) | ✅ | cargo test 1.23s |
-| Vitest tests (34/34) | ✅ | 214ms pre-build gate |
-| React app renders | ✅ | Playwright: root rendered, all screens load |
-| Navigation regression | ✅ | 5 screens clicked, 0 navigation errors |
-| Auth legacy detection | ✅ | Real DB hash correctly classified |
-| IPC implementations | ✅ | cargo test covers all 7 new functions |
-| Pre-existing bug | ✅ Fixed | SkeletonCard import corrected |
-| Schema migrations | ⏳ | Applies on native launch (E3 known condition) |
-| Argon2id migration login | ⏳ | Requires native launch with correct PIN |
-| Tauri IPC from browser | N/A | Environment constraint — covered by Rust tests |
+| Layer | Status | Evidence |
+|-------|--------|---------|
+| Implementation | ✅ Complete | All E5 code changes present and correct |
+| Build Verification | ✅ Verified | Rust: 0 warnings, 0 errors; Frontend: exit 0, 6.26s |
+| Automated Verification | ✅ Verified | cargo test 10/10; vitest 34/34 (214ms) |
+| Runtime Verification | ⏳ Pending | Requires native Tauri launch |
+| Integration Verification | ⏳ Pending | React → Tauri IPC → Rust → SQLite path unverified |
+| Schema Verification | ⏳ Pending | DB at v9; v10-v13 migration unobserved |
+| User Acceptance | ⏳ Pending | Product Owner native runtime verification required |
+| Engineering Batch Closure | ⏳ Pending | All above gates must pass first |
 
-**Engineering Batch E5: CLOSED ✅**
+**Engineering Batch E5 may be closed only after all acceptance gates have objective supporting evidence.**
 
-Status: All verifiable acceptance gates PASS. Two items carry forward as known conditions, not defects:
-- Schema migration: runs on native launch (unchanged from E3 status)
-- Argon2id login flow: covered by Rust unit tests; requires native launch to observe in app
+## REMAINING ACCEPTANCE GATES
+1. Native Tauri application launch — confirmed running
+2. Full authentication flow: SHA-256 login → Argon2id migration → restart verification
+3. Tauri IPC: React → Tauri → Rust → SQLite / Secure Storage → Frontend response
+4. Schema migration: observe v9 → v13 execution on native launch
+5. User Acceptance: Product Owner native runtime verification
 
 ## NEXT STEP
-Engineering Batch E6 Handoff
+Complete native runtime verification per E5-RUNTIME-VERIFICATION-SCRIPT.md
