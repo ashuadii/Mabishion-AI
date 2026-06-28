@@ -1,8 +1,8 @@
 # Repository Evidence Classification Standard v1.1
 
 **Status:** Active
-**Adopted:** Engineering Batch E6
-**Authority:** Product Owner
+**Evidence Level:** Repository Confirmed
+**Authority:** Product Owner Approved
 **Relationship:** Extends Engineering Lifecycle Standard v1.0
 
 ---

@@ -1,8 +1,8 @@
 # Unified Engineering Governance Model v2.0
 
-**Status:** Active — Final Candidate
-**Adopted:** Engineering Batch E6
-**Authority:** Product Owner
+**Status:** Final Candidate
+**Evidence Level:** Repository Confirmed
+**Authority:** Product Owner Approved
 **Relationship:** Unified model encompassing Engineering Lifecycle Standard v1.0 and Repository Evidence Classification Standard v1.1
 
 ---
