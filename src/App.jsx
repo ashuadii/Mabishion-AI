@@ -19,6 +19,7 @@ import InvoicesScreen from './screens/InvoicesScreen';
 import WorkerMonitorScreen from './screens/WorkerMonitorScreen';
 import DocumentsScreen from './screens/DocumentsScreen';
 import KnowledgeBaseScreen from './screens/KnowledgeBaseScreen';
+import LoginScreen from './screens/LoginScreen';
 import { BuildProvider } from './context/BuildContext';
 
 export default function App() {
@@ -47,6 +48,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<DashboardScreen onNavigate={handleNavigate} />} />
         <Route path="/dashboard" element={<DashboardScreen onNavigate={handleNavigate} />} />
+        <Route path="/login" element={<LoginScreen onUnlock={() => navigate('/dashboard')} />} />
         
         {/* Under the hood routes */}
         <Route path="/new-build" element={<ResearchScreen onNavigate={handleNavigate} />} />
@@ -73,8 +75,10 @@ export default function App() {
 
         {/* Tier 2 new screens */}
         <Route path="/clients" element={<ClientsScreen onNavigate={handleNavigate} />} />
-        <Route path="/invoices" element={<InvoicesScreen onNavigate={handleNavigate} />} />
+        <Route path="/workers" element={<WorkerMonitorScreen onNavigate={handleNavigate} />} />
         <Route path="/worker-monitor" element={<WorkerMonitorScreen onNavigate={handleNavigate} />} />
+        <Route path="/invoices" element={<InvoicesScreen onNavigate={handleNavigate} />} />
+        <Route path="/finance/invoices" element={<InvoicesScreen onNavigate={handleNavigate} />} />
         <Route path="/documents" element={<DocumentsScreen onNavigate={handleNavigate} />} />
         <Route path="/knowledge" element={<KnowledgeBaseScreen onNavigate={handleNavigate} />} />
       </Routes>
