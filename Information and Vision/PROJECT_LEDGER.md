@@ -1401,6 +1401,56 @@ BRC-1 (worker isolation) still Carry Forward — Batch 9 remaining.
 
 Next step: Batch 8 — Operations Verification (TESTING + DEPLOYMENT + DR + OPS + COST docs).
 
+[2026-06-28] [Engineering Stabilization Checkpoint] — [Claude Sonnet 4.6 (1M)] — [src/data/db_schema_upgrade.js, src/engine/runtime.js]
+
+## STABILIZATION FINDINGS
+
+### ✅ Test Suite
+- 24/24 tests passing — pre-build gate confirmed firing
+- No test regressions
+
+### ✅ Schema Migration  
+- 20 tables defined in db_schema_upgrade.js
+- SCHEMA_VERSION bumped 12 → 13 (backups table added to schema)
+- **Regression found and fixed:** `backups` table was missing from db_schema_upgrade.js — only created inline in cronService.js. Fresh databases would not have it until first backup run. Fixed: added to schema, version 13.
+- All E2/E3 tables verified present: tasks ✓ worker_executions ✓ cost_logs ✓ backups ✓ consents ✓ file_storage ✓ audit_logs ✓
+
+### ✅ Event Flow
+- **Regression found and fixed:** runtime.js had 3 listeners for old `approval_granted` event. B14 (E3) changed emitters to `approval_action` but runtime.js was not updated. Approval wait polling in runtime.js would never receive events.
+- Fixed: all 3 `listen('approval_granted', ...)` → `listen('approval_action', ...)`, payload fields `{ approvalId, decision }` → `{ approval_id, action }`
+- No remaining `approval_granted` listeners in codebase
+
+### ✅ UI Navigation
+- All 18 imported screens verified as routed — no orphaned imports
+- Parametric route /projects/:id registered correctly
+- Login, workers, finance/invoices routes confirmed present
+
+### ✅ Worker Registry
+- 24 workers confirmed in WORKER_REGISTRY (24 workerClass entries)
+- BaseWorker timeout (300s) wraps execute() only — approval wait unaffected
+
+### ✅ Approval Routing
+- normalizeApprovalStatus covers all 5 statuses: approved, rejected, changes_requested, expired, auto_approved
+
+### ⏳ Runtime Verification Pending (requires live app startup)
+- Database migration from v12 → v13 on live mabishion.db
+- Worker execution smoke test (end-to-end lead → approval flow)
+- UI navigation smoke test in running Tauri app
+- approval_action event propagation to UI listeners
+- B13 project detail screen navigation from ProjectsScreen
+
+## STABILIZATION EXIT CRITERIA
+
+| Criterion | Status |
+|-----------|--------|
+| Critical runtime regressions resolved | ✅ 2 regressions found and fixed (backups schema, approval_granted listeners) |
+| Tests pass | ✅ 24/24 |
+| Build clean | ✅ Exit code 0 — 5.66s |
+| No blocking issues in static analysis | ✅ Clear |
+| Runtime verification on live app | ⏳ Requires owner to start app |
+
+**Assessment:** No known issue blocks progression to P2. Two regressions found in static analysis and fixed. Runtime verification on live app remains pending — cannot be performed without Tauri process running.
+
 [2026-06-28] [Engineering Batch E4 — P1 Screens & Testing] — [Claude Sonnet 4.6 (1M)] — [package.json, src/screens/ProjectDetailScreen.jsx (NEW), src/App.jsx]
 
 ## BLUEPRINT TRACEABILITY
@@ -1415,19 +1465,21 @@ Next step: Batch 8 — Operations Verification (TESTING + DEPLOYMENT + DR + OPS 
 ## BLUEPRINT ALIGNMENT
 | Item | Blueprint § | Engineering State |
 |------|------------|------------------|
-| B11 — test suite into build | TESTING-STRATEGY §3.1 | Test Gate Implemented + Tests Executing (24/24 pass before every build via prebuild hook) |
-| B13 — /projects/{id} screen | UI/UX-SPEC §4.2 | Screen Implemented + Route Registered + Build Verified + Runtime Verification Pending |
+| B11 — test suite into build | TESTING-STRATEGY §3.1 | Pre-Build Test Gate Implemented — tests execute before every build, gate passes (24/24). CI/CD integration, complete test strategy, and release pipeline remain independent capabilities. |
+| B13 — /projects/{id} screen | UI/UX-SPEC §4.2 | Screen Structure Implemented + Route Registered + Build Verified + Runtime Data Integration Pending. Tasks/Files/Invoices/Activity tabs: structural shells present; functional behaviour depends on B12 runtime, file_storage population, and worker activity data. Blueprint conformance of tab content not yet verified. |
 
 > Alignment reflects reviewed Blueprint sections. Alignment with the complete Enterprise Blueprint remains subject to cross-document verification.
 
 ## IMPLEMENTATION EVIDENCE
 - Blueprint Reviewed: ✓ TESTING-STRATEGY §3.1, UI/UX-SPEC §4.2
 - Code Reviewed: ✓ package.json scripts, App.jsx, existing screen patterns (FinanceScreen.jsx)
-- Implemented: ✓ B11 (prebuild hook), B13 (ProjectDetailScreen.jsx + route)
-- Build Verified: ✓ Exit code 0 — 5.64s (tests ran first: 24/24 passed)
-- Tests Executed: ✓ 24/24 passed (prebuild gate confirmed firing)
-- Runtime Verified: ⏳ Pending — /projects/:id navigation not runtime-tested
-- Database Verified: ⏳ Not applicable for B11; B13 reads getProjects/getInvoices/getWorkerLogs
+- Blueprint Reviewed: ✓ TESTING-STRATEGY §3.1, UI/UX-SPEC §4.2
+- Code Reviewed: ✓ package.json, App.jsx, existing screen patterns
+- Implemented: ✓ B11 prebuild hook, B13 ProjectDetailScreen.jsx + route
+- Tests Executed: ✓ 24/24 passed (285ms, prebuild gate firing confirmed)
+- Build Verified: ✓ Exit code 0 — 5.64s
+- Runtime Verified: ⏳ Pending — Stabilization Checkpoint required
+- Dependency Status: B13 Tasks tab depends on B12 runtime (tasks table data); B13 Files tab depends on file_storage population; B13 Activity tab depends on worker execution logs against project_id
 
 ## SCOPE VERIFICATION
 
@@ -1776,7 +1828,7 @@ OPEN BRFs (Blueprint Reconciliation required before BRF-blocked items):
 - BRF-4: Worker naming authority (missing canonical registry `02_Worker_Registry.md v4.0 FINAL`)
 - BRF-5: Social/email scope (anti-goals in Vision/PRD vs BRD workers WK-012/013)
 
-NEXT STEP: Engineering Batch E5 — P2 Owner Decision items (CF-3A, CF-3B, Batch 2 P0) — present for owner resolution. E4 complete.
+NEXT STEP: Engineering Batch E5 — P2 Owner Decision items (CF-3A, CF-3B, Batch 2 P0) — present for owner resolution.
 
 P0 ROUTING BATCH (E1) — COMPLETE:
   B01: [x] /login routed — LoginScreen imported, onUnlock → /dashboard
