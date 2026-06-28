@@ -2355,18 +2355,81 @@ Evidence source: Native runtime screen recording, Product Owner observation.
 **What is not independently confirmed:**
 - Live invocation of the 5 new Blueprint IPC commands was not observed during the acceptance session. A4 PASS demonstrates existing IPC paths (SQLite plugin, pre-existing 26 commands) operated correctly. It does not confirm the new commands were called end-to-end from the React frontend through the Tauri IPC bridge.
 
-## ENGINEERING BATCH E5 — CLOSED ✅
+## ENGINEERING BATCH E5 — COMPLETION REPORT (FROZEN)
 
-| Layer | Final Status |
-|-------|-------------|
-| Implementation | ✅ Complete |
-| Build Verification | ✅ Verified |
-| Automated Verification | ✅ Verified |
-| Native Runtime | ✅ Verified |
-| Schema Verification | ✅ Verified |
-| Authentication Logic | ✅ Verified |
-| IPC Implementation | ✅ Verified |
-| Product Owner Acceptance | ✅ PASS |
-| Engineering Batch E5 | ✅ CLOSED |
+**Status:** CLOSED ✅ | **Frozen:** 2026-06-28
+**Authority:** Product Owner Acceptance — A1–A5 PASS (screen recording, 2026-06-28)
 
-Closed: 2026-06-28
+---
+
+### Approved Scope Delivered
+
+| Item | Decision | Outcome |
+|------|----------|---------|
+| CF-3A — Worker Runtime | Progressive Rust Offloading | Direction recorded; no premature rewrite authorized |
+| CF-3B — Authentication | Argon2id Option B | `hash_pin` + `verify_pin_argon2` Rust commands implemented; transparent SHA-256 migration in `verifyPin()` |
+| Batch 2 P0 — A | Implement 5 missing IPC commands | `switch_mode`, `get_mode_workers`, `get_api_keys`, `set_api_key`, `get_error_logs` registered |
+| Batch 2 P0 — B | Phase 3 Evaluation | No code change; deferred per approved decision |
+
+---
+
+### Engineering Verification Evidence
+
+| Engineering Conclusion | Supporting Artifact |
+|----------------------|-------------------|
+| Argon2id hash generation produces `$argon2id$v=19$` PHC string | Rust automated verification — cargo test 10/10, 1.23s (`test_hash_pin_produces_argon2id_phc_string`) |
+| Unique salt per hash call | Rust automated verification — cargo test 10/10 (`test_hash_pin_produces_unique_hashes`) |
+| Correct PIN accepted by Argon2id verifier | Rust automated verification — cargo test 10/10 (`test_verify_pin_argon2_accepts_correct_pin`) |
+| Wrong PIN rejected | Rust automated verification — cargo test 10/10 (`test_verify_pin_argon2_rejects_wrong_pin`) |
+| Argon2id PHC string does not trigger legacy detection | Rust automated verification — cargo test 10/10 (`test_argon2_hash_does_not_look_like_legacy_sha256`) |
+| `switch_mode` validates mode IDs 1–5 | Rust automated verification — cargo test 10/10 (`test_switch_mode_valid`, `test_switch_mode_invalid`) |
+| `get_error_logs` caps limit at 100 | Rust automated verification — cargo test 10/10 (`test_get_error_logs_caps_limit`, `test_get_error_logs_default_limit`) |
+| Legacy SHA-256 hex hash (64-char) detected correctly | Frontend automated verification — vitest 34/34, 214ms (`detects SHA-256 hex string as legacy`) |
+| Argon2id PHC string not treated as legacy | Frontend automated verification — vitest 34/34 (`does not treat Argon2id PHC string as legacy`) |
+| Migration path routes correctly per hash format | Frontend automated verification — vitest 34/34 (`routes SHA-256 hash to migration path`, `routes Argon2id hash to verify path`) |
+| Real DB hash (`61e7cfb3...`, 64-char hex) classified as legacy | Authentication integration verification — standalone binary 9/9 (`PASS 5: legacy SHA-256 from live DB detected correctly`) |
+| Migration hash generation and verification round-trip | Authentication integration verification — standalone binary 9/9 (`PASS 7: migration hash generation + verification`) |
+| All 7 new IPC commands registered in Tauri dispatch table | Binary IPC registration verification — `strings` inspection of `target/debug/mabishion-ai`; confirmed: `hash_pin`, `verify_pin_argon2`, `switch_mode`, `get_mode_workers`, `get_api_keys`, `set_api_key`, `get_error_logs` |
+| Schema migration executed v9 → v13 on app launch | Database schema verification — python3 DB query pre-launch (v9) and post-launch (v13); confirmed: tasks, worker_executions, cost_logs, file_storage, backups tables created |
+| 24 workers seeded in workers table | Database schema verification — python3 DB query post-launch: `SELECT COUNT(*) FROM workers` → 24 |
+| App launches without crash | Native runtime verification — PID 194330/194627 confirmed stable, ~178MB, no error output |
+| Dashboard, Lead CRM, Approval Center, Projects screens render | Native runtime verification — Playwright screenshots captured: e5-screen-02.png, e5-s-lead-crm.png, e5-s-approvals.png, e5-s-projects.png |
+| Pre-existing SkeletonCard import bug found and corrected | Code review — `import { SkeletonCard }` → `import SkeletonCard` (default import fix); build re-verified exit 0 |
+
+### Evidence Limitations (explicitly recorded)
+
+| Item | Limitation |
+|------|-----------|
+| SHA-256 → Argon2id migration execution | Migration logic verified by Rust automated verification, frontend automated verification, and authentication integration verification. Live post-login DB state not queried; `pin_hash` column update not independently observed. |
+| IPC live invocation (5 new commands) | Commands registered in binary (binary IPC registration verification). Logic verified by Rust automated verification. Live call from React frontend through Tauri IPC bridge not independently observed during acceptance session. |
+
+### Product Owner Acceptance
+
+| Gate | Observed Outcome | Source |
+|------|-----------------|--------|
+| A1 — Application Launch | PASS — launched successfully, no startup crash | Product Owner Acceptance — screen recording, 2026-06-28 |
+| A2 — Application Stability | PASS — stable throughout session | Product Owner Acceptance — screen recording, 2026-06-28 |
+| A3 — Authentication | PASS — authentication completed, main interface entered | Product Owner Acceptance — screen recording, 2026-06-28 |
+| A4 — Approved Scope | PASS — Dashboard loaded, navigation demonstrated, no visible regression | Product Owner Acceptance — screen recording, 2026-06-28 |
+| A5 — General Behaviour | PASS — normal interaction, no unexpected UI behaviour | Product Owner Acceptance — screen recording, 2026-06-28 |
+
+### Final Status
+
+| Layer | Status | Primary Evidence Artifact |
+|-------|--------|--------------------------|
+| Implementation | ✅ Complete | Code review: Cargo.toml, main.rs, db.js, unit.test.js |
+| Build Verification | ✅ Verified | cargo check 0 warnings; npm run build exit 0, 6.26s |
+| Rust Automated Verification | ✅ Verified | cargo test 10/10, 1.23s |
+| Frontend Automated Verification | ✅ Verified | vitest 34/34, 214ms |
+| Authentication Logic | ✅ Verified | Rust automated verification + authentication integration verification (9/9) |
+| IPC Registration | ✅ Verified | Binary IPC registration verification |
+| Native Runtime | ✅ Verified | Native runtime verification — PID stable, no crash |
+| Schema Migration | ✅ Verified | Database schema verification — v9 → v13 |
+| Screen Regression | ✅ Verified | Native runtime verification — Playwright screenshots |
+| Product Owner Acceptance | ✅ PASS | Product Owner Acceptance — screen recording A1–A5 |
+| SHA-256 Migration Execution | Not independently observed | Logic: Rust + Vitest + auth integration; execution: not observed |
+| IPC Live Invocation | Not independently observed | Registration: binary; logic: Rust tests; live call: not observed |
+| **Engineering Batch E5** | **✅ CLOSED** | Product Owner Acceptance A1–A5 PASS |
+
+**Freeze date:** 2026-06-28
+**Reopening conditions:** verified production defect, withdrawal of Product Owner acceptance, or verified regression affecting E5 functionality.
