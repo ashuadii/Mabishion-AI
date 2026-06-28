@@ -12,10 +12,10 @@
 
 | ID | Item | Domain | Blueprint Source | Effort |
 |----|------|--------|-----------------|--------|
-| B01 | Activate `/login` route — route LoginScreen.jsx | UI | UI/UX §1.2 | Small |
-| B02 | Activate `/clients` route — route ClientsScreen.jsx | UI | UI/UX §5 | Small |
-| B03 | Activate `/workers` route — route WorkerMonitorScreen.jsx | UI | UI/UX §6 | Small |
-| B04 | Activate `/finance/invoices` route — route InvoicesScreen.jsx | UI | UI/UX §8.2 | Small |
+| B01 | ~~Activate `/login` route~~ | UI | UI/UX §1.2 | **Done — E1** Route registered. Runtime verification pending. |
+| B02 | `/clients` route — functional screen verification | UI | UI/UX §5 | **Verified Existing Route — E1.** Route synchronized. Functional screen verification deferred to domain implementation batch. |
+| B03 | ~~Activate `/workers` route~~ | UI | UI/UX §6 | **Done — E1** Route registered. Runtime verification pending. |
+| B04 | ~~Activate `/finance/invoices` route~~ | UI | UI/UX §8.2 | **Done — E1** Route registered. Runtime verification pending. |
 | B05 | Populate `workers` table from WORKER_REGISTRY on app startup | Database | ARCHITECTURE §2.2 | Small |
 | B06 | Write backup metadata to `backups` DB table on each run | Database | DATABASE-SPEC §10 | Small |
 | B07 | Add cost alerts at 80% / 90% / 100% of daily+monthly limits | Cost | CGF §1.3 | Small |

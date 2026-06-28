@@ -1,11 +1,12 @@
 ---
 name: enterprise-reporting-standard
-description: Mandatory reporting and governance standard for all Enterprise Blueprint verification reports. Version 1.1.
-version: 1.1
+description: Mandatory reporting and governance standard for Blueprint verification reports and Engineering Completion Reviews. Version 1.2.
+version: 1.2
 ---
 
-# Enterprise Reporting Standard v1.1
+# Enterprise Reporting Standard v1.2
 **Governance Version:** 1.0 (Locked 2026-06-28)
+**v1.2 Change:** Engineering Completion Review template added (Engineering Batch E1 refinements, 2026-06-28).
 **Governance changes permitted only when:** verified implementation/governance problem exists AND existing canonical docs cannot absorb it AND measurable long-term benefit outweighs maintenance cost.
 
 ## Scope of This Standard
@@ -344,3 +345,87 @@ Out of scope: [what was NOT reviewed]
 ## Next Action
 [Single next step]
 ```
+
+---
+
+# Engineering Completion Review Template
+
+Required at the end of every Engineering Batch. Implementation is not considered complete until this review has passed.
+
+Engineering Batch identifiers (E1, E2, E3…) are independent from Blueprint Verification Batch identifiers. Do not merge these lifecycles.
+
+```
+## ANALYSIS SUMMARY
+- Batch: E[N] — [Batch Name]
+- Items: [B-IDs completed] | [B-IDs reclassified/deferred]
+- Blueprint source: [document + section refs]
+- Files changed: [list]
+
+## BLUEPRINT ALIGNMENT
+| Item | Blueprint § | Status |
+|------|------------|--------|
+| [item] | [§ref] | ✅ Implemented / Verified Existing / ⏳ Deferred |
+
+## SCOPE VERIFICATION
+
+Blueprint Scope (this batch):
+• [what the batch was scoped to]
+
+Completed:
+✓ [item]
+✓ [item]
+
+Out of Scope (deferred):
+• [item — reason]
+• [item — reason]
+
+## ARCHITECTURE REVIEW
+[Patterns followed, no drift, existing code preserved]
+
+## CODE REVIEW
+[Logic, error handling, edge cases, security — proportional to change size]
+
+## SECURITY REVIEW
+[Auth, data handling, injection risks — note N/A if genuinely not applicable]
+
+## BUILD VERIFICATION
+Build verification completed successfully. Functional runtime verification and Blueprint compliance remain pending where applicable.
+- Build: Exit code [N] — [Xs]
+
+## TEST RESULTS
+- Build: ✅ / ❌
+- Runtime verification: ✅ / ⏳ Pending — [what to verify manually]
+
+## VERIFICATION METHOD
+✓ Blueprint Review — [documents + sections read]
+✓ Source Code Review — [files reviewed]
+✓ Blueprint ↔ Code Synchronization
+✓ Build Verification
+⏳ Runtime Verification — Pending / ✅ Completed
+
+## KNOWN LIMITATIONS
+- [existing condition — not a new defect]
+- [deferred item — scope boundary]
+- [pre-existing warning — unchanged]
+
+## DOCUMENTATION SYNCHRONIZATION
+[PROJECT_LEDGER updated. IMPLEMENTATION-BACKLOG items closed/reclassified. Other docs if changed.]
+
+## APPROVAL STATUS
+[Pending owner review / Approved — Owner review YYYY-MM-DD]
+
+## NEXT IMPLEMENTATION BATCH
+Engineering Batch E[N+1] — [scope]
+```
+
+### Scope Boundary Rule
+
+Completed scope and deferred scope must be explicitly stated.
+
+A successful build confirms code integrity. It does not confirm runtime behaviour or Blueprint compliance. These must be stated separately.
+
+### Batch Identity Rule
+
+Engineering Batch identifiers (E1, E2…) track implementation execution.
+Blueprint Verification Batch identifiers (Batch 1…9) track documentation verification.
+These lifecycles are independent and must not be merged.

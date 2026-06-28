@@ -1401,16 +1401,83 @@ BRC-1 (worker isolation) still Carry Forward — Batch 9 remaining.
 
 Next step: Batch 8 — Operations Verification (TESTING + DEPLOYMENT + DR + OPS + COST docs).
 
-[2026-06-28] [Engineering Batch E1] — [Claude Sonnet 4.6 (1M)] — [src/App.jsx]
-What changed: Activated 4 Blueprint-specified routes per UI/UX-SPEC §1.2, §5.1, §6.1, §8.2.
-  - /login → LoginScreen (imported + wired onUnlock → /dashboard)
-  - /workers → WorkerMonitorScreen alias (alongside existing /worker-monitor)
-  - /finance/invoices → InvoicesScreen nested path (alongside existing /invoices)
-  - /clients: already routed, no change required
-Why changed: Blueprint ↔ Code sync — 3 required routes were missing from App.jsx.
-Build result: Exit code 0 — 5.74s
-Status: Working
-Next step: Engineering Batch E2 — B05–B10
+[2026-06-28] [Engineering Batch E1 — Route Activation] — [Claude Sonnet 4.6 (1M)] — [src/App.jsx]
+
+## ANALYSIS SUMMARY
+- Batch: E1 — Route Activation
+- Items: B01, B03, B04 (implemented) | B02 (verified existing)
+- Blueprint source: UI/UX-SPEC §1.2 (/login), §5.1 (/clients), §6.1 (/workers), §8.2 (/finance/invoices)
+- File changed: src/App.jsx
+
+## BLUEPRINT ALIGNMENT
+| Route | Blueprint § | Status |
+|-------|------------|--------|
+| /login | §1.2 | ✅ Now routed — LoginScreen imported, onUnlock → /dashboard |
+| /clients | §5.1 | Verified Existing Route Implementation — Route synchronized. Functional screen verification deferred to the relevant domain implementation batch. |
+| /workers | §6.1 | ✅ Now routed — alias added alongside /worker-monitor |
+| /finance/invoices | §8.2 | ✅ Now routed — nested path added alongside /invoices |
+
+## SCOPE VERIFICATION
+
+Blueprint Scope (this batch):
+• Route availability for B01–B04
+
+Completed:
+✓ Route registration — /login, /workers, /finance/invoices
+✓ Route alias — /workers (alongside /worker-monitor)
+✓ Existing route confirmed — /clients
+✓ Build verification — Exit code 0, 5.74s
+
+Out of Scope (deferred):
+• Screen functionality and data binding
+• Blueprint UI compliance (components, layout, interactions)
+• Business logic within each screen
+• Runtime navigation behaviour
+• Functional screen verification for /clients (B02)
+
+## ARCHITECTURE REVIEW
+- No new components created — existing screen files reused
+- LoginScreen.onUnlock prop respected (not overridden to onNavigate)
+- Existing routes /worker-monitor and /invoices preserved — no breaking changes
+- BuildProvider context scope unchanged
+
+## CODE REVIEW
+- 3 changes: 1 import line + 3 route additions
+- LoginScreen receives onUnlock={() => navigate('/dashboard')} — correct per Blueprint §1.2
+
+## SECURITY REVIEW
+- /login route additive only — PIN logic already in LoginScreen.jsx + db.js
+
+## BUILD VERIFICATION
+Build verification completed successfully. Functional runtime verification and Blueprint compliance remain pending where applicable.
+- Build: Exit code 0 — 5.74s
+
+## TEST RESULTS
+- Build: ✅ Pass
+- Runtime verification: ⏳ Pending — manual navigation to /login, /workers, /finance/invoices required
+
+## VERIFICATION METHOD
+✓ Blueprint Review — UI/UX-SPEC §1.2, §5.1, §6.1, §8.2 read directly
+✓ Source Code Review — App.jsx, LoginScreen.jsx reviewed
+✓ Blueprint ↔ Code Synchronization — gap analysis completed
+✓ Build Verification — npm run build, exit code 0
+⏳ Runtime Verification — Pending
+
+## KNOWN LIMITATIONS
+- Runtime navigation not yet verified
+- Functional screen behaviour pending (deferred from this batch scope)
+- /clients functional verification deferred (B02)
+- Existing bundle-size warning unchanged (pre-existing, not introduced by this batch)
+- Existing dynamic-import warning unchanged (pre-existing)
+
+## DOCUMENTATION SYNCHRONIZATION
+PROJECT_LEDGER updated. IMPLEMENTATION-BACKLOG.md B01/B03/B04 closed; B02 reclassified.
+
+## APPROVAL STATUS
+Approved — Owner review 2026-06-28
+
+## NEXT IMPLEMENTATION BATCH
+Engineering Batch E2 — B05–B10
 
 [2026-06-28] [Owner Direction Document] — UI/UX Architecture Direction v1.0
 Artifact Type: Owner Direction Document (not an ADR, not a Blueprint replacement)
