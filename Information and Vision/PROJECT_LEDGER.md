@@ -2023,3 +2023,65 @@ Pending owner review
 
 ## NEXT IMPLEMENTATION BATCH
 Engineering Batch E6 — Runtime verification of E5 changes, then B17 (developer approval gate — BRF-4 resolution needed) or next P1 backlog items
+
+[2026-06-28] [Engineering Batch E5 — Runtime Verification] — [Claude Sonnet 4.6 (1M)] — [src-tauri/src/main.rs]
+
+## RUNTIME VERIFICATION REPORT
+
+### Rust Unit Tests — VERIFIED ✅
+10 unit tests added to main.rs `#[cfg(test)]` module and executed via `cargo test`.
+
+| Test | Scenario | Result |
+|------|----------|--------|
+| test_hash_pin_produces_argon2id_phc_string | Fresh PIN hashed → hash starts with `$argon2id$` | ✅ PASS |
+| test_hash_pin_produces_unique_hashes | Same PIN hashed twice → different outputs (unique salt) | ✅ PASS |
+| test_verify_pin_argon2_accepts_correct_pin | Correct PIN verified against its hash | ✅ PASS |
+| test_verify_pin_argon2_rejects_wrong_pin | Wrong PIN rejected (security verification) | ✅ PASS |
+| test_argon2_hash_does_not_look_like_legacy_sha256 | Argon2id PHC string does not match SHA-256 hex pattern | ✅ PASS |
+| test_switch_mode_valid | Valid mode_id (1–5) returns success | ✅ PASS |
+| test_switch_mode_invalid | Invalid mode_id (99) returns INVALID_MODE_ID | ✅ PASS |
+| test_get_mode_workers_returns_structure | Returns mode_id + workers array | ✅ PASS |
+| test_get_error_logs_caps_limit | Request limit=200 → response limit=100 | ✅ PASS |
+| test_get_error_logs_default_limit | No limit provided → response limit=20 | ✅ PASS |
+
+**Result: 10 passed; 0 failed — finished in 1.23s**
+
+### Tauri App Launch — ENVIRONMENT CONSTRAINT ⚠️
+Claude Code runs inside VS Code snap package (SNAP_REVISION=247). Child processes inherit snap's core20 glibc (`/snap/core20/current/lib/x86_64-linux-gnu/libpthread.so.0`), which conflicts with the system glibc required by the Tauri binary. This causes `undefined symbol: __libc_pthread_init, version GLIBC_PRIVATE` on launch.
+
+This is a pre-existing environment constraint — not introduced by E5 changes. All previous app sessions in PROJECT_LEDGER were launched from the owner's native terminal. ldd confirms the binary links correctly against `/lib/x86_64-linux-gnu/` system libraries.
+
+### Owner Runtime Verification Required
+The following scenarios require the owner to launch the app from a native (non-snap) terminal via `cd "Nexious Mickii/nexious-ai-starter" && npm run tauri-dev`:
+
+| Scenario | How to verify |
+|----------|--------------|
+| Fresh PIN setup creates Argon2id hash | Set a new PIN → check `users.pin_hash` starts with `$argon2id$` in mabishion.db |
+| Legacy SHA-256 user migrates on login | If existing PIN was set before E5, log in once → verify `pin_hash` column updated to `$argon2id$` |
+| Wrong PIN rejected at login screen | Enter wrong PIN → login fails |
+| switch_mode IPC | Open browser console → `__TAURI__.core.invoke('switch_mode', {mode_id: 2})` |
+| get_api_keys IPC | Open browser console → `__TAURI__.core.invoke('get_api_keys', {})` |
+| get_error_logs IPC | Open browser console → `__TAURI__.core.invoke('get_error_logs', {})` |
+| Regression: existing 26 IPC commands | Normal app usage — workers, approvals, file ops should function unchanged |
+
+## VERIFICATION EVIDENCE SUMMARY
+
+| Category | Status |
+|----------|--------|
+| Rust unit tests (10 tests) | ✅ Verified — 10/10 pass |
+| Argon2id hash format | ✅ Verified — PHC string `$argon2id$...` |
+| Argon2id unique salts | ✅ Verified — same PIN produces different hashes |
+| Correct PIN accepted | ✅ Verified |
+| Wrong PIN rejected | ✅ Verified |
+| Legacy hash detection logic | ✅ Verified — PHC string never matches SHA-256 hex pattern |
+| switch_mode input validation | ✅ Verified |
+| IPC command structure (mode, error_logs) | ✅ Verified |
+| Frontend build | ✅ Verified — exit code 0, 5.77s |
+| App launch (Tauri runtime) | ⏳ Pending — requires owner native terminal |
+| End-to-end PIN flow | ⏳ Pending — requires owner native terminal |
+| Legacy SHA-256 migration | ⏳ Pending — requires owner native terminal |
+| IPC invocation from frontend | ⏳ Pending — requires owner native terminal |
+| Regression verification | ⏳ Pending — requires owner native terminal |
+
+Status: Unit test and build verification complete. Runtime verification requires owner action from native terminal.
+Next step: Owner launches app from native terminal and verifies PIN flow + IPC commands. Once confirmed, E5 is complete.
