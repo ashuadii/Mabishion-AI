@@ -35,7 +35,7 @@ import Badge from "../components/Badge";
 import Button from "../components/Button";
 import Icon from "../components/Icon";
 import ProgressBar from "../components/ProgressBar";
-import { SkeletonCard } from "../components/SkeletonCard.jsx";
+import SkeletonCard from "../components/SkeletonCard.jsx";
 import MickiiOrb from "../components/MickiiOrb";
 
 const DEMO_PROJECTS = [
