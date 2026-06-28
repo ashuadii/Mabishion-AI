@@ -29,14 +29,14 @@
 
 | ID | Item | Domain | Blueprint Source | Effort |
 |----|------|--------|-----------------|--------|
-| B11 | Integrate test suite into app build process | Testing | TESTING-STRATEGY §3.1 | Medium |
-| B12 | Add missing tables: `tasks`, `worker_executions`, `cost_logs` | Database | DATABASE-SPEC §9,10,14 | Large |
-| B13 | Add `/projects/{id}` parametric route and screen | UI | UI/UX §4.2 | Medium |
-| B14 | Add `approval_action` Tauri event emission | Approval | API-SPEC §9.1 | Small |
-| B15 | Add missing `file_storage` table init (if not auto-created after F1) | Database | DATABASE-SPEC §5 | Small |
-| B16 | Add fallback API call logging in `audit_logs` | Security | ADDENDUM §Gap 1 | Small |
-| B17 | Review `developer` worker approval gate (STANDARD vs CRITICAL) | Workers | AGENT-SYSTEM §2.2 | Small |
-| B18 | Add per-task 5-minute timeout in BaseWorker.run() | Workers | WORKER-ARCH §2.2, ARCH §6.2 | Small |
+| B11 | Integrate test suite into app build process | Testing | TESTING-STRATEGY §3.1 | **E4 — pending** |
+| B12 | ~~Add missing tables: `tasks`, `worker_executions`, `cost_logs`~~ | Database | DATABASE-SPEC §9/10/14 | **Done — E3** Route Synchronized. Schema v12. |
+| B13 | Add `/projects/{id}` parametric route and screen | UI | UI/UX §4.2 | **E4 — pending** |
+| B14 | ~~Add `approval_action` Tauri event emission~~ | Approval | API-SPEC §9.1 | **Done — E3** Route Synchronized. Payload aligned. |
+| B15 | ~~`file_storage` table~~ | Database | DATABASE-SPEC | **Verified Existing — E3.** Present in schema since F1 fix. |
+| B16 | ~~Add fallback API call logging in `audit_logs`~~ | Security | ADDENDUM §Gap 1 | **Done — E3** Route Synchronized. |
+| B17 | `developer` worker approval gate (STANDARD vs CRITICAL) | Workers | AGENT-SYSTEM §2.2 | **Blocked — BRF-4** (Worker Naming Authority unresolved). |
+| B18 | ~~Per-task 5-minute timeout in BaseWorker.run()~~ | Workers | ARCH §6.2 | **Done — E3** Route Synchronized. Promise.race 300s. |
 
 ---
 

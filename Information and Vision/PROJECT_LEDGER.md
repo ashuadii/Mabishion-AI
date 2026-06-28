@@ -1401,6 +1401,81 @@ BRC-1 (worker isolation) still Carry Forward — Batch 9 remaining.
 
 Next step: Batch 8 — Operations Verification (TESTING + DEPLOYMENT + DR + OPS + COST docs).
 
+[2026-06-28] [Engineering Batch E3 — P1 Core] — [Claude Sonnet 4.6 (1M)] — [src/data/db_schema_upgrade.js, src/data/db.js, src/services/llmManager.js, src/engine/workers/baseWorker.js]
+
+## ANALYSIS SUMMARY
+- Batch: E3 — P1 Core
+- Items: B12 (impl), B14 (impl), B15 (verified existing), B16 (impl), B17 (blocked), B18 (impl)
+- Blueprint sources: DATABASE-SPEC §9/10/14, API-SPEC §9.1, ADDENDUM §Gap 1, ARCHITECTURE §6.2
+- Files changed: db_schema_upgrade.js, db.js, llmManager.js, baseWorker.js
+
+## BLUEPRINT TRACEABILITY
+| Field | Content |
+|-------|---------|
+| Blueprint Documents | DATABASE-SPEC §9 (tasks), §10 (worker_executions), §14 (cost_logs); API-SPEC §9.1 (approval_action event); ADDENDUM §Gap 1 (fallback logging); ARCHITECTURE §6.2 (300s timeout); AGENT-SYSTEM §2.2 (B17 reviewed) |
+| Product Owner Decisions | None applicable |
+| Blueprint Addenda | ADDENDUM v2.0 §Gap 1 — fallback API logging requirement |
+| Blueprint Reconciliation Findings | BRF-4 (Worker Naming Authority) — blocks B17 |
+| Verification References | Verification Summary Batch 4 (Workers & Agents) |
+
+## BLUEPRINT ALIGNMENT
+| Item | Blueprint § | Engineering State |
+|------|------------|------------------|
+| B12 — tasks, worker_executions, cost_logs | DATABASE-SPEC §9/10/14 | Route Synchronized — tables added to db_schema_upgrade.js (schema v12) |
+| B14 — approval_action event | API-SPEC §9.1 | Route Synchronized — approval_granted → approval_action, payload aligned to spec |
+| B15 — file_storage table | DATABASE-SPEC | Verified Existing — present in db_schema_upgrade.js line 157 since F1 fix |
+| B16 — fallback API audit log | ADDENDUM §Gap 1 | Route Synchronized — logAudit('FALLBACK_API_CALL') in executeLlmWithFallback() |
+| B17 — developer approval gate | AGENT-SYSTEM §2.2 | Blocked — BRF-4 (Worker Naming Authority) unresolved. AGENT-SYSTEM naming (WK-001 MaxCore=CRITICAL) does not directly map to current registry. Change deferred until BRF-4 resolved. |
+| B18 — 5-minute timeout | ARCHITECTURE §6.2 | Route Synchronized — Promise.race with 300s timeout in BaseWorker.run() |
+
+> Alignment reflects reviewed Blueprint sections. Alignment with the complete Enterprise Blueprint remains subject to cross-document verification.
+
+## SCOPE VERIFICATION
+
+Completed:
+✓ B12: tasks, worker_executions, cost_logs — schema v11→12
+✓ B14: approval_action event with spec-compliant payload
+✓ B15: Verified Existing (no change required)
+✓ B16: Fallback API audit log — ADDENDUM §Gap 1 satisfied
+✓ B18: 5-min Promise.race timeout on BaseWorker.execute()
+✓ Build: Exit code 0 — 6.10s
+
+Out of Scope (deferred):
+• B17: BRF-4 blocked — developer gate not changed
+• cost_logs TRIGGER (Blueprint spec) — omitted; cost enforcement in cronService.js
+• B11: test suite integration — E4
+• B13: /projects/{id} screen — E4
+
+## ARCHITECTURE REVIEW
+- Schema version bumped 11→12 — upgradeDatabase() handles idempotent migration
+- cost_logs omits Blueprint TRIGGER — cost enforcement already in runCostAlertJob()
+- B14: all three approval emit sites updated (updateApprovalStatus, approveAction, rejectAction)
+- B18 timeout is per-execute() call — does not affect approval wait time (that's outside execute())
+- logAudit in llmManager wrapped with .catch(() => {}) — non-blocking on DB unavailability
+
+## BUILD VERIFICATION
+Build verification completed successfully. Functional runtime verification and Blueprint compliance remain pending where applicable.
+Build: Exit code 0 — 6.10s
+
+## KNOWN LIMITATIONS
+- cost_logs TRIGGER not implemented (intentional — enforcement in cronService.js)
+- B17 deferred — developer gate unchanged at STANDARD, BRF-4 resolution required
+- Runtime schema migration to v12 verified only after app restart with live DB
+- Pre-existing dynamic-import and bundle-size warnings unchanged
+
+## VERIFICATION METHOD
+✓ Blueprint Review — DATABASE-SPEC §9/10/14, API-SPEC §9.1, ADDENDUM §Gap 1, ARCHITECTURE §6.2, AGENT-SYSTEM §2.2
+✓ Source Code Review — db_schema_upgrade.js, db.js, llmManager.js, baseWorker.js reviewed before change
+✓ Blueprint ↔ Code Synchronization — gap confirmed per item
+✓ Build Verification — exit code 0
+⏳ Runtime Verification — Pending
+
+## APPROVAL STATUS
+Pending owner review
+
+## NEXT IMPLEMENTATION BATCH
+Engineering Batch E4 — B11 (test suite integration), B13 (/projects/{id} screen)
+
 [2026-06-28] [Engineering Batch E2 — P0 Foundation] — [Claude Sonnet 4.6 (1M)] — [src/utils/approvalRouting.js, src/data/db.js, src/services/cronService.js, src/engine/workers/clientIntakeWorker.js]
 
 ## ANALYSIS SUMMARY
@@ -1634,7 +1709,7 @@ OPEN BRFs (Blueprint Reconciliation required before BRF-blocked items):
 - BRF-4: Worker naming authority (missing canonical registry `02_Worker_Registry.md v4.0 FINAL`)
 - BRF-5: Social/email scope (anti-goals in Vision/PRD vs BRD workers WK-012/013)
 
-NEXT STEP: Engineering Batch E3 — P1 items (B11–B18).
+NEXT STEP: Engineering Batch E4 — B11 (test suite), B13 (project detail screen).
 
 P0 ROUTING BATCH (E1) — COMPLETE:
   B01: [x] /login routed — LoginScreen imported, onUnlock → /dashboard
