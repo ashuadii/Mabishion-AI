@@ -2296,5 +2296,24 @@ Product Owner native terminal verification (E5-RUNTIME-VERIFICATION-SCRIPT.md) r
 2. Argon2id migration on actual PIN login
 3. User Acceptance: Product Owner native runtime verification
 
-## NEXT STEP
-Owner runs app from native terminal and verifies PIN login + IPC console commands per E5-RUNTIME-VERIFICATION-SCRIPT.md. Once evidence received, E5 will be formally closed or corrected.
+## FINAL ENGINEERING STATUS — 2026-06-28
+
+| Layer | Status |
+|-------|--------|
+| Implementation | ✅ Complete |
+| Build Verification | ✅ Verified |
+| Automated Verification | ✅ Verified |
+| Native Runtime | ✅ Verified |
+| Schema Verification | ✅ Verified |
+| Authentication Logic | ✅ Verified |
+| IPC Implementation | ✅ Engineering Verified |
+| Engineering Evidence Collection | ✅ Complete |
+| End-to-End IPC Invocation | ⏳ Product Owner Verification Pending |
+| Live Authentication Migration | ⏳ Product Owner Verification Pending |
+| Product Owner Acceptance | ⏳ Pending |
+| Engineering Batch E5 Closure | ⏳ Pending |
+
+Engineering-controlled verification is complete. Product Owner acceptance verification remains outstanding.
+Batch closure requires: End-to-End IPC Invocation + Live Authentication Migration + Product Owner Acceptance.
+
+Verification procedure: Information and Vision/E5-RUNTIME-VERIFICATION-SCRIPT.md
