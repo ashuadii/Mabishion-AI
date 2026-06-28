@@ -2396,6 +2396,12 @@ Pre-existing bundle-size warning unchanged
 ## APPROVAL STATUS
 Pending Product Owner acceptance
 
+[2026-06-29] [Governance] — [Product Owner] — [Information and Vision/ENGINEERING-LIFECYCLE-STANDARD-v1.0.md]
+What changed: Engineering Lifecycle Standard v1.0 established by Product Owner. Defines 8-stage batch lifecycle, evidence classification standard (6 classes), 4 independent reporting categories, 2 terminal outcomes, batch governance rule, and runtime verification principle. Applies to Engineering Batch E6 and all subsequent batches.
+Canonical location: Information and Vision/ENGINEERING-LIFECYCLE-STANDARD-v1.0.md
+Status: Active
+Next step: Apply to current Engineering Batch E6-B (currently at Product Owner Acceptance stage)
+
 [2026-06-28] [Engineering Batch E5 — CLOSED] — [Claude Sonnet 4.6 (1M)] — [PROJECT_LEDGER.md]
 
 ## PRODUCT OWNER ACCEPTANCE EVIDENCE
