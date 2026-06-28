@@ -2402,6 +2402,11 @@ Canonical location: Information and Vision/ENGINEERING-LIFECYCLE-STANDARD-v1.0.m
 Status: Active
 Next step: Apply to current Engineering Batch E6-B (currently at Product Owner Acceptance stage)
 
+[2026-06-29] [Governance] — [Product Owner] — [Information and Vision/ENGINEERING-LIFECYCLE-STANDARD-v1.1.md]
+What changed: Repository Evidence Classification Standard v1.1 established. Extends v1.0. Defines 6 evidence states (Claimed → Repository Confirmed → Build Confirmed → Runtime Confirmed → Acceptance Confirmed → Audit Confirmed). Evidence is progressive — reports must reference the highest confirmed level explicitly. Intermediate levels cannot be skipped. Binary "Verified/Not Verified" model replaced.
+Canonical location: Information and Vision/ENGINEERING-LIFECYCLE-STANDARD-v1.1.md
+Status: Active
+
 [2026-06-28] [Engineering Batch E5 — CLOSED] — [Claude Sonnet 4.6 (1M)] — [PROJECT_LEDGER.md]
 
 ## PRODUCT OWNER ACCEPTANCE EVIDENCE
