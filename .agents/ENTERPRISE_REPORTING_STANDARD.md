@@ -361,10 +361,21 @@ Engineering Batch identifiers (E1, E2, E3…) are independent from Blueprint Ver
 - Blueprint source: [document + section refs]
 - Files changed: [list]
 
+## BLUEPRINT TRACEABILITY
+| Field | Content |
+|-------|---------|
+| Blueprint Documents | [document name + sections reviewed] |
+| Product Owner Decisions | [applicable decisions or "None"] |
+| Blueprint Addenda | [applicable addenda or "None"] |
+| Blueprint Reconciliation Findings | [applicable BRFs or "None"] |
+| Verification References | [cross-reference to Verification Summary if applicable] |
+
 ## BLUEPRINT ALIGNMENT
 | Item | Blueprint § | Status |
 |------|------------|--------|
 | [item] | [§ref] | ✅ Implemented / Verified Existing / ⏳ Deferred |
+
+> Alignment statements must be qualified: "The current implementation aligns with the reviewed [Document] §[section]. Alignment with the complete Enterprise Blueprint remains subject to cross-document verification."
 
 ## SCOPE VERIFICATION
 

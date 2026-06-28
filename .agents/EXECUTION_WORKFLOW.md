@@ -59,6 +59,111 @@ None of these artifacts replaces another.
 
 ---
 
+### Blueprint Interpretation Rules (Engineering Version 1.0)
+
+These rules govern how the Enterprise Blueprint is interpreted during all engineering work. They introduce no new governance policy — they define how Governance Version 1.0 is applied during implementation.
+
+#### 1. Unified Specification
+
+The Enterprise Blueprint is a unified specification, not a collection of competing documents. Every Blueprint document contributes within its intended scope:
+
+| Layer | Scope |
+|-------|-------|
+| Vision | Business intent and product philosophy |
+| BRD | Business requirements and constraints |
+| PRD | Product features and acceptance criteria |
+| SRD | System requirements and non-functional constraints |
+| TRD | Technical requirements and integration constraints |
+| Architecture | System design and component structure |
+| Agent System | Agent roles, prompts, and routing |
+| Worker Architecture | Worker definitions, queues, and execution rules |
+
+#### 2. Blueprint Dependency Hierarchy
+
+```
+Vision
+    ↓
+BRD
+    ↓
+PRD
+    ↓
+SRD
+    ↓
+TRD
+    ↓
+Architecture
+    ↓
+Agent System
+    ↓
+Worker Architecture
+```
+
+Higher layers define business intent. Lower layers define technical realization.
+
+A lower document does not override a higher document unless an approved Blueprint Revision, Addendum, Blueprint Reconciliation, or Product Owner Decision explicitly states otherwise.
+
+#### 3. Materially Relevant Cross-Document Verification
+
+Before implementing any task:
+
+1. Identify the affected engineering domain.
+2. Identify every Blueprint document that materially governs that implementation.
+3. Review the applicable sections of those documents.
+4. Compare them for consistency across layers.
+5. Compare with the current implementation as evidence.
+6. Review applicable Product Owner Decisions, Blueprint Addenda, and Blueprint Reconciliation Findings.
+7. Perform Blueprint ↔ Code synchronization.
+8. Implement only after all materially relevant Blueprint evidence has been evaluated.
+
+Avoid reviewing unrelated Blueprint documents. Review all layers that materially govern the implementation being modified.
+
+#### 4. Blueprint Authority Rule
+
+When Blueprint documents appear to differ:
+
+- Higher layers = business intent (do not override without approved change)
+- Lower layers = technical realization (refines higher layers, does not replace them)
+
+Engineering shall not decide which document is "correct." Only an approved Blueprint Revision, Addendum, Reconciliation, or Product Owner Decision may change Blueprint authority.
+
+#### 5. Conflict Handling
+
+When multiple Blueprint documents appear inconsistent:
+
+- Do not select one document over another.
+- Record a Blueprint Reconciliation Finding (BRF) — see `ENTERPRISE_REPORTING_STANDARD.md`.
+- Identify the conflicting sections precisely.
+- Review existing Addenda and Product Owner Decisions first.
+- If no approved resolution exists: defer only the implementation directly affected. Continue all independent implementation work.
+
+Implementation shall never resolve Blueprint conflicts through engineering judgement alone.
+
+#### 6. Reporting Alignment Qualification
+
+When reporting Blueprint alignment, qualify the scope explicitly.
+
+Avoid:
+> "The implementation aligns with the Agent System."
+
+Use instead:
+> "The current implementation aligns with the reviewed [Document] §[section] requirements. Alignment with the complete Enterprise Blueprint remains subject to cross-document verification."
+
+Local document alignment is never complete Enterprise Blueprint conformance.
+
+#### 7. Blueprint Traceability
+
+Each Engineering Batch Completion Review shall record:
+
+| Traceability Field | Content |
+|-------------------|---------|
+| Blueprint Documents | Which documents and sections were reviewed |
+| Product Owner Decisions | Which decisions apply |
+| Blueprint Addenda | Which addenda apply |
+| Blueprint Reconciliation Findings | Which BRFs are relevant |
+| Verification References | Cross-reference to Verification Summary if applicable |
+
+---
+
 ## 1. Task Intake & Classification
 
 ### Step 1: Parse the Request
