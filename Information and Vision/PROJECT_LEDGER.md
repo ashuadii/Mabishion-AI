@@ -1401,6 +1401,17 @@ BRC-1 (worker isolation) still Carry Forward — Batch 9 remaining.
 
 Next step: Batch 8 — Operations Verification (TESTING + DEPLOYMENT + DR + OPS + COST docs).
 
+[2026-06-28] [Engineering Batch E1] — [Claude Sonnet 4.6 (1M)] — [src/App.jsx]
+What changed: Activated 4 Blueprint-specified routes per UI/UX-SPEC §1.2, §5.1, §6.1, §8.2.
+  - /login → LoginScreen (imported + wired onUnlock → /dashboard)
+  - /workers → WorkerMonitorScreen alias (alongside existing /worker-monitor)
+  - /finance/invoices → InvoicesScreen nested path (alongside existing /invoices)
+  - /clients: already routed, no change required
+Why changed: Blueprint ↔ Code sync — 3 required routes were missing from App.jsx.
+Build result: Exit code 0 — 5.74s
+Status: Working
+Next step: Engineering Batch E2 — B05–B10
+
 [2026-06-28] [Owner Direction Document] — UI/UX Architecture Direction v1.0
 Artifact Type: Owner Direction Document (not an ADR, not a Blueprint replacement)
 Saved: Information and Vision/UI-UX-ARCHITECTURE-DIRECTION-v1.0.md
@@ -1470,15 +1481,16 @@ OPEN BRFs (Blueprint Reconciliation required before BRF-blocked items):
 - BRF-4: Worker naming authority (missing canonical registry `02_Worker_Registry.md v4.0 FINAL`)
 - BRF-5: Social/email scope (anti-goals in Vision/PRD vs BRD workers WK-012/013)
 
-NEXT STEP: P0 implementation items B01–B10 (no blockers, ready now).
-  Start with B01–B04 (activate 4 unrouted screens: /login, /clients, /workers, /finance/invoices).
-  Workflow: Read UI/UX-SPECIFICATION.md §1.2, §5, §6, §8.2 first → review current App.jsx → implement routes → 7-pass review → ledger entry.
+NEXT STEP: P0 items B05–B10 (no blockers, ready now).
 
-PENDING P0 ITEMS (ALL READY — no owner decisions or BRF blockers):
-  B01: Activate /login route (LoginScreen.jsx exists, not routed)
-  B02: Activate /clients route (ClientsScreen.jsx exists, not routed)
-  B03: Activate /workers route (WorkerMonitorScreen.jsx exists, not routed)
-  B04: Activate /finance/invoices route (InvoicesScreen.jsx exists, not routed)
+P0 ROUTING BATCH (E1) — COMPLETE:
+  B01: [x] /login routed — LoginScreen imported, onUnlock → /dashboard
+  B02: [x] /clients — was already routed (pre-existing, no change needed)
+  B03: [x] /workers routed — alias added alongside /worker-monitor
+  B04: [x] /finance/invoices routed — nested path added alongside /invoices
+  Build: Exit code 0, 5.74s. File changed: src/App.jsx
+
+PENDING P0 ITEMS (E2, ready now):
   B05: Populate workers table from WORKER_REGISTRY on app startup
   B06: Write backup metadata to backups DB table on each run
   B07: Add cost alerts at 80%/90%/100% of daily+monthly limits
