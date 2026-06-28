@@ -4,7 +4,7 @@
  * Creates tables if they do not exist. No destructive changes.
  */
 
-export const SCHEMA_VERSION = 11;
+export const SCHEMA_VERSION = 12;
 
 export const CREATE_TABLES_SQL = [
   `CREATE TABLE IF NOT EXISTS clients (
@@ -172,6 +172,50 @@ export const CREATE_TABLES_SQL = [
     is_setup INTEGER DEFAULT 0,
     last_login TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE TABLE IF NOT EXISTS tasks (
+    id TEXT PRIMARY KEY,
+    project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
+    worker_id TEXT REFERENCES workers(id) ON DELETE SET NULL,
+    type TEXT NOT NULL DEFAULT 'ops',
+    input_data TEXT NOT NULL DEFAULT '{}',
+    output_data TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    retry_count INTEGER NOT NULL DEFAULT 0,
+    cost INTEGER NOT NULL DEFAULT 0,
+    started_at TEXT,
+    completed_at TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TEXT,
+    fr_reference TEXT DEFAULT 'FR-3.4'
+  )`,
+  `CREATE TABLE IF NOT EXISTS worker_executions (
+    id TEXT PRIMARY KEY,
+    worker_id TEXT REFERENCES workers(id),
+    task_id TEXT REFERENCES tasks(id) ON DELETE CASCADE,
+    input TEXT NOT NULL DEFAULT '{}',
+    output TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    start_time TEXT,
+    end_time TEXT,
+    duration_seconds INTEGER,
+    error_message TEXT,
+    retry_count INTEGER DEFAULT 0,
+    fr_reference TEXT DEFAULT 'FR-4.1'
+  )`,
+  `CREATE TABLE IF NOT EXISTS cost_logs (
+    id TEXT PRIMARY KEY,
+    task_id TEXT REFERENCES tasks(id) ON DELETE CASCADE,
+    worker_id TEXT REFERENCES workers(id),
+    provider TEXT NOT NULL DEFAULT 'unknown',
+    model TEXT,
+    amount INTEGER NOT NULL DEFAULT 0,
+    tokens INTEGER,
+    category TEXT NOT NULL DEFAULT 'ai_api',
+    description TEXT,
+    timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+    fr_reference TEXT DEFAULT 'FR-5.1'
   )`,
   `CREATE TABLE IF NOT EXISTS consents (
     id TEXT PRIMARY KEY,

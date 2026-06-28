@@ -1,4 +1,4 @@
-import { getSetting, logLlmUsage } from '../data/db';
+import { getSetting, logLlmUsage, logAudit } from '../data/db';
 import { logLLMProvider } from '../engine/utils/runtimeHealth.js';
 
 /**
@@ -248,7 +248,10 @@ export async function executeLlmWithFallback(prompt, systemInstruction = '') {
       const duration = Date.now() - startTime;
 
       console.log(`[LLM Fallback] Success with ${step.provider} in ${duration}ms. Model: ${result.model}`);
-      
+
+      // B16: Log fallback API call to audit_logs (ADDENDUM §Gap 1)
+      await logAudit('INFO', 'FALLBACK_API_CALL', JSON.stringify({ provider: step.provider, model: result.model, duration_ms: duration })).catch(() => {});
+
       // Log usage metrics
       await logLlmUsage(
         step.provider,

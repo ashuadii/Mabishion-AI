@@ -1002,13 +1002,13 @@ export async function approveAction(id) {
         .catch(err => console.error('[Mickii DB Auto-Trigger] Failed to import runWorker:', err));
     }
   }
-  await emit('approval_granted', { approvalId: id, decision: 'approved' });
+  await emit('approval_action', { approval_id: id, action: 'approved', timestamp: new Date().toISOString() });
 }
 
 export async function rejectAction(id) {
   const db = await getDb();
   await db.execute("UPDATE approvals SET status = $1, owner_notes = 'Rejected via Legacy API' WHERE id = $2", ['rejected', id]);
-  await emit('approval_granted', { approvalId: id, decision: 'rejected' });
+  await emit('approval_action', { approval_id: id, action: 'rejected', timestamp: new Date().toISOString() });
 }
 
 export async function getApprovals() {
@@ -1065,7 +1065,7 @@ export async function updateApprovalStatus(id, status, notes = '') {
           .catch(err => console.error('[Mickii DB Auto-Trigger] Failed to import runWorker:', err));
       }
     }
-    await emit('approval_granted', { approvalId: id, decision: normalizedStatus });
+    await emit('approval_action', { approval_id: id, action: normalizedStatus, timestamp: new Date().toISOString() });
   }
 }
 
