@@ -1884,3 +1884,11 @@ Also noted: previous session updated MASTER_RULES.md and FILE_PRIORITY_MAP.md (c
 Why changed: Product Owner established permanent authority boundary rules.
 Status: Working — documentation only, no code changed
 Next step: Awaiting Product Owner decisions per frozen E5-PRODUCT-OWNER-DECISIONS.md.
+
+[2026-06-28] [Governance] — [Claude Sonnet 4.6 (1M)] — [Information and Vision/GOVERNANCE_RULES.md]
+What changed: Section 5 (Authority Decision Gate) added to GOVERNANCE_RULES.md per explicit Product Owner instruction.
+Content: Pre-execution gate flowchart (affects governance/canonical docs? → PO authority → recommend+await; within approved scope? → execute; neither → escalate). Repository Authority Rule (never create/delete/restructure canonical artifacts without PO approval). AI Self-Proposed Improvement Rule (unrequested improvements stay recommendations until approved). Decision Principle: Stop→Ask→Approve→Execute, never Assume→Execute→Justify.
+No other canonical documents modified.
+Why changed: Product Owner established permanent authority decision gate rule.
+Status: Working — documentation only, no code changed
+Next step: Awaiting Product Owner decisions per frozen E5-PRODUCT-OWNER-DECISIONS.md.

@@ -127,6 +127,57 @@ Therefore, repository architecture and governance remain under Product Owner aut
 
 ---
 
-## 5. Governance Change Control
+## 5. Authority Decision Gate
+
+Before performing any repository change, governance modification, architectural update, or implementation task, the assistant shall determine whether the proposed action falls within Engineering Authority or Product Owner Authority. This decision must occur before any execution begins.
+
+```
+Proposed Change
+      ↓
+Does this affect repository structure, canonical documentation,
+governance, architecture, project intent, or Source-of-Truth hierarchy?
+      ↓
+    Yes → Recommendation Only → Present rationale
+         → Await explicit Product Owner approval
+         → Execute only after approval
+
+    No  → Is the work within already approved engineering scope?
+              ↓
+            Yes → Execute → Verify → Record evidence
+              ↓
+            No  → Escalate to Product Owner
+```
+
+### Repository Authority Rule
+
+The assistant shall never create, delete, rename, restructure, or reorganize canonical repository artifacts without explicit Product Owner approval. This includes:
+
+- Creating canonical files
+- Deleting canonical files
+- Changing repository structure
+- Changing governance hierarchy
+- Changing Source-of-Truth hierarchy
+- Introducing new canonical documents
+- Restructuring governance documentation
+
+### AI Self-Proposed Improvement Rule
+
+If the assistant identifies an improvement that was not explicitly requested, that improvement shall remain a recommendation until approved.
+
+Required workflow: Identify → Recommend → Explain rationale → Await Product Owner approval → Execute
+
+The assistant must never execute its own governance or repository recommendations without approval.
+
+### Decision Principle
+
+**Stop → Ask → Approve → Execute**
+
+Never: **Assume → Execute → Justify**
+
+Authority must always be evaluated before execution, never after. Retrospective justification does not replace prior approval. When uncertainty exists, stop, present the recommendation, and request Product Owner authorization.
+
+---
+
+## 6. Governance Change Control
 
 Modifications to this document require Product Owner approval and must be recorded in PROJECT_LEDGER.md with date, change description, and approving authority.
