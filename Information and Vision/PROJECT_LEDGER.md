@@ -1405,51 +1405,70 @@ Next step: Batch 8 — Operations Verification (TESTING + DEPLOYMENT + DR + OPS 
 
 ## STABILIZATION FINDINGS
 
-### ✅ Test Suite
+### Test Suite
+- Evidence: Tests Executed ✅
 - 24/24 tests passing — pre-build gate confirmed firing
 - No test regressions
 
-### ✅ Schema Migration  
-- 20 tables defined in db_schema_upgrade.js
-- SCHEMA_VERSION bumped 12 → 13 (backups table added to schema)
-- **Regression found and fixed:** `backups` table was missing from db_schema_upgrade.js — only created inline in cronService.js. Fresh databases would not have it until first backup run. Fixed: added to schema, version 13.
-- All E2/E3 tables verified present: tasks ✓ worker_executions ✓ cost_logs ✓ backups ✓ consents ✓ file_storage ✓ audit_logs ✓
+### Schema Migration
+- Evidence: Code Reviewed ✅ | Static Verification ✅ | Build Verified ✅ | Runtime Migration Verification Pending ⏳
+- **Regression found and fixed:** `backups` table missing from db_schema_upgrade.js — only created inline in cronService.js. Fresh databases would not have it until first backup run.
+- Schema Updated: tasks, worker_executions, cost_logs, backups, consents, file_storage, audit_logs — all present in db_schema_upgrade.js (Verified Static)
+- SCHEMA_VERSION 12 → 13
+- Not yet demonstrated: migration execution on live DB, existing DB upgrade compatibility, FK integrity after migration, data preservation
 
-### ✅ Event Flow
-- **Regression found and fixed:** runtime.js had 3 listeners for old `approval_granted` event. B14 (E3) changed emitters to `approval_action` but runtime.js was not updated. Approval wait polling in runtime.js would never receive events.
-- Fixed: all 3 `listen('approval_granted', ...)` → `listen('approval_action', ...)`, payload fields `{ approvalId, decision }` → `{ approval_id, action }`
-- No remaining `approval_granted` listeners in codebase
+### Event Flow
+- Evidence: Code Reviewed ✅ | Static Verification ✅ | Build Verified ✅ | Runtime Verification Pending ⏳
+- **Regression found and fixed:** runtime.js had 3 `approval_granted` listeners; emitters (B14/E3) already changed to `approval_action`. Listener mismatch would break approval wait polling.
+- Event Wiring Updated: all 3 listener sites → `approval_action`, payload fields aligned `{ approval_id, action }` (Verified Static)
+- No remaining `approval_granted` listeners in codebase (Verified Static)
+- Not yet demonstrated: event emitted in running app, event received by listener, worker resumed, approval workflow completed end-to-end
 
-### ✅ UI Navigation
-- All 18 imported screens verified as routed — no orphaned imports
-- Parametric route /projects/:id registered correctly
-- Login, workers, finance/invoices routes confirmed present
+### UI Navigation
+- Evidence: Code Reviewed ✅ | Static Verification ✅ | Build Verified ✅ | Runtime Verification Pending ⏳
+- All 18 imported screens verified routed — no orphaned imports (Verified Static)
+- Parametric route /projects/:id registered (Verified Static)
+- Not yet demonstrated: navigation in running Tauri app
 
-### ✅ Worker Registry
-- 24 workers confirmed in WORKER_REGISTRY (24 workerClass entries)
-- BaseWorker timeout (300s) wraps execute() only — approval wait unaffected
+### Worker Registry & Timeout
+- Evidence: Code Reviewed ✅ | Static Verification ✅ | Build Verified ✅ | Runtime Verification Pending ⏳
+- 24 workers in WORKER_REGISTRY (Verified Static)
+- Default 300s timeout implementation exists (Verified Static)
+- Not yet demonstrated: per-worker timeout override, runtime timeout behaviour, timeout interaction with approval wait
 
-### ✅ Approval Routing
-- normalizeApprovalStatus covers all 5 statuses: approved, rejected, changes_requested, expired, auto_approved
+### Approval Routing
+- Evidence: Code Reviewed ✅ | Static Verification ✅
+- normalizeApprovalStatus covers all 5 statuses (Verified Static)
 
-### ⏳ Runtime Verification Pending (requires live app startup)
-- Database migration from v12 → v13 on live mabishion.db
-- Worker execution smoke test (end-to-end lead → approval flow)
-- UI navigation smoke test in running Tauri app
-- approval_action event propagation to UI listeners
-- B13 project detail screen navigation from ProjectsScreen
+---
 
-## STABILIZATION EXIT CRITERIA
+**Static verification completed. Runtime verification remains pending until execution within the application environment.**
 
-| Criterion | Status |
-|-----------|--------|
-| Critical runtime regressions resolved | ✅ 2 regressions found and fixed (backups schema, approval_granted listeners) |
-| Tests pass | ✅ 24/24 |
-| Build clean | ✅ Exit code 0 — 5.66s |
-| No blocking issues in static analysis | ✅ Clear |
-| Runtime verification on live app | ⏳ Requires owner to start app |
+## STABILIZATION EVIDENCE SUMMARY
 
-**Assessment:** No known issue blocks progression to P2. Two regressions found in static analysis and fixed. Runtime verification on live app remains pending — cannot be performed without Tauri process running.
+| Category | Status |
+|----------|--------|
+| Blueprint Reviewed | ✅ Verified |
+| Code Reviewed | ✅ Verified |
+| Implemented (regressions fixed) | ✅ Verified |
+| Static Verification | ✅ Verified (Static) |
+| Tests Executed | ✅ Verified — 24/24 |
+| Build Verified | ✅ Verified — Exit code 0, 5.66s |
+| Runtime Verified | ⏳ Pending Verification |
+| Operationally Verified | ⏳ Pending Verification |
+
+## RUNTIME DEFERRAL — DOCUMENTED TECHNICAL JUSTIFICATION
+
+Runtime verification items deferred:
+1. Database migration v12→v13 on live mabishion.db
+2. approval_action event propagation end-to-end
+3. Worker execution smoke test
+4. UI navigation in running Tauri app
+5. B13 project detail screen navigation
+
+**Technical justification for deferral:** Tauri application requires an interactive GUI session (`npm run tauri-dev`). Terminal-only context cannot exercise Tauri IPC, SQLite plugin, event system, or rendered UI. Runtime verification requires owner to start the application and validate these paths.
+
+**P2 entry condition:** Runtime stabilization items are intentionally deferred. No known issue identified in static analysis blocks P2. Two regressions identified and resolved at source before they could affect runtime.
 
 [2026-06-28] [Engineering Batch E4 — P1 Screens & Testing] — [Claude Sonnet 4.6 (1M)] — [package.json, src/screens/ProjectDetailScreen.jsx (NEW), src/App.jsx]
 
