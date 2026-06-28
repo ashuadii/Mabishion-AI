@@ -1684,11 +1684,17 @@ export async function logAudit(level, message, context) {
 }
 
 // ── AUTH (Tier 3) — PIN-based single-user auth ────────────────────────────────
+// CF-3B (E5): Argon2id via Rust IPC replaces SHA-256 + static salt.
+// Migration: existing SHA-256 hashes (hex, 64 chars) are detected and re-hashed
+// transparently on the first successful login.
 
-async function simpleHash(pin) {
-  // SHA-256 via Web Crypto — no external dependency
+async function _sha256Legacy(pin) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin + 'mabishion_salt_v1'));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function _isLegacyHash(hash) {
+  return typeof hash === 'string' && /^[0-9a-f]{64}$/.test(hash);
 }
 
 export async function getAuthUser() {
@@ -1701,7 +1707,7 @@ export async function getAuthUser() {
 
 export async function setupPin(pin) {
   const db = await getDb();
-  const hash = await simpleHash(pin);
+  const hash = await invoke('hash_pin', { pin });
   const existing = await db.select('SELECT id FROM users LIMIT 1');
   if (existing && existing.length > 0) {
     await db.execute('UPDATE users SET pin_hash=$1, is_setup=1 WHERE id=$2', [hash, existing[0].id]);
@@ -1715,9 +1721,26 @@ export async function setupPin(pin) {
 
 export async function verifyPin(pin) {
   const user = await getAuthUser();
-  if (!user || !user.is_setup) return { valid: true, firstTime: true }; // not set up yet
-  const hash = await simpleHash(pin);
-  const valid = hash === user.pin_hash;
+  if (!user || !user.is_setup) return { valid: true, firstTime: true };
+
+  let valid = false;
+
+  if (_isLegacyHash(user.pin_hash)) {
+    // Transparent migration: verify with old SHA-256, then re-hash with Argon2id
+    const legacyHash = await _sha256Legacy(pin);
+    if (legacyHash === user.pin_hash) {
+      valid = true;
+      // Upgrade stored hash to Argon2id silently
+      try {
+        const newHash = await invoke('hash_pin', { pin });
+        const db = await getDb();
+        await db.execute('UPDATE users SET pin_hash=$1 WHERE id=$2', [newHash, user.id]);
+      } catch { /* non-blocking — login still succeeds */ }
+    }
+  } else {
+    valid = await invoke('verify_pin_argon2', { pin, hash: user.pin_hash });
+  }
+
   if (valid) {
     const db = await getDb();
     await db.execute('UPDATE users SET last_login=$1 WHERE id=$2', [new Date().toISOString(), user.id]);
