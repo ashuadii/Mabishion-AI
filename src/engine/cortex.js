@@ -12,6 +12,7 @@ import {
   getProjectMemory,
   getDailyCostTotal,
   logExecutionSpan,
+  getAgentPrompt,
 } from "../data/db.js";
 import { appDataDir } from "@tauri-apps/api/path";
 import { logLLMProvider, logMemoryPrune } from "./utils/runtimeHealth.js";
@@ -647,29 +648,41 @@ export class Cortex {
 
     this.history.push({ role: "user", content: userText });
 
-    // ── Executive Agent role injection (T5.3) ────────────────────────────────
+    // ── Executive Agent role injection (T5.3) — B31/B32: load from DB, fallback to hardcoded ──
     const lower = userText.toLowerCase();
-    let execPrompt = '';
+    let agentId = null;
     if (lower.includes('revenue') || lower.includes('strategy') || lower.includes('paisa') ||
         lower.includes('opportunity') || lower.includes('business plan') || lower.includes('grow')) {
-      execPrompt = AG_CEO_PROMPT;
+      agentId = 'AG-CEO';
     } else if (lower.includes('technical') || lower.includes('architecture') || lower.includes('stack') ||
                lower.includes('implement') || lower.includes('build') || lower.includes('develop') ||
                lower.includes('code') || lower.includes('tech')) {
-      execPrompt = AG_CTO_PROMPT;
+      agentId = 'AG-CTO';
     } else if (lower.includes('marketing') || lower.includes('content') || lower.includes('post') ||
                lower.includes('lead gen') || lower.includes('instagram') || lower.includes('linkedin') ||
                lower.includes('campaign') || lower.includes('promo')) {
-      execPrompt = AG_CMO_PROMPT;
+      agentId = 'AG-CMO';
     } else if (lower.includes('legal') || lower.includes('contract') || lower.includes('nda') ||
                lower.includes('compliance') || lower.includes('clause') || lower.includes('agreement') ||
                lower.includes('dpdp') || lower.includes('gst') || lower.includes('liability') ||
                lower.includes('ip ') || lower.includes('intellectual property')) {
-      execPrompt = AG_CLO_PROMPT;
+      agentId = 'AG-CLO';
     } else if (lower.includes('operations') || lower.includes('workflow') || lower.includes('pipeline') ||
                lower.includes('delivery') || lower.includes('bottleneck') || lower.includes('blocked') ||
                lower.includes('project status') || lower.includes('kya chal raha') || lower.includes('coordination')) {
-      execPrompt = AG_COO_PROMPT;
+      agentId = 'AG-COO';
+    }
+
+    let execPrompt = '';
+    if (agentId) {
+      // Try DB first; fall back to hardcoded constants
+      const dbPrompt = await getAgentPrompt(agentId).catch(() => null);
+      if (dbPrompt) {
+        execPrompt = dbPrompt;
+      } else {
+        const fallbacks = { 'AG-CEO': AG_CEO_PROMPT, 'AG-CTO': AG_CTO_PROMPT, 'AG-CMO': AG_CMO_PROMPT, 'AG-CLO': AG_CLO_PROMPT, 'AG-COO': AG_COO_PROMPT };
+        execPrompt = fallbacks[agentId] || '';
+      }
     }
     const activeSystemPrompt = execPrompt
       ? execPrompt + '\n\n' + this.systemPrompt

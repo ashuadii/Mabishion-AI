@@ -218,6 +218,9 @@ export async function runDailyBackupJob() {
 // Register daily backup job (24h interval)
 cronEngine.schedule('DailyBackup', 24 * 60 * 60 * 1000, runDailyBackupJob);
 
+// B30: Hourly incremental backup (RPO ≤1 hour — DISASTER-RECOVERY §2)
+cronEngine.schedule('HourlyBackup', 60 * 60 * 1000, runDailyBackupJob);
+
 /**
  * GST Filing Reminder Job — checks if today is approaching GSTR-1 (11th) or GSTR-3B (20th).
  * Runs every 12 hours. Logs an audit reminder when within 3 days of due date.

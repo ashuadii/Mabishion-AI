@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import { C } from './consts';
+import { getSetting, setSetting } from '../data/db.js';
 
 const MODES = [
   { id: 'agency',     label: 'Agency',     emoji: '🏭', color: '#6366F1' },
@@ -15,9 +16,21 @@ function OperatingModeBar() {
     () => localStorage.getItem('mabishion_mode') || 'agency'
   );
 
+  // B23: Load persisted mode from SQLite on mount
+  useEffect(() => {
+    getSetting('current_business_mode').then(saved => {
+      if (saved && saved !== active) {
+        setActive(saved);
+        localStorage.setItem('mabishion_mode', saved);
+      }
+    }).catch(() => {});
+  }, []);
+
   const setMode = (id) => {
     setActive(id);
     localStorage.setItem('mabishion_mode', id);
+    // B23: Also persist to SQLite settings table
+    setSetting('current_business_mode', id).catch(() => {});
   };
 
   const current = MODES.find(m => m.id === active) || MODES[0];

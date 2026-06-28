@@ -4,7 +4,7 @@
  * Creates tables if they do not exist. No destructive changes.
  */
 
-export const SCHEMA_VERSION = 13;
+export const SCHEMA_VERSION = 14;
 
 export const CREATE_TABLES_SQL = [
   `CREATE TABLE IF NOT EXISTS clients (
@@ -48,7 +48,8 @@ export const CREATE_TABLES_SQL = [
     type TEXT,
     status TEXT,
     last_run INTEGER,
-    success_rate REAL
+    success_rate REAL,
+    system_prompt TEXT
   )`,
   `CREATE TABLE IF NOT EXISTS skills (
     id TEXT PRIMARY KEY,
@@ -264,6 +265,13 @@ export async function upgradeDatabase(db) {
     // Create tables
     for (const sql of CREATE_TABLES_SQL) {
       await db.execute(sql);
+    }
+
+    // v14: Add system_prompt column to workers if it doesn't exist
+    if (currentVersion < 14) {
+      try {
+        await db.execute('ALTER TABLE workers ADD COLUMN system_prompt TEXT');
+      } catch (_) { /* column may already exist on fresh DBs */ }
     }
 
     // Insert or update version

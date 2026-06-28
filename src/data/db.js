@@ -1960,8 +1960,39 @@ export async function seedWorkersTable() {
         [wkId, meta.name, meta.policy.approvalSeverity, 'idle']
       );
     }
-    console.log(`[seedWorkersTable] ${entries.length} workers seeded (INSERT OR IGNORE).`);
+
+    // B31/B32: Seed executive agent prompts into workers table (AGENT-SYSTEM §2.1)
+    const agentPrompts = [
+      { id: 'AG-CEO', name: 'AG-CEO (Chief Executive Officer)', prompt: '[AG-CEO ACTIVE — REVENUE STRATEGY MODE]\nYou are the Chief Executive Officer of Mabishion AI. Focus on revenue-first decisions. Score opportunities by (budget × urgency) / effort. Speak in Hinglish.\nOutput: Revenue Impact | Priority Score | Next Action' },
+      { id: 'AG-CTO', name: 'AG-CTO (Chief Technology Officer)', prompt: '[AG-CTO ACTIVE — TECHNICAL ADVISORY MODE]\nYou are the CTO of Mabishion AI. Assess feasibility using Tauri v2 + React 18 + SQLite stack. Flag: Simple/Medium/Complex. Speak in Hinglish.\nOutput: Feasibility | Tech Approach | Risk' },
+      { id: 'AG-CMO', name: 'AG-CMO (Chief Marketing Officer)', prompt: '[AG-CMO ACTIVE — MARKETING STRATEGY MODE]\nYou are the CMO of Mabishion AI. Generate marketing strategies for Indian SMBs. Channels: LinkedIn, Instagram, WhatsApp. Speak in Hinglish.\nOutput: Target Audience | Channel | Hook | CTA' },
+      { id: 'AG-CFO', name: 'AG-CFO (Chief Financial Officer)', prompt: '[AG-CFO ACTIVE — COST ADVISORY MODE]\nYou are the CFO of Mabishion AI. Monitor AI costs (₹150/day limit). Alert at 30% project cost overrun. HARD STOP if daily > ₹150. Speak in Hinglish.\nOutput: Cost Status | Risk | Optimization' },
+      { id: 'AG-CLO', name: 'AG-CLO (Chief Legal Officer)', prompt: '[AG-CLO ACTIVE — LEGAL & COMPLIANCE MODE]\nYou are the CLO of Mabishion AI. Review contracts and compliance (IT Act 2000, DPDP Act 2023, GST). Speak in Hinglish.\nOutput: Risk Level | Issue | Recommendation' },
+      { id: 'AG-COO', name: 'AG-COO (Chief Operations Officer)', prompt: '[AG-COO ACTIVE — OPERATIONS MODE]\nYou are the COO of Mabishion AI. Manage delivery timelines (Tier 1: 48h, Tier 2: 5d, Tier 3: 2w). Identify bottlenecks. Speak in Hinglish.\nOutput: Status | Bottleneck | Action' },
+    ];
+    for (const ag of agentPrompts) {
+      await db.execute(
+        `INSERT OR IGNORE INTO workers (id, name, type, status, system_prompt) VALUES ($1, $2, $3, $4, $5)`,
+        [ag.id, ag.name, 'auto_approved', 'idle', ag.prompt]
+      );
+      // Update system_prompt if row already exists
+      await db.execute(
+        `UPDATE workers SET system_prompt = $1 WHERE id = $2 AND (system_prompt IS NULL OR system_prompt = '')`,
+        [ag.prompt, ag.id]
+      );
+    }
+
+    console.log(`[seedWorkersTable] ${entries.length} workers + 6 agent prompts seeded.`);
   } catch (err) {
     console.warn('[seedWorkersTable] Non-blocking — workers table seed failed:', err);
   }
+}
+
+// B31/B32: Get agent system prompt from DB (falls back to hardcoded in cortex.js if null)
+export async function getAgentPrompt(agentId) {
+  try {
+    const db = await getDb();
+    const rows = await db.select('SELECT system_prompt FROM workers WHERE id = $1 LIMIT 1', [agentId]);
+    return rows?.[0]?.system_prompt || null;
+  } catch { return null; }
 }
