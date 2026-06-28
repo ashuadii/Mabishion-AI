@@ -1892,3 +1892,134 @@ No other canonical documents modified.
 Why changed: Product Owner established permanent authority decision gate rule.
 Status: Working — documentation only, no code changed
 Next step: Awaiting Product Owner decisions per frozen E5-PRODUCT-OWNER-DECISIONS.md.
+
+[2026-06-28] [Engineering Batch E5 — Product Owner Decisions Approved] — [Claude Sonnet 4.6 (1M)] — [PROJECT_LEDGER.md]
+
+## APPROVED PRODUCT OWNER DECISIONS — E5
+
+All four decisions from the frozen E5-PRODUCT-OWNER-DECISIONS.md are now approved and recorded.
+
+### CF-3A — Worker Runtime
+- **Decision:** Approved — Progressive Rust Offloading
+- **Rationale:** Current JS worker implementation satisfies MVP requirements. Rust capabilities introduced incrementally for computationally intensive workloads where measurable engineering benefit is demonstrated. Full worker rewrite not approved.
+- **Implementation Impact:** No immediate code changes to existing workers. Rust offloading applied incrementally per future engineering evidence.
+- **Decision Date:** 2026-06-28
+
+### CF-3B — Authentication
+- **Decision:** Option B — Argon2id only. JWT formally deferred.
+- **Rationale:** Verified SHA-256 + static salt security gap closed at low cost. JWT deferred — local-first, single-user, no network/multi-device requirements.
+- **Implementation Impact:** Replace simpleHash() in db.js with Argon2id via new Rust IPC command. PIN credential retained. JWT not implemented.
+- **Decision Date:** 2026-06-28
+
+### Batch 2 P0 — Decision A (5 Missing IPC Commands)
+- **Decision:** Approved — Implement remaining Blueprint IPC commands.
+- **Rationale:** Low engineering cost, minimal regression risk, improves Blueprint alignment.
+- **Implementation Impact:** Identify and implement ~5 IPC commands in API-SPECIFICATION v1.1 absent from current main.rs (26 of 31 implemented per Batch 2 verification).
+- **Decision Date:** 2026-06-28
+
+### Batch 2 P0 — Decision B (DB via Rust IPC)
+- **Decision:** Phase 3 Evaluation — Deferred.
+- **Rationale:** Current implementation stable. Migration architecturally desirable but not justified — high cost and regression risk.
+- **Implementation Impact:** No code changes. Direct SQL plugin path remains canonical for current cycle.
+- **Decision Date:** 2026-06-28
+
+## E5 APPROVED IMPLEMENTATION SCOPE
+
+| Item | Approved Direction | Code Change |
+|------|-------------------|-------------|
+| CF-3A | Progressive Rust Offloading | None now |
+| CF-3B | Argon2id Option B | Yes — replace simpleHash() via Rust IPC |
+| Batch 2 P0 — A | Implement ~5 missing IPC commands | Yes — add to main.rs |
+| Batch 2 P0 — B | Phase 3 Evaluation | None — deferred |
+
+Status: Decisions recorded. E5 implementation begins next.
+Next step: Read API-SPECIFICATION v1.1 to identify the 5 missing IPC commands, then implement CF-3B (Argon2id) and Batch 2 P0-A.
+
+[2026-06-28] [Engineering Batch E5 — Implementation] — [Claude Sonnet 4.6 (1M)] — [src-tauri/Cargo.toml, src-tauri/src/main.rs, src/data/db.js]
+
+## ANALYSIS SUMMARY
+- Batch: E5 — P2 Owner Decision Implementation
+- Items: CF-3B (Argon2id auth), Batch 2 P0 Decision A (5 missing IPC commands)
+- CF-3A: No immediate code change — Progressive Rust Offloading is incremental. No action this batch.
+- Batch 2 P0 Decision B: Deferred to Phase 3. No action this batch.
+- Blueprint sources: API-SPECIFICATION v1.1 §4.1/§4.2, SECURITY-ARCHITECTURE §4.2
+- Files changed: Cargo.toml, main.rs, db.js
+
+## BLUEPRINT TRACEABILITY
+| Field | Content |
+|-------|---------|
+| Blueprint Documents | API-SPECIFICATION v1.1 §4.1 (command table), §4.2 (new endpoints: switch_mode, get_mode_workers, get_api_keys, set_api_key, get_error_logs); SECURITY-ARCHITECTURE §4.2 (Argon2id requirement) |
+| Product Owner Decisions | CF-3A (Progressive Rust Offloading — no immediate action), CF-3B (Argon2id Option B), Batch 2 P0 Decision A (Approved), Decision B (Phase 3) |
+| Blueprint Addenda | ADDENDUM v2.0 §Gap 3 — JWT deferred per CF-3B Option B |
+| Blueprint Reconciliation Findings | BRF-3 (operating modes) noted in get_mode_workers/switch_mode — command stubs implemented, full data model deferred to BRF-3 resolution |
+
+## BLUEPRINT ALIGNMENT
+| Item | Blueprint § | Engineering State |
+|------|------------|------------------|
+| CF-3B — Argon2id | SECURITY-ARCH §4.2 | Implemented — hash_pin + verify_pin_argon2 Rust commands. Transparent migration from SHA-256. |
+| CF-3A — Rust offloading | ARCHITECTURE §2.2 | Approved direction recorded. No immediate action. |
+| v1/switch_mode | API-SPEC §4.2 Cat.11 | Implemented — command registered. Full operating_modes table pending BRF-3. |
+| v1/get_mode_workers | API-SPEC §4.2 Cat.11 | Implemented — command registered. Worker list management deferred to BRF-3. |
+| v1/get_api_keys | API-SPEC §4.2 Cat.12 | Implemented — reads from existing secret store. |
+| v1/set_api_key | API-SPEC §4.2 Cat.12 | Implemented — delegates to store_secret. |
+| v1/get_error_logs | API-SPEC §4.2 Cat.13 | Implemented — command registered. error_logs table is Phase 3. |
+
+## SCOPE VERIFICATION
+
+Completed:
+✓ CF-3B: argon2 + rand crates added to Cargo.toml
+✓ CF-3B: hash_pin Rust command — Argon2id with OsRng salt
+✓ CF-3B: verify_pin_argon2 Rust command — PasswordHash verify
+✓ CF-3B: db.js auth functions updated — setupPin uses hash_pin, verifyPin uses verify_pin_argon2
+✓ CF-3B: Transparent migration — _isLegacyHash() detects SHA-256 hex hashes, re-hashes on login
+✓ Decision A: switch_mode — registered, mode validation, BRF-3 noted
+✓ Decision A: get_mode_workers — registered, BRF-3 noted
+✓ Decision A: get_api_keys — registered, reads secret store provider metadata
+✓ Decision A: set_api_key — registered, delegates to store_secret
+✓ Decision A: get_error_logs — registered, error_logs table Phase 3 noted
+✓ All 7 new commands registered in invoke_handler
+✓ Duplicate import removed from db.js
+
+Out of scope (deferred):
+• CF-3A: Incremental Rust offloading — no immediate action per approved direction
+• Batch 2 P0-B: DB via Rust IPC — Phase 3 per approved direction
+• operating_modes / mode_workers tables — BRF-3 pending
+• error_logs table — Phase 3 pending
+• JWT — formally deferred per CF-3B Option B
+
+## ARCHITECTURE REVIEW
+- hash_pin: OsRng salt per call — each PIN has unique salt, no shared static salt
+- verify_pin_argon2: uses PasswordHash::new() for PHC string format parsing — correct Argon2id flow
+- _isLegacyHash(): regex /^[0-9a-f]{64}$/ accurately identifies SHA-256 hex output vs $argon2 PHC strings
+- Migration is non-blocking on re-hash failure — login succeeds regardless
+- get_api_keys/set_api_key route through existing store_secret/read_secret — no new secret storage introduced
+- switch_mode and get_mode_workers return structured JSON stubs — no panic paths
+- BRF-3 dependency noted in command comments for future implementation
+
+## SECURITY REVIEW
+- Argon2id: brute-force resistant, per-call unique salt, PHC string format stored
+- Old SHA-256 hashes upgraded transparently on first login — no plaintext PIN stored
+- Legacy hash fallback does not expose timing differences that would aid brute-force (same code path length)
+- get_api_keys returns only metadata (provider name + configured bool) — no key values returned
+
+## BUILD VERIFICATION
+Rust: cargo check — zero warnings, zero errors — 1.58s
+Frontend: npm run build — Exit code 0 — 5.77s (pre-existing bundle-size warning unchanged)
+
+## TEST RESULTS
+- Rust check: ✅ Zero warnings
+- Frontend build: ✅ Exit code 0 — 5.77s
+- Runtime verification: ⏳ Pending — Tauri app start required to verify Argon2id PIN flow end-to-end
+- Pre-build test gate: ⏳ Pending — vitest run
+
+## KNOWN LIMITATIONS
+- switch_mode and get_mode_workers are stubs until BRF-3 operating_modes table is resolved
+- get_error_logs is a stub until error_logs table is created (Phase 3)
+- Runtime PIN migration path not yet runtime-verified
+- Pre-existing bundle-size warning unchanged
+
+## APPROVAL STATUS
+Pending owner review
+
+## NEXT IMPLEMENTATION BATCH
+Engineering Batch E6 — Runtime verification of E5 changes, then B17 (developer approval gate — BRF-4 resolution needed) or next P1 backlog items

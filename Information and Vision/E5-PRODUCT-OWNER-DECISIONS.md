@@ -62,12 +62,12 @@ Rust async workers consistently specified. ADDENDUM v2.0 §Gap 2 (approved for i
 
 | Field | Value |
 |-------|-------|
-| Status | Awaiting |
-| Decision | |
-| Rationale | |
-| Approved Implementation Batch | |
-| Decision Date | |
-| Project Ledger Reference | |
+| Status | Approved |
+| Decision | Progressive Rust Offloading |
+| Rationale | Current JS workers satisfy MVP. Rust introduced incrementally where measurable benefit demonstrated. Full rewrite not approved. |
+| Approved Implementation Batch | E5 (no immediate code change — future incremental) |
+| Decision Date | 2026-06-28 |
+| Project Ledger Reference | [2026-06-28] Engineering Batch E5 — Product Owner Decisions Approved |
 
 ---
 
@@ -108,12 +108,12 @@ JWT provides limited immediate MVP value for a local-first desktop application, 
 
 | Field | Value |
 |-------|-------|
-| Status | Awaiting |
-| Decision | (Option A / Option B / Option C) |
-| Rationale | |
-| Approved Implementation Batch | |
-| Decision Date | |
-| Project Ledger Reference | |
+| Status | Approved |
+| Decision | Option B — Argon2id only. JWT formally deferred. |
+| Rationale | SHA-256 + static salt gap closed at low cost. JWT deferred — local-first, single-user, no network/multi-device requirements. |
+| Approved Implementation Batch | E5 |
+| Decision Date | 2026-06-28 |
+| Project Ledger Reference | [2026-06-28] Engineering Batch E5 — Product Owner Decisions Approved |
 
 ---
 
@@ -160,23 +160,23 @@ High effort, high regression risk. Architecturally sound and Blueprint-aligned. 
 
 | Field | Value |
 |-------|-------|
-| Status | Awaiting |
-| Decision | (Approve / Defer) |
-| Rationale | |
-| Approved Implementation Batch | |
-| Decision Date | |
-| Project Ledger Reference | |
+| Status | Approved |
+| Decision | Approve — Implement remaining Blueprint IPC commands |
+| Rationale | Low engineering cost, minimal regression risk, improves Blueprint alignment. |
+| Approved Implementation Batch | E5 |
+| Decision Date | 2026-06-28 |
+| Project Ledger Reference | [2026-06-28] Engineering Batch E5 — Product Owner Decisions Approved |
 
 **Product Owner Decision — Batch 2 P0 — Decision B**
 
 | Field | Value |
 |-------|-------|
-| Status | Awaiting |
-| Decision | (Phase 3 / Approve now / Defer) |
-| Rationale | |
-| Approved Implementation Batch | |
-| Decision Date | |
-| Project Ledger Reference | |
+| Status | Approved |
+| Decision | Phase 3 Evaluation — Deferred |
+| Rationale | Current implementation stable. Migration architecturally desirable but not justified — high cost and regression risk in current phase. |
+| Approved Implementation Batch | Phase 3 |
+| Decision Date | 2026-06-28 |
+| Project Ledger Reference | [2026-06-28] Engineering Batch E5 — Product Owner Decisions Approved |
 
 ---
 
