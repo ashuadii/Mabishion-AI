@@ -20,6 +20,7 @@ import WorkerMonitorScreen from './screens/WorkerMonitorScreen';
 import DocumentsScreen from './screens/DocumentsScreen';
 import KnowledgeBaseScreen from './screens/KnowledgeBaseScreen';
 import LoginScreen from './screens/LoginScreen';
+import ProjectDetailScreen from './screens/ProjectDetailScreen';
 import { BuildProvider } from './context/BuildContext';
 
 export default function App() {
@@ -59,6 +60,7 @@ export default function App() {
         {/* Core Sidebar 8 items */}
         <Route path="/products" element={<ProjectsScreen onNavigate={handleNavigate} />} />
         <Route path="/projects" element={<ProjectsScreen onNavigate={handleNavigate} />} />
+        <Route path="/projects/:id" element={<ProjectDetailScreen onNavigate={handleNavigate} />} />
         <Route path="/leads" element={<LeadsScreen onNavigate={handleNavigate} />} />
         <Route path="/marketing" element={<SalesMarketingHubScreen onNavigate={handleNavigate} />} />
         <Route path="/promotion" element={<SalesMarketingHubScreen onNavigate={handleNavigate} />} />
