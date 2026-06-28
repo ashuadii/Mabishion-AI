@@ -1401,6 +1401,92 @@ BRC-1 (worker isolation) still Carry Forward — Batch 9 remaining.
 
 Next step: Batch 8 — Operations Verification (TESTING + DEPLOYMENT + DR + OPS + COST docs).
 
+[2026-06-28] [Engineering Batch E2 — P0 Foundation] — [Claude Sonnet 4.6 (1M)] — [src/utils/approvalRouting.js, src/data/db.js, src/services/cronService.js, src/engine/workers/clientIntakeWorker.js]
+
+## ANALYSIS SUMMARY
+- Batch: E2 — P0 Foundation
+- Items: B05, B06, B07, B08, B09, B10 — all implemented
+- Blueprint sources: ARCHITECTURE §2.2, DATABASE-SPEC §10/§23, CGF §1.3, HAF §5.1/§8.1, BRD §15.2
+- Files changed: approvalRouting.js, db.js, cronService.js, clientIntakeWorker.js
+
+## BLUEPRINT ALIGNMENT
+| Item | Blueprint § | Status |
+|------|------------|--------|
+| B05 workers table seed | ARCHITECTURE §2.2 | ✅ seedWorkersTable() — INSERT OR IGNORE, 24 workers, called from initDb() |
+| B06 backup metadata | DATABASE-SPEC §23 | ✅ runDailyBackupJob() now INSERTs to backups table — SHA-256 checksum, size_bytes, path |
+| B07 cost alerts | CGF §1.3 | ✅ runCostAlertJob() every 30min — 80%/90%/100% thresholds, daily + monthly, nexious_cost_alert events |
+| B08 changes_requested | HAF §5.1 | ✅ CHANGES_REQUESTED added to APPROVAL_STATUS + normalizeApprovalStatus() |
+| B09 audit_logs | HAF §8.1 | ✅ logAudit() called inside updateApprovalStatus() — covers all approval resolution paths |
+| B10 DPDP consent | BRD §15.2 | ✅ consents INSERT in clientIntakeWorker.js after client record — type=data_collection_storage_processing |
+
+## SCOPE VERIFICATION
+
+Blueprint Scope (this batch):
+• Data seeding, audit logging, cost governance, compliance, status completeness
+
+Completed:
+✓ Worker registry → workers table (B05)
+✓ Backup file → backups table metadata (B06)
+✓ Cost alert cron job with 3-level thresholds (B07)
+✓ changes_requested approval status (B08)
+✓ Audit log on every approval decision (B09)
+✓ DPDP consent record on client onboarding (B10)
+✓ Build verification — Exit code 0, 5.72s
+
+Out of Scope (deferred):
+• HMAC chain on audit_logs (B27 — Phase 3)
+• SQLCipher encryption on backups (B26 — Phase 3)
+• Runtime test of cron jobs
+• Cost alert UI display (nexious_cost_alert event emitted, UI subscription deferred)
+
+## ARCHITECTURE REVIEW
+- seedWorkersTable() uses dynamic import to avoid circular dependency
+- All changes non-blocking (wrapped in try/catch, non-breaking on failure)
+- updateApprovalStatus is single point of truth for audit logging — all paths covered
+- backups table created with CREATE TABLE IF NOT EXISTS inside cronService (table not in current schema upgrade)
+- Cost alert fires nexious_cost_alert CustomEvent for UI consumption
+
+## CODE REVIEW
+- INSERT OR IGNORE in seedWorkersTable() — idempotent on every startup
+- SHA-256 via SubtleCrypto.subtle.digest() — native browser API, no dependency
+- window?.dispatchEvent() — safe in browser/Tauri, skipped in non-window environments
+- DPDP consent insert wrapped as non-blocking — does not fail client intake on consent error
+
+## SECURITY REVIEW
+- logAudit for approvals: uses existing maskPii + optional HMAC (Tauri IPC, non-blocking if unavailable)
+- DPDP consent records client_id FK — referential integrity enforced
+- Cost HARD STOP logged at CRITICAL level in audit_logs
+
+## BUILD VERIFICATION
+Build verification completed successfully. Functional runtime verification and Blueprint compliance remain pending where applicable.
+- Build: Exit code 0 — 5.72s
+
+## TEST RESULTS
+- Build: ✅ Pass
+- Runtime verification: ⏳ Pending — cron jobs, consent insert, worker seed require app startup
+
+## VERIFICATION METHOD
+✓ Blueprint Review — CGF §1.3, DATABASE-SPEC §10/§23, HAF §5.1/§8.1, BRD §15.2
+✓ Source Code Review — all 4 modified files reviewed before change
+✓ Blueprint ↔ Code Synchronization — gap confirmed, implemented, verified
+✓ Build Verification — npm run build, exit code 0
+⏳ Runtime Verification — Pending
+
+## KNOWN LIMITATIONS
+- backups table created inline in cronService (not in db_schema_upgrade.js — acceptable for now)
+- Cost alert UI rendering pending (event emitted but no UI subscriber yet)
+- Runtime cron timing not verified in this session
+- Pre-existing dynamic-import and bundle-size warnings unchanged
+
+## DOCUMENTATION SYNCHRONIZATION
+PROJECT_LEDGER updated. IMPLEMENTATION-BACKLOG.md B05–B10 closed.
+
+## APPROVAL STATUS
+Pending owner review
+
+## NEXT IMPLEMENTATION BATCH
+Engineering Batch E3 — P1 items B11–B18
+
 [2026-06-28] [Engineering Batch E1 — Route Activation] — [Claude Sonnet 4.6 (1M)] — [src/App.jsx]
 
 ## ANALYSIS SUMMARY
@@ -1548,7 +1634,7 @@ OPEN BRFs (Blueprint Reconciliation required before BRF-blocked items):
 - BRF-4: Worker naming authority (missing canonical registry `02_Worker_Registry.md v4.0 FINAL`)
 - BRF-5: Social/email scope (anti-goals in Vision/PRD vs BRD workers WK-012/013)
 
-NEXT STEP: P0 items B05–B10 (no blockers, ready now).
+NEXT STEP: Engineering Batch E3 — P1 items (B11–B18).
 
 P0 ROUTING BATCH (E1) — COMPLETE:
   B01: [x] /login routed — LoginScreen imported, onUnlock → /dashboard
@@ -1557,10 +1643,11 @@ P0 ROUTING BATCH (E1) — COMPLETE:
   B04: [x] /finance/invoices routed — nested path added alongside /invoices
   Build: Exit code 0, 5.74s. File changed: src/App.jsx
 
-PENDING P0 ITEMS (E2, ready now):
-  B05: Populate workers table from WORKER_REGISTRY on app startup
-  B06: Write backup metadata to backups DB table on each run
-  B07: Add cost alerts at 80%/90%/100% of daily+monthly limits
-  B08: Add changes_requested as 4th approval status
-  B09: Write approval decisions to audit_logs (basic, no HMAC)
-  B10: DPDP consent capture logic in clientIntakeWorker.js
+P0 BATCH (E2) — COMPLETE:
+  B05: [x] workers table seeded from WORKER_REGISTRY on initDb() — INSERT OR IGNORE, 24 workers
+  B06: [x] Backup metadata written to backups table on each runDailyBackupJob() — SHA-256 checksum, size_bytes
+  B07: [x] Cost alerts at 80%/90%/100% of ₹150/day + ₹1,500/month — runCostAlertJob() every 30min, nexious_cost_alert events
+  B08: [x] changes_requested added to APPROVAL_STATUS + normalizeApprovalStatus() — approvalRouting.js
+  B09: [x] Approval decisions written to audit_logs — logAudit() in updateApprovalStatus(), covers all paths
+  B10: [x] DPDP consent INSERT in clientIntakeWorker.js — type='data_collection_storage_processing', BRD §15.2
+  Build: Exit code 0 — 5.72s

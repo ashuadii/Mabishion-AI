@@ -16,12 +16,12 @@
 | B02 | `/clients` route — functional screen verification | UI | UI/UX §5 | **Verified Existing Route — E1.** Route synchronized. Functional screen verification deferred to domain implementation batch. |
 | B03 | ~~Activate `/workers` route~~ | UI | UI/UX §6 | **Done — E1** Route registered. Runtime verification pending. |
 | B04 | ~~Activate `/finance/invoices` route~~ | UI | UI/UX §8.2 | **Done — E1** Route registered. Runtime verification pending. |
-| B05 | Populate `workers` table from WORKER_REGISTRY on app startup | Database | ARCHITECTURE §2.2 | Small |
-| B06 | Write backup metadata to `backups` DB table on each run | Database | DATABASE-SPEC §10 | Small |
-| B07 | Add cost alerts at 80% / 90% / 100% of daily+monthly limits | Cost | CGF §1.3 | Small |
-| B08 | Add `changes_requested` as 4th approval status | Approval | HAF §5.1 | Small |
-| B09 | Write approval decisions to `audit_logs` (basic — no HMAC) | Audit | HAF §8.1 | Small |
-| B10 | Add DPDP consent capture logic in `clientIntakeWorker.js` | Compliance | BRD §15, HAF §8.2 | Small |
+| B05 | ~~Populate `workers` table from WORKER_REGISTRY~~ | Database | ARCHITECTURE §2.2 | **Done — E2** Route Synchronized. Runtime verification pending. |
+| B06 | ~~Write backup metadata to `backups` DB table~~ | Database | DATABASE-SPEC §23 | **Done — E2** Route Synchronized. Runtime verification pending. |
+| B07 | ~~Cost alerts 80%/90%/100%~~ | Cost | CGF §1.3 | **Done — E2** Route Synchronized. UI event subscription deferred. |
+| B08 | ~~`changes_requested` 4th approval status~~ | Approval | HAF §5.1 | **Done — E2** Route Synchronized. |
+| B09 | ~~Approval decisions → `audit_logs`~~ | Audit | HAF §8.1 | **Done — E2** Route Synchronized. HMAC chain deferred to B27. |
+| B10 | ~~DPDP consent capture in `clientIntakeWorker.js`~~ | Compliance | BRD §15.2 | **Done — E2** Route Synchronized. Runtime verification pending. |
 
 ---
 
