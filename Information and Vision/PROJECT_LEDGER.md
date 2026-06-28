@@ -2402,6 +2402,20 @@ Canonical location: Information and Vision/ENGINEERING-LIFECYCLE-STANDARD-v1.0.m
 Status: Active
 Next step: Apply to current Engineering Batch E6-B (currently at Product Owner Acceptance stage)
 
+[2026-06-29] [Engineering Batch E6 — CLOSED] — [Product Owner] — Owner confirmed "chal to sab raha hai" (E6-B PASS). E6 formally closed.
+
+[2026-06-29] [Engineering Batch E7 — Implementation] — [Claude Sonnet 4.6 (1M)] — [src/services/cronService.js, src/data/db_schema_upgrade.js, src/data/db.js, src/engine/cortex.js, src/components/AppShell.jsx]
+
+B30 — Hourly Incremental Backup: Added `cronEngine.schedule('HourlyBackup', 60*60*1000, runDailyBackupJob)` alongside existing daily backup. RPO now ≤1 hour. Source: DISASTER-RECOVERY §2.
+
+B31/B32 — Agent Prompts to DB: Schema v13→v14 with system_prompt column on workers table. ALTER TABLE migration for existing DBs. seedWorkersTable() now also seeds 6 executive agent prompts (AG-CEO/CTO/CMO/CFO/CLO/COO) with INSERT OR IGNORE + UPDATE. cortex.js now calls getAgentPrompt(agentId) from DB first, falls back to hardcoded constants. getAgentPrompt() added to db.js. Source: AGENT-SYSTEM §2.1.
+
+B23 — Operating Mode Persistence: AppShell.jsx OperatingModeBar now loads saved mode from SQLite (getSetting('current_business_mode')) on mount and persists every mode change via setSetting(). localStorage remains as fast-load fallback. Source: Vision §14.
+
+Build: vitest 34/34 ✅ — exit code 0, 6.24s ✅
+Runtime: Pending native launch
+Approval: Pending owner review
+
 [2026-06-29] [Governance] — [Product Owner] — [Information and Vision/ENGINEERING-LIFECYCLE-STANDARD-v1.1.md]
 What changed: Repository Evidence Classification Standard v1.1 established. Extends v1.0. Defines 6 evidence states (Claimed → Repository Confirmed → Build Confirmed → Runtime Confirmed → Acceptance Confirmed → Audit Confirmed). Evidence is progressive — reports must reference the highest confirmed level explicitly. Intermediate levels cannot be skipped. Binary "Verified/Not Verified" model replaced.
 Canonical location: Information and Vision/ENGINEERING-LIFECYCLE-STANDARD-v1.1.md
