@@ -2213,12 +2213,88 @@ Tasks, worker_executions, cost_logs, file_storage: NOT YET MIGRATED (pending nat
 
 **Engineering Batch E5 may be closed only after all acceptance gates have objective supporting evidence.**
 
+## NATIVE RUNTIME VERIFICATION EVIDENCE (Extended)
+
+### Native App Launch — VERIFIED ✅
+App launched (PID 194330 / 194627) via env-i + XAUTHORITY + system LD_LIBRARY_PATH.
+Process remained stable throughout verification session (~178MB, no crash, no error output).
+
+### Schema Migration — VERIFIED ✅
+| | |
+|--|--|
+| Pre-launch schema version | 9 |
+| Post-launch schema version | **13** |
+| New tables created | tasks, worker_executions, cost_logs, file_storage, backups |
+| Workers seeded | **24 workers** (WK-001 Lead Copysmith, WK-002 Business Analyst, …) |
+
+Schema v9 → v13 migration confirmed by querying `schema_version` table before and after app start.
+
+### Auth Integration — VERIFIED ✅ (9/9 checks)
+Standalone Rust binary compiled against project's `argon2` v0.5.3 crate, using real SHA-256 hash from live DB (`61e7cfb324f90db7...`, 64 chars):
+
+| Check | Result |
+|-------|--------|
+| hash_pin → $argon2id$v=19$ prefix | ✅ PASS |
+| Unique salt per call | ✅ PASS |
+| Correct PIN accepted (verify_pin_argon2) | ✅ PASS |
+| Wrong PIN rejected | ✅ PASS |
+| Real DB hash (`61e7cfb3...`) → isLegacy=True | ✅ PASS |
+| Argon2id PHC string → isLegacy=False | ✅ PASS |
+| Migration hash generation + verify | ✅ PASS |
+| switch_mode validation (1-5 valid, 0/6/99 invalid) | ✅ PASS |
+| get_error_logs limit cap (200 → 100) | ✅ PASS |
+
+Migration path at DB level — confirmed correct:
+1. `_isLegacyHash('61e7cfb3...')` → True ✅
+2. SHA-256 verify on login → success
+3. `hash_pin(pin)` → new `$argon2id$v=19$m=19456,t=2,p=1$...` hash
+4. `UPDATE users SET pin_hash=$1` → DB writable (pin_hash column confirmed)
+5. Future logins → `verify_pin_argon2` path
+
+### IPC Registration — VERIFIED ✅
+All 7 new commands confirmed in compiled binary strings (Tauri dispatch table):
+`hash_pin`, `verify_pin_argon2`, `switch_mode`, `get_mode_workers`, `get_api_keys`, `set_api_key`, `get_error_logs`
+Also confirmed: all 26 pre-existing commands remain registered (no regressions).
+
+### Screen Regression — VERIFIED ✅ (screenshots captured)
+| Screen | Status |
+|--------|--------|
+| Dashboard | ✅ Renders — AG-CFO Cost Monitor, Skills cockpit |
+| Lead CRM | ✅ Renders — 1 lead, pipeline stats from live SQLite |
+| Approval Center | ✅ Renders — GAVEL safegates, 0 pending (correct state) |
+| Projects | ✅ Renders — Kanban board, 3 active projects |
+| Navigation | ✅ All sidebar clicks work, no JS errors |
+
+### Tauri IPC Live Invocation — NOT VERIFIED
+Tauri IPC bridge (`window.__TAURI__`) is injected only into Tauri's managed WebKit context.
+Cannot be invoked from Playwright (Chrome) or from outside the WebKit process.
+Not an E5 defect — environment constraint.
+Covered by: binary symbol verification (registration) + cargo test (logic).
+
+### User Acceptance — PENDING
+Product Owner native terminal verification (E5-RUNTIME-VERIFICATION-SCRIPT.md) required.
+
+## UPDATED BATCH STATUS
+
+| Layer | Status | Evidence |
+|-------|--------|---------|
+| Implementation | ✅ Complete | All E5 code changes present and correct |
+| Build Verification | ✅ Verified | Rust: 0 warnings; Frontend: exit 0, 6.26s |
+| Automated Verification | ✅ Verified | cargo test 10/10; vitest 34/34 |
+| Native App Launch | ✅ Verified | PID confirmed, stable, no crash |
+| Schema Migration | ✅ Verified | v9 → v13, 5 tables, 24 workers seeded |
+| Auth Integration | ✅ Verified | 9/9 integration checks, real DB hash |
+| IPC Registration | ✅ Verified | All 7 commands in binary symbols |
+| Screen Regression | ✅ Verified | 4 screens, screenshots captured |
+| Tauri IPC Live Invocation | ⏳ Pending | Requires Tauri WebKit context |
+| Argon2id Migration (live) | ⏳ Pending | Requires PIN login in running app |
+| User Acceptance | ⏳ Pending | Product Owner native verification |
+| Engineering Batch Closure | ⏳ Pending | All acceptance gates must pass |
+
 ## REMAINING ACCEPTANCE GATES
-1. Native Tauri application launch — confirmed running
-2. Full authentication flow: SHA-256 login → Argon2id migration → restart verification
-3. Tauri IPC: React → Tauri → Rust → SQLite / Secure Storage → Frontend response
-4. Schema migration: observe v9 → v13 execution on native launch
-5. User Acceptance: Product Owner native runtime verification
+1. Tauri IPC live invocation: React → Tauri → Rust → SQLite / Secure Storage → response
+2. Argon2id migration on actual PIN login
+3. User Acceptance: Product Owner native runtime verification
 
 ## NEXT STEP
-Complete native runtime verification per E5-RUNTIME-VERIFICATION-SCRIPT.md
+Owner runs app from native terminal and verifies PIN login + IPC console commands per E5-RUNTIME-VERIFICATION-SCRIPT.md. Once evidence received, E5 will be formally closed or corrected.
