@@ -882,6 +882,9 @@ export async function initDb() {
   `).catch(err => console.error('[Mickii DB] Client context table creation failed:', err));
 
   console.log("Database initialized successfully!");
+
+  // B05: Seed workers table from WORKER_REGISTRY (non-blocking)
+  seedWorkersTable().catch(() => {});
 }
 
 export async function addRevenue(projectId, amount, source) {
@@ -1037,6 +1040,9 @@ export async function updateApprovalStatus(id, status, notes = '') {
     "UPDATE approvals SET status = $1, owner_notes = $2 WHERE id = $3",
     [normalizedStatus, notes, id]
   );
+
+  // B09: Log every approval decision to audit_logs (basic — no HMAC, per Implementation Backlog)
+  await logAudit('APPROVAL', `Approval ${normalizedStatus}`, JSON.stringify({ approval_id: id, status: normalizedStatus, notes }));
   
   // If approved or rejected, log in action ledger
   if (normalizedStatus === 'approved' || normalizedStatus === 'rejected') {
@@ -1916,3 +1922,23 @@ export async function undoApproval(id) {
 
 // Client Context Re-exports
 export { getClientProfile, saveClientProfile } from '../utils/clientContext.js';
+
+// B05: Populate workers table from WORKER_REGISTRY on app startup (idempotent)
+export async function seedWorkersTable() {
+  try {
+    const { WORKER_REGISTRY } = await import('../engine/workers/index.js');
+    const db = await getDb();
+    const entries = Object.entries(WORKER_REGISTRY);
+    for (let i = 0; i < entries.length; i++) {
+      const [, meta] = entries[i];
+      const wkId = `WK-${String(i + 1).padStart(3, '0')}`;
+      await db.execute(
+        `INSERT OR IGNORE INTO workers (id, name, type, status) VALUES ($1, $2, $3, $4)`,
+        [wkId, meta.name, meta.policy.approvalSeverity, 'idle']
+      );
+    }
+    console.log(`[seedWorkersTable] ${entries.length} workers seeded (INSERT OR IGNORE).`);
+  } catch (err) {
+    console.warn('[seedWorkersTable] Non-blocking — workers table seed failed:', err);
+  }
+}

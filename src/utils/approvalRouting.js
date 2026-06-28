@@ -2,6 +2,7 @@ export const APPROVAL_STATUS = {
   PENDING: 'pending',
   APPROVED: 'approved',
   REJECTED: 'rejected',
+  CHANGES_REQUESTED: 'changes_requested',
   EXPIRED: 'expired',
   AUTO_APPROVED: 'auto_approved'
 };
@@ -102,6 +103,7 @@ export function normalizeApprovalStatus(status) {
   const normalized = String(status || APPROVAL_STATUS.PENDING).toLowerCase();
   if (normalized === APPROVAL_STATUS.APPROVED) return APPROVAL_STATUS.APPROVED;
   if (normalized === APPROVAL_STATUS.REJECTED) return APPROVAL_STATUS.REJECTED;
+  if (normalized === APPROVAL_STATUS.CHANGES_REQUESTED) return APPROVAL_STATUS.CHANGES_REQUESTED;
   if (normalized === APPROVAL_STATUS.EXPIRED) return APPROVAL_STATUS.EXPIRED;
   if (normalized === APPROVAL_STATUS.AUTO_APPROVED) return APPROVAL_STATUS.AUTO_APPROVED;
   return APPROVAL_STATUS.PENDING;

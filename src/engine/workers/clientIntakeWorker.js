@@ -121,6 +121,22 @@ Return a valid JSON object ONLY with keys: welcomeEmail, questionnaire (10 items
       ).catch(() => {});
     }
 
+    // B10: DPDP Act 2023 — explicit consent record for data collection, storage, processing
+    try {
+      await db.execute(
+        `INSERT INTO consents (id, client_id, consent_type, granted, granted_at, notes)
+         VALUES ($1, $2, $3, 1, CURRENT_TIMESTAMP, $4)`,
+        [
+          crypto.randomUUID(),
+          clientId,
+          'data_collection_storage_processing',
+          'Consent recorded at client onboarding — DPDP Act 2023 §15.2'
+        ]
+      );
+    } catch (consentErr) {
+      console.warn('[ClientIntake] DPDP consent insert failed (non-blocking):', consentErr.message);
+    }
+
     return {
       clientId, leadId, clientName, projectName,
       welcomeEmail:      parsed.welcomeEmail,

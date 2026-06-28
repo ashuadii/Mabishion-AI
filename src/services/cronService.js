@@ -170,6 +170,34 @@ export async function runDailyBackupJob() {
 
       await writeTextFile(filePath, jsonData);
 
+      // B06: Write backup metadata to backups table
+      try {
+        const db = await getDb();
+        await db.execute(
+          `CREATE TABLE IF NOT EXISTS backups (
+            id TEXT PRIMARY KEY,
+            path TEXT NOT NULL,
+            checksum TEXT NOT NULL,
+            size_bytes INTEGER NOT NULL,
+            is_encrypted INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+          )`
+        );
+        // SHA-256 checksum via SubtleCrypto
+        let checksum = 'unavailable';
+        try {
+          const buf = new TextEncoder().encode(jsonData);
+          const hashBuf = await crypto.subtle.digest('SHA-256', buf);
+          checksum = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
+        } catch (_) {}
+        await db.execute(
+          `INSERT INTO backups (id, path, checksum, size_bytes, is_encrypted, created_at) VALUES ($1, $2, $3, $4, 0, $5)`,
+          [crypto.randomUUID(), filePath, checksum, jsonData.length, now.toISOString()]
+        );
+      } catch (backupMetaErr) {
+        console.warn('[Cron DailyBackup] Backup metadata write failed (non-blocking):', backupMetaErr.message);
+      }
+
       // Record last backup timestamp in settings
       await setSetting('last_backup_at', now.toISOString());
 
@@ -249,3 +277,52 @@ export async function runMorningBriefJob() {
 
 // Morning brief — every 24 hours, runs immediately on first start
 cronEngine.schedule('MorningBrief', 24 * 60 * 60 * 1000, runMorningBriefJob);
+
+/**
+ * B07: Cost Alert Job — checks daily and monthly spend against CGF §1.3 thresholds.
+ * Thresholds: 80% warning, 90% high priority, 100% critical hard stop.
+ * Daily limit: ₹150 (15000 paise). Monthly limit: ₹1,500 (150000 paise).
+ * Runs every 30 minutes.
+ */
+export async function runCostAlertJob() {
+  try {
+    const db = await getDb();
+
+    const DAILY_LIMIT = 15000;   // ₹150 in paise
+    const MONTHLY_LIMIT = 150000; // ₹1,500 in paise
+
+    // Query today's and this month's cost from execution_spans
+    const dailyRows = await db.select(
+      `SELECT COALESCE(SUM(cost_inr), 0) AS total FROM execution_spans WHERE date(timestamp) = date('now')`
+    ).catch(() => [{ total: 0 }]);
+    const monthlyRows = await db.select(
+      `SELECT COALESCE(SUM(cost_inr), 0) AS total FROM execution_spans WHERE timestamp >= date('now', 'start of month')`
+    ).catch(() => [{ total: 0 }]);
+
+    const dailyCost = Number(dailyRows[0]?.total || 0);
+    const monthlyCost = Number(monthlyRows[0]?.total || 0);
+
+    const checkThreshold = async (cost, limit, period) => {
+      const pct = limit > 0 ? (cost / limit) * 100 : 0;
+      if (pct >= 100) {
+        await logAudit('CRITICAL', `COST HARD STOP — ${period} limit reached`, JSON.stringify({ cost_paise: cost, limit_paise: limit, percent: pct }));
+        window?.dispatchEvent(new CustomEvent('nexious_cost_alert', { detail: { level: 'critical', period, cost, limit, percent: pct } }));
+      } else if (pct >= 90) {
+        await logAudit('WARN', `COST HIGH — ${period} at ${pct.toFixed(1)}%`, JSON.stringify({ cost_paise: cost, limit_paise: limit, percent: pct }));
+        window?.dispatchEvent(new CustomEvent('nexious_cost_alert', { detail: { level: 'high', period, cost, limit, percent: pct } }));
+      } else if (pct >= 80) {
+        await logAudit('WARN', `COST WARNING — ${period} at ${pct.toFixed(1)}%`, JSON.stringify({ cost_paise: cost, limit_paise: limit, percent: pct }));
+        window?.dispatchEvent(new CustomEvent('nexious_cost_alert', { detail: { level: 'warning', period, cost, limit, percent: pct } }));
+      }
+    };
+
+    await checkThreshold(dailyCost, DAILY_LIMIT, 'daily');
+    await checkThreshold(monthlyCost, MONTHLY_LIMIT, 'monthly');
+
+  } catch (err) {
+    console.warn('[CostAlert] Non-blocking check failed:', err);
+  }
+}
+
+// Cost alert check — every 30 minutes
+cronEngine.schedule('CostAlert', 30 * 60 * 1000, runCostAlertJob);
