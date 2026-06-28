@@ -220,12 +220,12 @@ export class AgentRuntime {
         
         // Block execution using Tauri events instead of DB polling
         await new Promise(async (resolve, reject) => {
-          const unlisten = await listen('approval_granted', (event) => {
-            const { approvalId: receivedId, decision } = event.payload;
+          const unlisten = await listen('approval_action', (event) => {
+            const { approval_id: receivedId, action } = event.payload;
             if (receivedId === approvalId) {
               clearTimeout(timeout);
               unlisten();
-              if (decision === 'Approved') {
+              if (action === 'approved') {
                 resolve(true);
               } else {
                 reject(new Error('User rejected the file creation.'));
@@ -292,12 +292,12 @@ export class AgentRuntime {
       await emit('approval_requested', { approvalId, path: args.localDir });
       
       await new Promise(async (resolve, reject) => {
-        const unlisten = await listen('approval_granted', (event) => {
-          const { approvalId: receivedId, decision } = event.payload;
+        const unlisten = await listen('approval_action', (event) => {
+          const { approval_id: receivedId, action } = event.payload;
           if (receivedId === approvalId) {
             clearTimeout(timeout);
             unlisten();
-            if (decision === 'Approved') {
+            if (action === 'approved') {
               resolve(true);
             } else {
               reject(new Error('User rejected deployment.'));
@@ -371,11 +371,11 @@ export class AgentRuntime {
         
         const decision = await new Promise((resolve, reject) => {
           const timeout = setTimeout(() => reject(new Error('Approval timeout — user did not respond within 120s')), 120000);
-          listen('approval_granted', (event) => {
-            const { approvalId: receivedId, decision: uidecision } = event.payload;
+          listen('approval_action', (event) => {
+            const { approval_id: receivedId, action } = event.payload;
             if (receivedId === approvalId) {
               clearTimeout(timeout);
-              resolve(uidecision);
+              resolve(action);
             }
           }).then(unlisten => {
             // Keep reference to unlisten if needed, but Tauri usually manages it.

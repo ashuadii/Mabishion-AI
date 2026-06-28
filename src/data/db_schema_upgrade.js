@@ -4,7 +4,7 @@
  * Creates tables if they do not exist. No destructive changes.
  */
 
-export const SCHEMA_VERSION = 12;
+export const SCHEMA_VERSION = 13;
 
 export const CREATE_TABLES_SQL = [
   `CREATE TABLE IF NOT EXISTS clients (
@@ -172,6 +172,15 @@ export const CREATE_TABLES_SQL = [
     is_setup INTEGER DEFAULT 0,
     last_login TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE TABLE IF NOT EXISTS backups (
+    id TEXT PRIMARY KEY,
+    path TEXT NOT NULL,
+    checksum TEXT NOT NULL DEFAULT 'unavailable',
+    size_bytes INTEGER NOT NULL DEFAULT 0,
+    is_encrypted INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    fr_reference TEXT DEFAULT 'FR-10.2'
   )`,
   `CREATE TABLE IF NOT EXISTS tasks (
     id TEXT PRIMARY KEY,
