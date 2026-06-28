@@ -29,9 +29,9 @@
 
 | ID | Item | Domain | Blueprint Source | Effort |
 |----|------|--------|-----------------|--------|
-| B11 | Integrate test suite into app build process | Testing | TESTING-STRATEGY §3.1 | **E4 — pending** |
+| B11 | ~~Integrate test suite into app build process~~ | Testing | TESTING-STRATEGY §3.1 | **Done — E4** Test Gate Implemented. 24/24 tests pass before every build (prebuild hook). |
 | B12 | ~~Add missing tables: `tasks`, `worker_executions`, `cost_logs`~~ | Database | DATABASE-SPEC §9/10/14 | **Done — E3** Route Synchronized. Schema v12. |
-| B13 | Add `/projects/{id}` parametric route and screen | UI | UI/UX §4.2 | **E4 — pending** |
+| B13 | ~~Add `/projects/{id}` parametric route and screen~~ | UI | UI/UX §4.2 | **Done — E4** Screen Implemented + Route Registered. Tasks/Files tabs: deferred pending B12 runtime. |
 | B14 | ~~Add `approval_action` Tauri event emission~~ | Approval | API-SPEC §9.1 | **Done — E3** Route Synchronized. Payload aligned. |
 | B15 | ~~`file_storage` table~~ | Database | DATABASE-SPEC | **Verified Existing — E3.** Present in schema since F1 fix. |
 | B16 | ~~Add fallback API call logging in `audit_logs`~~ | Security | ADDENDUM §Gap 1 | **Done — E3** Route Synchronized. |

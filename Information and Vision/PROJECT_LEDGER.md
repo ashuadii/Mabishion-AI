@@ -1401,6 +1401,69 @@ BRC-1 (worker isolation) still Carry Forward — Batch 9 remaining.
 
 Next step: Batch 8 — Operations Verification (TESTING + DEPLOYMENT + DR + OPS + COST docs).
 
+[2026-06-28] [Engineering Batch E4 — P1 Screens & Testing] — [Claude Sonnet 4.6 (1M)] — [package.json, src/screens/ProjectDetailScreen.jsx (NEW), src/App.jsx]
+
+## BLUEPRINT TRACEABILITY
+| Field | Content |
+|-------|---------|
+| Blueprint Documents | TESTING-STRATEGY §3.1 (test levels, tools); UI/UX-SPEC §4.2 (/projects/{id} — 5 tabs, layout) |
+| Product Owner Decisions | None |
+| Blueprint Addenda | None |
+| Blueprint Reconciliation Findings | None |
+| Verification References | Verification Summary Batch 6 (UI/UX), Batch 8 (Testing) |
+
+## BLUEPRINT ALIGNMENT
+| Item | Blueprint § | Engineering State |
+|------|------------|------------------|
+| B11 — test suite into build | TESTING-STRATEGY §3.1 | Test Gate Implemented + Tests Executing (24/24 pass before every build via prebuild hook) |
+| B13 — /projects/{id} screen | UI/UX-SPEC §4.2 | Screen Implemented + Route Registered + Build Verified + Runtime Verification Pending |
+
+> Alignment reflects reviewed Blueprint sections. Alignment with the complete Enterprise Blueprint remains subject to cross-document verification.
+
+## IMPLEMENTATION EVIDENCE
+- Blueprint Reviewed: ✓ TESTING-STRATEGY §3.1, UI/UX-SPEC §4.2
+- Code Reviewed: ✓ package.json scripts, App.jsx, existing screen patterns (FinanceScreen.jsx)
+- Implemented: ✓ B11 (prebuild hook), B13 (ProjectDetailScreen.jsx + route)
+- Build Verified: ✓ Exit code 0 — 5.64s (tests ran first: 24/24 passed)
+- Tests Executed: ✓ 24/24 passed (prebuild gate confirmed firing)
+- Runtime Verified: ⏳ Pending — /projects/:id navigation not runtime-tested
+- Database Verified: ⏳ Not applicable for B11; B13 reads getProjects/getInvoices/getWorkerLogs
+
+## SCOPE VERIFICATION
+
+Completed:
+✓ B11: prebuild = vitest run src/tests/ — tests gate every future build
+✓ B13: ProjectDetailScreen.jsx — 5 tabs (Overview, Tasks, Files, Invoices, Activity), Blueprint layout
+✓ B13: /projects/:id parametric route registered in App.jsx
+
+Out of Scope (deferred):
+• B13 Tasks tab: Kanban not yet functional — tasks table populated at runtime (B12)
+• B13 Files tab: file_storage data display pending runtime population
+• B13 drag-and-drop task reordering — deferred
+• Additional Vitest test cases for new workers/screens — deferred to B11 expansion
+
+## ARCHITECTURE REVIEW
+- prebuild hook uses npm lifecycle — runs automatically before every npm run build, transparent to tauri-dev
+- ProjectDetailScreen uses useParams() from react-router-dom for :id param
+- All DB calls wrapped in try/catch with .catch(() => []) fallback — no crash on empty tables
+- Reuses existing AppShell, ScreenHeader, glassStyle, Badge, Icon patterns
+
+## BUILD VERIFICATION
+Build verification completed with test gate. Tests ran first, then build succeeded.
+Tests: 24 passed (24) — 285ms. Build: Exit code 0 — 5.64s.
+
+## KNOWN LIMITATIONS
+- B13 Tasks tab: shows empty state — tasks table not yet populated at runtime (B12 schema added, data entry pending)
+- B13 breadcrumb in ScreenHeader requires breadcrumbs prop support (may render as pageTitle only)
+- Runtime navigation from ProjectsScreen to /projects/:id not yet wired
+- Pre-existing dynamic-import and bundle-size warnings unchanged
+
+## APPROVAL STATUS
+Pending owner review
+
+## NEXT IMPLEMENTATION BATCH
+Engineering Batch E5 — P2 Owner Decision items (CF-3A, CF-3B, Batch 2 P0) for owner resolution
+
 [2026-06-28] [Engineering Batch E3 — P1 Core] — [Claude Sonnet 4.6 (1M)] — [src/data/db_schema_upgrade.js, src/data/db.js, src/services/llmManager.js, src/engine/workers/baseWorker.js]
 
 ## ANALYSIS SUMMARY
@@ -1421,57 +1484,61 @@ Next step: Batch 8 — Operations Verification (TESTING + DEPLOYMENT + DR + OPS 
 ## BLUEPRINT ALIGNMENT
 | Item | Blueprint § | Engineering State |
 |------|------------|------------------|
-| B12 — tasks, worker_executions, cost_logs | DATABASE-SPEC §9/10/14 | Route Synchronized — tables added to db_schema_upgrade.js (schema v12) |
-| B14 — approval_action event | API-SPEC §9.1 | Route Synchronized — approval_granted → approval_action, payload aligned to spec |
-| B15 — file_storage table | DATABASE-SPEC | Verified Existing — present in db_schema_upgrade.js line 157 since F1 fix |
-| B16 — fallback API audit log | ADDENDUM §Gap 1 | Route Synchronized — logAudit('FALLBACK_API_CALL') in executeLlmWithFallback() |
-| B17 — developer approval gate | AGENT-SYSTEM §2.2 | Blocked — BRF-4 (Worker Naming Authority) unresolved. AGENT-SYSTEM naming (WK-001 MaxCore=CRITICAL) does not directly map to current registry. Change deferred until BRF-4 resolved. |
-| B18 — 5-minute timeout | ARCHITECTURE §6.2 | Route Synchronized — Promise.race with 300s timeout in BaseWorker.run() |
+| B12 — tasks, worker_executions, cost_logs | DATABASE-SPEC §9/10/14 | Schema Implemented + Build Verified + Runtime Migration Pending + Database Verification Pending |
+| B14 — approval_action event | API-SPEC §9.1 | Event Emission Implemented + Build Verified + Runtime Verification Pending |
+| B15 — file_storage table | DATABASE-SPEC | Verified Existing (present since F1 fix) |
+| B16 — fallback API audit log | ADDENDUM §Gap 1 | Audit Logging Implemented + Build Verified + Runtime Verification Pending |
+| B17 — developer approval gate | AGENT-SYSTEM §2.2 | Blocked — BRF-4 (Worker Naming Authority). AGENT-SYSTEM WK numbering does not map to current registry. Deferred. |
+| B18 — 5-minute timeout | ARCHITECTURE §6.2 | Logic Implemented (fixed 300s global) + Build Verified + Per-task override not yet implemented (WORKER-ARCH lists as open question) — Partially Complete |
 
 > Alignment reflects reviewed Blueprint sections. Alignment with the complete Enterprise Blueprint remains subject to cross-document verification.
+
+## IMPLEMENTATION EVIDENCE
+- Blueprint Reviewed: ✓ DATABASE-SPEC §9/10/14, API-SPEC §9.1, ADDENDUM §Gap 1, ARCHITECTURE §6.2, AGENT-SYSTEM §2.2
+- Code Reviewed: ✓ db_schema_upgrade.js, db.js, llmManager.js, baseWorker.js (before change)
+- Implemented: ✓ B12, B14, B16, B18 (B15 verified existing)
+- Build Verified: ✓ Exit code 0 — 6.10s
+- Runtime Verified: ⏳ Pending
+- Database Verified: ⏳ Pending (schema v12 migration requires live app restart)
+- Tests Executed: ⏳ Pending (B11 not yet implemented)
 
 ## SCOPE VERIFICATION
 
 Completed:
-✓ B12: tasks, worker_executions, cost_logs — schema v11→12
-✓ B14: approval_action event with spec-compliant payload
-✓ B15: Verified Existing (no change required)
-✓ B16: Fallback API audit log — ADDENDUM §Gap 1 satisfied
-✓ B18: 5-min Promise.race timeout on BaseWorker.execute()
-✓ Build: Exit code 0 — 6.10s
+✓ B12: Schema Implemented — tasks, worker_executions, cost_logs (schema v11→12)
+✓ B14: Event Emission Implemented — approval_action payload Blueprint-aligned; all 3 emit sites updated
+✓ B15: Verified Existing
+✓ B16: Audit Logging Implemented — logAudit('FALLBACK_API_CALL') in executeLlmWithFallback()
+✓ B18: Logic Implemented — Promise.race 300s global timeout in BaseWorker.run()
 
 Out of Scope (deferred):
-• B17: BRF-4 blocked — developer gate not changed
-• cost_logs TRIGGER (Blueprint spec) — omitted; cost enforcement in cronService.js
-• B11: test suite integration — E4
-• B13: /projects/{id} screen — E4
+• B17: BRF-4 blocked
+• cost_logs TRIGGER: omitted — cost enforcement in cronService.js (intentional)
+• B11: Testing infrastructure impacts build and validation pipeline — scheduled as independent engineering batch (E4)
+• B13: /projects/{id} — new screen, medium effort — E4
+• B18 per-task override: WORKER-ARCH lists worker-specific timeouts as an open question — deferred
 
 ## ARCHITECTURE REVIEW
 - Schema version bumped 11→12 — upgradeDatabase() handles idempotent migration
 - cost_logs omits Blueprint TRIGGER — cost enforcement already in runCostAlertJob()
 - B14: all three approval emit sites updated (updateApprovalStatus, approveAction, rejectAction)
-- B18 timeout is per-execute() call — does not affect approval wait time (that's outside execute())
+- B18 timeout wraps execute() call only — approval wait time unaffected
 - logAudit in llmManager wrapped with .catch(() => {}) — non-blocking on DB unavailability
 
 ## BUILD VERIFICATION
-Build verification completed successfully. Functional runtime verification and Blueprint compliance remain pending where applicable.
+Build verification completed successfully. Runtime verification, database migration, and functional behaviour remain pending.
 Build: Exit code 0 — 6.10s
 
 ## KNOWN LIMITATIONS
+- B12: Runtime database migration to v12 not yet verified against live mabishion.db
+- B14: Event listener consumption by UI not verified (implementation side only)
+- B16: audit_logs persistence of FALLBACK_API_CALL not runtime-verified
+- B18: Fixed 300s global timeout only — per-task override pending WORKER-ARCH resolution
 - cost_logs TRIGGER not implemented (intentional — enforcement in cronService.js)
-- B17 deferred — developer gate unchanged at STANDARD, BRF-4 resolution required
-- Runtime schema migration to v12 verified only after app restart with live DB
 - Pre-existing dynamic-import and bundle-size warnings unchanged
 
-## VERIFICATION METHOD
-✓ Blueprint Review — DATABASE-SPEC §9/10/14, API-SPEC §9.1, ADDENDUM §Gap 1, ARCHITECTURE §6.2, AGENT-SYSTEM §2.2
-✓ Source Code Review — db_schema_upgrade.js, db.js, llmManager.js, baseWorker.js reviewed before change
-✓ Blueprint ↔ Code Synchronization — gap confirmed per item
-✓ Build Verification — exit code 0
-⏳ Runtime Verification — Pending
-
 ## APPROVAL STATUS
-Pending owner review
+Approved — Owner review 2026-06-28
 
 ## NEXT IMPLEMENTATION BATCH
 Engineering Batch E4 — B11 (test suite integration), B13 (/projects/{id} screen)
@@ -1709,7 +1776,7 @@ OPEN BRFs (Blueprint Reconciliation required before BRF-blocked items):
 - BRF-4: Worker naming authority (missing canonical registry `02_Worker_Registry.md v4.0 FINAL`)
 - BRF-5: Social/email scope (anti-goals in Vision/PRD vs BRD workers WK-012/013)
 
-NEXT STEP: Engineering Batch E4 — B11 (test suite), B13 (project detail screen).
+NEXT STEP: Engineering Batch E5 — P2 Owner Decision items (CF-3A, CF-3B, Batch 2 P0) — present for owner resolution. E4 complete.
 
 P0 ROUTING BATCH (E1) — COMPLETE:
   B01: [x] /login routed — LoginScreen imported, onUnlock → /dashboard
