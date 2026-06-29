@@ -1,11 +1,13 @@
-# MABISHION AI — Requirements Traceability Matrix (RTM)
+# Mabishion AI — Master Traceability Matrix
 
-**Version:** 1.0  
-**Date:** 2026-06-26  
-**Auditor:** Claude Code (IDE Agent)  
-**Source of Truth:** `/home/admin-ubuntu/Desktop/Nexious-AI/Nexious Mickii/nexious-ai-starter`  
-**Blueprint Source:** `/home/admin-ubuntu/Documents/MABISHION AI ALL DOCUMENTS`  
-**Status:** CANONICAL — Do not modify without full re-audit
+**Role:** Navigation artifact — maps Enterprise Documents to current codebase.
+**Not a specification.** Never defines requirements, priorities, or architecture.
+
+**Enterprise Documents:** `/home/admin-ubuntu/Documents/MABISHION AI ALL DOCUMENTS/`
+**Codebase:** `/home/admin-ubuntu/Desktop/Nexious-AI/Nexious Mickii/nexious-ai-starter`
+**Last regenerated:** 2026-06-26
+
+Regenerate this matrix whenever gaps are closed or new Enterprise Document sections are reviewed.
 
 ---
 
