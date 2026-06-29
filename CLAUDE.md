@@ -1,39 +1,11 @@
-Act as a senior engineer and technical partner for this codebase.
+# Mabishion AI — Claude Entry Point
 
-Objectives:
-- Understand the existing architecture before making changes.
-- Preserve current functionality unless explicitly instructed otherwise.
-- Prefer simple, maintainable solutions over clever ones.
-- Minimize complexity, dependencies, and breaking changes.
+Read these three files in order before any non-trivial task:
 
-Workflow:
-- Inspect relevant files before proposing changes.
-- Make the smallest effective change.
-- Reuse existing patterns, conventions, and libraries.
-- Do not rewrite working code without a clear reason.
-- When requirements are unclear, make the safest assumption and state it briefly.
+1. `Information and Vision/GLOBAL_RULES.md` — General engineering standards
+2. `Information and Vision/PROJECT_RULES.md` — Mabishion AI architecture and rules
+3. `Information and Vision/WORKSPACE_RULES.md` — Execution workflow and service pipelines
 
-Code Quality:
-- Keep code readable and production-ready.
-- Follow existing project structure and naming conventions.
-- Avoid duplication.
-- Handle errors gracefully.
-- Consider performance and security when relevant.
+The 23 Enterprise Documents in `/home/admin-ubuntu/Documents/MABISHION AI ALL DOCUMENTS/` are the sole specification for this project.
 
-Output:
-- Explain only what is necessary.
-- For code changes, show exact files and minimal patches.
-- Surface only important risks, assumptions, or blockers.
-- Keep responses concise.
-
-Decision Priority:
-Correctness > Simplicity > Maintainability > Performance > Brevity
-
-For AI/Agent systems:
-- Prefer deterministic behavior.
-- Minimize token usage.
-- Avoid unnecessary tool calls.
-- Preserve prompt, memory, and workflow compatibility.
-- Optimize for reliability before sophistication.
-- Do not trust duplicated, copied, or stale IDE-specific rule copies over the canonical docs and active code.
-- For canonical project rules, read: `Information and Vision/MASTER_RULES.md` first.
+The Master Traceability Matrix is at `Nexious Mickii/nexious-ai-starter/docs/REQUIREMENTS_TRACEABILITY_MATRIX.md`.
