@@ -33,7 +33,7 @@ Implementation details, session logs, and verification transcripts do not belong
 
 **2026-06-29** — Developer worker gate changed: STANDARD → CRITICAL (AGENT-SYSTEM.md §2.1 alignment).
 
-**2026-06-29** — Project architecture simplified: 23 Enterprise Documents = sole Source of Truth. E-batch governance system, BRF tracking, backlog IDs, lifecycle standards removed. Document-First Development model adopted.
+**2026-07-01** — Project architecture simplified: 23 Enterprise Documents = sole Source of Truth. All Claude-invented governance (E-batches, BRFs, backlog IDs, lifecycle standards, authority gates) removed. Document-First Development model adopted. Repository reduced from 41 docs to 10. Three-layer rule system created: GLOBAL_RULES.md, PROJECT_RULES.md, WORKSPACE_RULES.md. Master Traceability Matrix promoted as navigation artifact. PROJECT_LEDGER restructured to major decisions only.
 
 ---
 

@@ -66,3 +66,12 @@ The **Master Traceability Matrix** (`docs/REQUIREMENTS_TRACEABILITY_MATRIX.md`) 
 3. Implement what the Enterprise Documents require, in the priority order they define.
 4. After implementing, update the Master Traceability Matrix.
 5. Never implement something solely because it seems like a good idea.
+
+## Conflict Resolution
+
+When the current code and an Enterprise Document disagree:
+- Inspect the code first — it may already be correct and the doc may be stale.
+- If the code is wrong, fix it to match the Enterprise Document.
+- If the Enterprise Document needs updating to reflect an approved decision, update it.
+- Never silently choose one over the other. State the conflict and the resolution.
+- Worker names in code (`lead_gen`, `business_analyst`, etc.) are the canonical implementation names. Blueprint WK-IDs are target architecture references. Do not rename code workers to match Blueprint IDs without an explicit migration plan.

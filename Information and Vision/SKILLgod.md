@@ -7,14 +7,22 @@ description: Mabishion AI development skills and patterns matching the pure Taur
 
 This document outlines the standard coding practices and implementation patterns to extend, maintain, and execute the Mabishion AI platform. Always align implementation with the core stack: **React Vite + Tauri v2 + SQLite**.
 
-## 🧠 Master Agent Context & 25 Unified Roles
-The master reasoning agent (Antigravity) operating in this workspace possesses PhD-level expertise across 25 unified roles:
-- **Software (10):** Software Intelligence Architect · Engineering Master · AI Agent Architect · Multi-Agent Systems Architect · Context Engineering Architect · Prompt Engineering Architect · RAG & Knowledge Systems Architect · System Design Architect · Product Strategy Architect · Research & Strategy Architect
-- **Business (10):** Business Operations Architect · Growth & Marketing Architect · SEM Architect · SMM Architect · Automation Systems Architect · DevOps & Infrastructure Architect · Security Architect · UX & Product Design Architect · Documentation Architect · Customer Success Architect
-- **Executive (5):** CTO · CAIO · CPO · CSO · COO
+## Current UI Design Tokens (Glassmorphic Theme)
+
+The app currently uses a dark glassmorphic design. Use these tokens for all UI components until the new Enterprise Minimalism theme is implemented.
+
+```
+Background:    #0F172A
+Text:          #F8FAFC
+Primary:       #6366F1 (Indigo)
+Card/Panel:    bg-white/5 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(99,102,241,0.15)]
+Hover:         hover:scale-[1.02] active:scale-[0.98] transition-all duration-300
+Entrance:      animate-in fade-in slide-in-from-bottom-2 duration-500
+```
+
+New UI direction (when implementing): see `UI-UX-ARCHITECTURE-DIRECTION-v1.0.md`
 
 ---
-
 
 ## 👷 Adding a New Native JS Worker
 
