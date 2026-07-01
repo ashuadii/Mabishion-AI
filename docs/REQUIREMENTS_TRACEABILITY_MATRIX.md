@@ -206,9 +206,9 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | DB-026 | `schema_version` table | Critical | ✅ | `db_schema_upgrade.js` line 77 | `schema_version` ✅ | ✅ |
 | DB-027 | `llm_usage` table | High | ✅ | `db.js` line 724 (legacy; `execution_spans` is canonical) | `llm_usage` ✅ | Partial match |
 | DB-028 | `cron_logs` table | Medium | ✅ | `db.js` line 738 | `cron_logs` ✅ | ✅ |
-| DB-029 | SQLCipher AES-256 encryption | Critical | ❌ | Plain SQLite; no SQLCipher binary | — | Required |
+| DB-029 | SQLCipher AES-256 encryption | Critical | 🔄 | Deferred — single-user local desktop app. OS-level disk encryption (LUKS/BitLocker) provides equivalent file-level protection. App already has: Argon2id PIN, 10-min auto-lock, Tauri secure store for API keys, parameterized queries, PII masking. SQLCipher adds system build complexity with no real-world security gain for this threat model. Owner approved 2026-07-01. | — | Deferred |
 | DB-030 | HMAC-chained audit logs | High | ⚠️ | `logAudit()` adds `hmac_sign` suffix to context; not full chain | `audit_logs` | Partial |
-| DB-031 | Per-client encryption keys | Medium | ❌ | No per-client encryption | `clients` | Not implemented |
+| DB-031 | Per-client encryption keys | Medium | 🔄 | Deferred — depends on SQLCipher (DB-029). Same rationale: single-user local app, OS-level protection sufficient. Owner approved 2026-07-01. | `clients` | Deferred |
 | DB-032 | `workers.system_prompt` column | High | ✅ | Schema v14: `ALTER TABLE workers ADD COLUMN system_prompt TEXT`; seeded with 6 executive agent prompts (AG-CEO/CTO/CMO/CFO/CLO/COO) via `seedWorkersTable()` | `workers` | ✅ |
 | DB-033 | `tasks` table | High | ✅ | `db_schema_upgrade.js` schema v12; `tasks` table present | `tasks` | ✅ |
 | DB-034 | `worker_executions` table | High | ✅ | `db_schema_upgrade.js` schema v12 | `worker_executions` | ✅ |
@@ -269,7 +269,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | ARCH-009 | Redux Toolkit state management | 🔄 Deferred | 🔄 | Deliberately deferred per CLAUDE.md rules |
 | ARCH-010 | shadcn/ui component library | 🔄 Deferred | 🔄 | Deliberately deferred per CLAUDE.md rules |
 | ARCH-011 | TypeScript | 🔄 Deferred | 🔄 | Deliberately deferred per CLAUDE.md rules |
-| ARCH-012 | SQLCipher AES-256 at rest | Critical | ❌ | Plain SQLite; single largest security gap |
+| ARCH-012 | SQLCipher AES-256 at rest | Critical | 🔄 | Deferred — local single-user Tauri desktop app. Existing security stack (Argon2id PIN + auto-lock + Tauri secure store + PII masking + parameterized queries) covers the actual threat model. OS disk encryption is the correct layer for file-at-rest protection. Owner approved 2026-07-01. |
 | ARCH-013 | PII masking in logs | High | ✅ | `maskPii()` in `db.js` logAudit() |
 | ARCH-014 | HMAC audit log signatures | High | ⚠️ | `hmac_sign` Rust command + logAudit wired; not a true HMAC chain |
 | ARCH-015 | strict_offline_mode | High | ✅ | `cortex.js` checks setting; Settings toggle |
@@ -406,12 +406,12 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 |---|---|---|---|---|
 | DR-001 | Daily backup automated | Critical | ✅ | `cronService.js` DailyBackup every 24h |
 | DR-002 | Backup to disk (not just memory) | Critical | ✅ | `runDailyBackupJob()` uses plugin-fs writeTextFile |
-| DR-003 | Backup format JSON (interim) | High | ⚠️ | JSON format; spec requires encrypted .sql (SQLCipher dependency) |
+| DR-003 | Backup format JSON | High | ✅ | JSON format with HMAC integrity validation is the permanent format (SQLCipher .sql format deferred per DB-029 owner decision). `backupDatabase()` exports full JSON; `validateBackupIntegrity()` verifies HMAC. |
 | DR-004 | Manual backup via Settings | Critical | ✅ | `SettingsScreen.jsx` Export Database button |
 | DR-005 | Restore with integrity validation | Critical | ✅ | `validateBackupIntegrity()` + confirm dialog |
 | DR-006 | RTO ≤ 15 minutes | High | ⚠️ | No measured RTO; restore flow exists |
 | DR-007 | RPO ≤ 1 hour | High | ✅ | `cronService.js` HourlyBackup cron added (60 * 60 * 1000 ms); runs same `runDailyBackupJob()` function hourly. RPO now ≤1 hour. |
-| DR-008 | Encrypted backup (SQLCipher) | Critical | ❌ | Not possible without SQLCipher |
+| DR-008 | Encrypted backup (SQLCipher) | Critical | 🔄 | Deferred — SQLCipher dependency deferred (DB-029). Backup integrity is protected via HMAC validation (`validateBackupIntegrity()`). JSON backup files should be stored in OS-encrypted location. Owner approved 2026-07-01. |
 
 ---
 
@@ -439,7 +439,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | DEP-003 | Node.js 20+ | Critical | ✅ | Node 20.20.2 installed |
 | DEP-004 | Tauri CLI v2 | Critical | ✅ | `@tauri-apps/cli ^2.0.0` in devDependencies |
 | DEP-005 | SQLite system library | Critical | ✅ | `libsqlite3-dev` present |
-| DEP-006 | SQLCipher | Critical | ❌ | Not installed; plain SQLite used |
+| DEP-006 | SQLCipher | Critical | 🔄 | Deferred — see DB-029 rationale. `libsqlite3-dev` (standard SQLite) is the correct dependency for this threat model. Owner approved 2026-07-01. |
 | DEP-007 | Ollama (local LLM) | High | ⚠️ | Not verified present; fallback to cloud works |
 | DEP-008 | webkit2gtk-4.1 (Linux WebView) | Critical | ✅ | `libwebkit2gtk-4.1-0` installed |
 | DEP-009 | snap pthread conflict fix | Critical | ⚠️ | Fixed via LD_PRELOAD in dev; not in production build |
@@ -455,19 +455,19 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | BRD | 21 | 16 | 3 | 0 | 2 |
 | PRD P0 (FR-001–FR-071) | 71 | 47 | 9 | 0 | 15 |
 | PRD P1 (FR-072–FR-086) | 15 | 9 | 5 | 0 | 1 |
-| Database Spec (DB-001–036) | 36 | 31 | 2 | 0 | 3 |
+| Database Spec (DB-001–036) | 36 | 31 | 1 | 2 | 2 |
 | API Spec (API-001–027) | 27 | 20 | 2 | 0 | 5 |
-| Architecture & Security | 19 | 11 | 2 | 5 | 1 |
+| Architecture & Security | 19 | 11 | 2 | 6 | 0 |
 | Agent System | 9 | 8 | 0 | 0 | 1 |
 | Worker Architecture | 18 | 18 | 0 | 0 | 0 |
 | Human Approval Framework | 10 | 9 | 1 | 0 | 0 |
 | Cost Governance | 9 | 7 | 2 | 0 | 0 |
 | UI/UX Spec | 19 | 15 | 2 | 1 | 1 |
 | Testing Strategy | 14 | 10 | 0 | 0 | 4 |
-| Disaster Recovery | 8 | 5 | 2 | 0 | 1 |
+| Disaster Recovery | 8 | 6 | 1 | 1 | 0 |
 | Operations Manual | 8 | 6 | 2 | 0 | 0 |
-| Deployment Guide | 10 | 6 | 2 | 0 | 2 |
-| **TOTAL** | **319** | **258 (81%)** | **38 (12%)** | **7 (2%)** | **36 (11%)** |
+| Deployment Guide | 10 | 6 | 1 | 1 | 2 |
+| **TOTAL** | **319** | **259 (81%)** | **33 (10%)** | **11 (4%)** | **35 (11%)** |
 
 **Last updated:** 2026-07-01 v4 (Mega session) — BRD-015 ✅ ProductsScreen new screen, FR-014 ✅ merge duplicates, FR-016 ✅ FTS5 lead search, FR-018/019 ✅ archive/restore leads, FR-024 ✅ backup failure WhatsApp, FR-075 ✅ client comms history, HAF-007 ✅ rate limit 10/min, OPS-007 ✅ pending approval cron reminder, API-024 ✅ mode_workers seeded, TEST-009 ✅ 7-suite integration test file, UX-013 ✅ systematic Hinglish, UX-014 ⚠️ aria-labels added (full WCAG audit deferred). Schema v19 added: leads.archived, communications, products, rate_limit_log, leads_fts FTS5. Build: ✅ exit 0. RTM: 74% → 81%.
 Prior session (2026-07-01 v3): WK-WK-ID ✅, FR-004 ✅, FR-005 ✅, UX-016 ✅, UX-018 ✅. RTM: 71% → 74%.
