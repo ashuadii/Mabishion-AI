@@ -5,7 +5,7 @@ import MickiiOrb from './MickiiOrb';
 import Badge from './Badge';
 import Button from './Button';
 import Icon from './Icon';
-import { getWorkerLogs } from '../data/db.js';
+import { getWorkerLogs, getSetting } from '../data/db.js';
 import { formatLocalTime } from '../utils/dateFormatter.js';
 import { listen } from '@tauri-apps/api/event';
 import { getWorkerLabel } from '../utils/approvalRouting.js';
@@ -16,6 +16,7 @@ export default function ScreenHeader({ title, pageTitle, subtitle, index, badgeL
   const [showNotifications, setShowNotifications] = useState(false);
   const [hasNewNotifications, setHasNewNotifications] = useState(false);
   const [costAlert, setCostAlert] = useState(null); // B33: cost threshold alert
+  const [isOffline, setIsOffline] = useState(false); // UX-016: offline indicator
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -57,11 +58,24 @@ export default function ScreenHeader({ title, pageTitle, subtitle, index, badgeL
     const handleCostAlert = (e) => setCostAlert(e.detail);
     window.addEventListener('nexious_cost_alert', handleCostAlert);
 
+    // UX-016: Offline indicator — track navigator.onLine + strict_offline_mode setting
+    const updateOfflineState = async () => {
+      const strictMode = await getSetting('strict_offline_mode').catch(() => null);
+      setIsOffline(!navigator.onLine || strictMode === '1' || strictMode === 'true');
+    };
+    updateOfflineState();
+    const handleOnline = () => updateOfflineState();
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
     return () => {
       active = false;
       clearInterval(interval);
       if (unlistenLogs) unlistenLogs();
       window.removeEventListener('nexious_cost_alert', handleCostAlert);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     };
   }, []);
 
@@ -166,6 +180,13 @@ export default function ScreenHeader({ title, pageTitle, subtitle, index, badgeL
           <div className="min-w-0">
             <h2 className="truncate text-sm font-bold tracking-wider uppercase text-white/80">{title}</h2>
           </div>
+          {/* UX-016: Offline indicator pill */}
+          {isOffline && (
+            <span className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30" title="App is offline or in Strict Offline Mode. Cloud LLMs unavailable.">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              Offline
+            </span>
+          )}
         </div>
         <div className="relative flex shrink-0 items-center gap-2">
           {extraBadges}

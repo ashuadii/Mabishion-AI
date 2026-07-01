@@ -84,7 +84,7 @@ export default function CampaignTracker({ leads }) {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="p-5 rounded-3xl" style={glassStyle({ glow: 'primary' })}>
           <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Total Ad Spend</span>
-          <span className="text-2xl font-black text-white font-mono">${totalSpend.toLocaleString()}</span>
+          <span className="text-2xl font-black text-white font-mono">₹{totalSpend.toLocaleString('en-IN')}</span>
           <p className="text-[10px] text-slate-500 mt-2">Active paid acquisition spent</p>
         </div>
 
@@ -96,7 +96,7 @@ export default function CampaignTracker({ leads }) {
 
         <div className="p-5 rounded-3xl" style={glassStyle({ glow: 'warning' })}>
           <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Average Cost Per Lead (CPL)</span>
-          <span className="text-2xl font-black text-white font-mono">${averageCpl}</span>
+          <span className="text-2xl font-black text-white font-mono">₹{Number(averageCpl).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           <p className="text-[10px] text-slate-500 mt-2">Net cost per customer acquisition</p>
         </div>
 
@@ -124,8 +124,8 @@ export default function CampaignTracker({ leads }) {
                 <th className="p-4">Acquisition Channel</th>
                 <th className="p-4">Budget Spent</th>
                 <th className="p-4 text-center">Leads</th>
-                <th className="p-4 text-center">CPL ($)</th>
-                <th className="p-4 text-right">Won Value ($)</th>
+                <th className="p-4 text-center">CPL (₹)</th>
+                <th className="p-4 text-right">Won Value (₹)</th>
                 <th className="p-4 text-center">Conv. %</th>
                 <th className="p-4 text-right">ROI</th>
               </tr>
@@ -150,7 +150,7 @@ export default function CampaignTracker({ leads }) {
                     <td className="p-4 font-mono font-bold text-slate-300">
                       {isEditing ? (
                         <div className="flex items-center gap-1">
-                          <span className="text-xs">$</span>
+                          <span className="text-xs">₹</span>
                           <input
                             type="text"
                             className="w-16 px-1.5 py-0.5 bg-black/40 border border-white/20 rounded text-white text-xs"
@@ -163,8 +163,8 @@ export default function CampaignTracker({ leads }) {
                         </div>
                       ) : (
                         <div className="flex items-center gap-1 group">
-                          <span>${stats.spend.toLocaleString()}</span>
-                          <button 
+                          <span>₹{stats.spend.toLocaleString('en-IN')}</span>
+                          <button
                             onClick={() => handleStartEditSpend(source)}
                             className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-white transition-opacity ml-1.5"
                           >
@@ -174,8 +174,8 @@ export default function CampaignTracker({ leads }) {
                       )}
                     </td>
                     <td className="p-4 text-center font-mono">{stats.count}</td>
-                    <td className="p-4 text-center font-mono font-bold text-amber-300">${stats.cpl}</td>
-                    <td className="p-4 text-right font-mono font-bold text-emerald-400">${stats.revenue.toLocaleString()}</td>
+                    <td className="p-4 text-center font-mono font-bold text-amber-300">₹{Number(stats.cpl).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td className="p-4 text-right font-mono font-bold text-emerald-400">₹{stats.revenue.toLocaleString('en-IN')}</td>
                     <td className="p-4 text-center font-mono">{stats.conversionRate}%</td>
                     <td className="p-4 text-right font-black">
                       <span className={Number(stats.roi) >= 100 || stats.roi === '∞' ? 'text-emerald-400' : Number(stats.roi) > 0 ? 'text-cyan-400' : 'text-slate-400'}>

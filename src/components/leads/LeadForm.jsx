@@ -1,9 +1,18 @@
 import React, { useState } from 'react';
-import { addLead } from '../../data/db';
+import { addLead, getSetting } from '../../data/db';
+import { runWorker } from '../../engine/workers/index.js';
+import { WhatsAppService } from '../../services/whatsappService.js';
 import { C, glassStyle } from '../consts';
 import Icon from '../Icon';
 import Button from '../Button';
 import Badge from '../Badge';
+
+// FR-004: Parse budget string → numeric INR value for threshold checks
+function parseBudgetInr(budgetStr) {
+  if (!budgetStr) return 0;
+  const num = Number(String(budgetStr).replace(/[₹$,\s]/g, '').split('-')[0].trim());
+  return isNaN(num) ? 0 : num;
+}
 
 export default function LeadForm({ onSubmitSuccess }) {
   const [name, setName]           = useState('');
@@ -74,7 +83,7 @@ export default function LeadForm({ onSubmitSuccess }) {
         }
       ]);
 
-      await addLead(
+      const leadId = await addLead(
         name.trim(),
         email.trim(),
         phone.trim(),
@@ -84,6 +93,28 @@ export default function LeadForm({ onSubmitSuccess }) {
         budget,
         combinedNotes
       );
+
+      // FR-004: Auto-trigger Lead Manager worker for high-value leads (budget >₹5,000)
+      const budgetInr = parseBudgetInr(budget);
+      if (budgetInr > 5000) {
+        runWorker('lead_manager', {
+          leadId,
+          name: name.trim(),
+          email: email.trim(),
+          budget,
+          source,
+          trigger: 'auto_high_value_lead',
+        }).catch(err => console.warn('[FR-004] Auto lead_manager trigger failed:', err.message));
+      }
+
+      // FR-005: WhatsApp notification to owner on new lead
+      getSetting('wa_personal_number').then(phone => {
+        if (phone) {
+          const msg = `🆕 New Lead: ${name.trim()} | Source: ${source} | Budget: ${budget} | Email: ${email.trim()}`;
+          WhatsAppService.sendMessage(phone, msg)
+            .catch(err => console.warn('[FR-005] WhatsApp lead notification failed:', err.message));
+        }
+      }).catch(() => {});
 
       // Reset form
       setName('');

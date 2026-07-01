@@ -102,3 +102,18 @@ export function formatLocalDate(ts, options = {}) {
 
 // Auto-trigger calibration at module load time
 fetchSystemTimeInfo().catch(err => console.warn("[dateFormatter] Auto-trigger calibration failed:", err));
+
+/**
+ * UX-018: Consistent Indian Rupee formatting (₹1,50,000 style).
+ * @param {number} amount — value in full rupees (not paise)
+ * @param {boolean} showPaise — if true, show 2 decimal places
+ * @returns {string} — e.g. "₹1,50,000" or "₹149.99"
+ */
+export function formatINR(amount, showPaise = false) {
+  if (amount == null || isNaN(amount)) return '₹0';
+  const opts = {
+    minimumFractionDigits: showPaise ? 2 : 0,
+    maximumFractionDigits: showPaise ? 2 : 0,
+  };
+  return `₹${Number(amount).toLocaleString('en-IN', opts)}`;
+}

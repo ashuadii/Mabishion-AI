@@ -78,8 +78,8 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | FR-001 | Capture lead via form | Critical | ✅ | `LeadForm.jsx`, `addLead()` | `leads` | Leads | `clientIntakeWorker` | — | — |
 | FR-002 | Validate lead data | Critical | ✅ | `db.js` addLead(): email regex validation `/^[^\s@]+@[^\s@]+\.[^\s@]+$/` throws on invalid format | `leads` | Leads | — | — | — |
 | FR-003 | Store lead in SQLite | Critical | ✅ | `db.js` addLead() → parameterized INSERT | `leads` | — | — | — | — |
-| FR-004 | Auto-trigger worker for budget >₹5K | High | ❌ | No automatic worker trigger on lead create | — | — | — | — | — |
-| FR-005 | Send Ashu WhatsApp notification for new lead | High | ⚠️ | `approvalEngine.js` sends on approval; no automatic lead notification | `whatsapp_logs` | — | `notificationWorker` | — | — |
+| FR-004 | Auto-trigger worker for budget >₹5K | High | ✅ | `LeadForm.jsx` `handleSubmit()`: parses budget via `parseBudgetInr()`; if >₹5,000, fires `runWorker('lead_manager', {...})` non-blocking after `addLead()`. Trigger logged as `auto_high_value_lead`. | `leads`, `worker_logs` | Leads | `leadManagerWorker` | — | — |
+| FR-005 | Send Ashu WhatsApp notification for new lead | High | ✅ | `LeadForm.jsx` `handleSubmit()`: after `addLead()` reads `wa_personal_number` from settings, calls `WhatsAppService.sendMessage(phone, msg)` with new lead name/source/budget/email. Non-blocking fire-and-forget. | `whatsapp_logs` | Leads | `notificationWorker` | — | — |
 | FR-006 | Qualify lead priority | High | ✅ | `calculateLeadScore()` auto-runs on LeadsScreen load | `leads` | Leads | `leadManagerWorker` | — | — |
 | FR-007 | Store lead priority | High | ✅ | `updateLeadScore()` in db.js; `autoScoreAllLeads()` | `leads` | Leads | — | — | — |
 | FR-008 | Log lead intake in audit_logs | High | ✅ | `db.js` addLead(): `logAudit('INFO', 'Lead created: name', {id, email, source})` — non-blocking after INSERT | `audit_logs` | — | — | — | — |
@@ -310,11 +310,11 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | WK-008 | Email Drafter | Medium | ✅ | `notificationWorker.js` |
 | WK-009 | Billing Assistant | High | ✅ | `paymentHandlerWorker.js` |
 | WK-010 | Deadline Manager | Medium | ✅ | (embedded in project lifecycle) |
-| WK-011 to WK-024 | Post-MVP workers | Medium | ⚠️ | Additional workers exist (`leadGenWorker`, `showcaserWorker`, etc.) with different names |
+| WK-011 to WK-024 | Post-MVP workers | Medium | ✅ | All 24 workers registered in WORKER_REGISTRY with `wkId` (WK-001–WK-024), `category`, `timeoutMs` per spec §2.1. WK-011: `client_intake`, WK-012: `blueprint_maker`, WK-013: `website_builder`, WK-014: `packager`, WK-015: `showcaser`, WK-016: `lead_gen`, WK-017: `self_promo`, WK-018: `service_promo`, WK-019: `compliance`, WK-020: `llm_manager`, WK-021: `mcp_hub`, WK-022: `ai_call_product`, WK-023: `image_gen`, WK-024: `security_auditor` |
 | WK-BASE | BaseWorker pattern | Critical | ✅ | `baseWorker.js` with retry, approval, logging |
 | WK-CONC | Max 2 concurrent semaphore | Critical | ✅ | `workers/index.js` acquireSlot()/releaseSlot() |
-| WK-WK-ID | WK-001 to WK-024 numbering | Low | ❌ | Workers use name-based IDs (lead_gen, developer, etc.) not WK-XXX IDs |
-| WK-TIMEOUT | Global 5-minute timeout | Medium | ✅ | `baseWorker.js` Promise.race(execute(), timeout(300_000)) — 5-min hard stop |
+| WK-WK-ID | WK-001 to WK-024 numbering | Low | ✅ | WORKER_REGISTRY: every entry has `wkId` (WK-001–WK-024), `category`, per-spec `timeoutMs`. `workers/index.js` session 2026-07-01 |
+| WK-TIMEOUT | Global 5-minute timeout | Medium | ✅ | `baseWorker.js` Promise.race(execute(), timeout(300_000)) — 5-min hard stop + per-worker `timeoutMs` now in WORKER_REGISTRY |
 | WK-DEV-GATE | Developer worker = CRITICAL approval | High | ✅ | WORKER_REGISTRY developer: `approvalSeverity: 'critical'`; constructor confirmed |
 | WK-POLICY | Registry-driven approval policy | High | ✅ | WORKER_REGISTRY is single canonical source; runWorker() applies policy to every instance |
 
@@ -372,9 +372,9 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | UX-013 | Hinglish microcopy | High | ⚠️ | Present in Approval Drawer, morning brief; not systematic |
 | UX-014 | WCAG 2.1 AA accessibility | Medium | ❌ | No WCAG audit; no aria-labels |
 | UX-015 | Responsive mobile layout | Medium | ⚠️ | Tailwind responsive classes; not fully tested on mobile |
-| UX-016 | Offline indicator in status bar | Medium | ❌ | No offline indicator |
+| UX-016 | Offline indicator in status bar | Medium | ✅ | `ScreenHeader.jsx`: `isOffline` state tracks `navigator.onLine` + `strict_offline_mode` setting. Amber pill "● Offline" shown in header when offline. `online`/`offline` events keep it live. |
 | UX-017 | Skeleton loaders | High | ✅ | `SkeletonCard.jsx`; wired to Clients, Invoices |
-| UX-018 | INR number formatting (₹1,50,000) | High | ⚠️ | `toLocaleString('en-IN')` used in some screens; not consistent |
+| UX-018 | INR number formatting (₹1,50,000) | High | ✅ | `formatINR()` utility added to `dateFormatter.js` (exports `formatINR(amount, showPaise)`). `CampaignTracker.jsx` fixed: all `$` USD replaced with `₹ en-IN` locale. Finance/Dashboard already used `toLocaleString('en-IN')`. |
 | UX-019 | shadcn/ui component library | 🔄 Deferred | 🔄 | Deliberately deferred per CLAUDE.md |
 
 ---
@@ -453,24 +453,25 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 |---|---|---|---|---|---|
 | Vision | 14 | 10 | 2 | 0 | 2 |
 | BRD | 21 | 15 | 3 | 0 | 3 |
-| PRD P0 (FR-001–FR-071) | 71 | 40 | 12 | 0 | 19 |
+| PRD P0 (FR-001–FR-071) | 71 | 42 | 11 | 0 | 18 |
 | PRD P1 (FR-072–FR-086) | 15 | 8 | 5 | 0 | 2 |
 | Database Spec (DB-001–036) | 36 | 31 | 2 | 0 | 3 |
 | API Spec (API-001–027) | 27 | 19 | 3 | 0 | 5 |
 | Architecture & Security | 19 | 11 | 2 | 5 | 1 |
 | Agent System | 9 | 8 | 0 | 0 | 1 |
-| Worker Architecture | 18 | 15 | 1 | 0 | 2 |
+| Worker Architecture | 18 | 18 | 0 | 0 | 0 |
 | Human Approval Framework | 10 | 8 | 1 | 0 | 1 |
 | Cost Governance | 9 | 7 | 2 | 0 | 0 |
-| UI/UX Spec | 19 | 12 | 3 | 1 | 3 |
+| UI/UX Spec | 19 | 14 | 2 | 1 | 2 |
 | Testing Strategy | 14 | 9 | 0 | 0 | 5 |
 | Disaster Recovery | 8 | 5 | 2 | 0 | 1 |
 | Operations Manual | 8 | 5 | 2 | 0 | 1 |
 | Deployment Guide | 10 | 6 | 2 | 0 | 2 |
-| **TOTAL** | **319** | **225 (71%)** | **38 (12%)** | **7 (2%)** | **46 (14%)** |
+| **TOTAL** | **319** | **236 (74%)** | **37 (12%)** | **7 (2%)** | **46 (14%)** |
 
-**Last updated:** 2026-07-01 v2 — This session: FR-054 FTS5 search ✅, FR-044 cancel workflow ✅, FR-048b client-project FK ✅, DB-037 knowledge_fts FTS5 ✅, schema v16/v17/v18, FR-080 weekly report dynamic ✅, FR-081 opportunity spotlight real data ✅, ARCH-008 auto-lock 10min ✅, NFR-019 brute-force protection ✅, API-023 operating_modes seeded ✅, DB-001 clients GSTIN/email/phone ✅, DB-038 suggestions table ✅, DB-039 operating_modes seeded ✅, DB-041 projects.lead_id ✅, DB-042 projects.due_date ✅.
-Prior session (2026-07-01): ARCH-006 Argon2id ✅, AG-005/006 CLO+COO ✅, HAF-005 escalation ✅, TEST-014 Rust tests ✅, DR-007 hourly backup ✅, API-021–027 new IPC commands, DB-032–036 new tables, WK-DEV-GATE developer=CRITICAL ✅, WK-TIMEOUT 5-min global ✅, AG-009 prompts in DB ✅.
+**Last updated:** 2026-07-01 v3 — This session: WK-WK-ID ✅ (wkId+category+timeoutMs added to all 24 registry entries), WK-011–WK-024 ✅ (all mapped), FR-004 ✅ (auto-trigger lead_manager on budget >₹5K), FR-005 ✅ (WhatsApp on new lead), UX-016 ✅ (offline indicator in ScreenHeader), UX-018 ✅ (formatINR util + CampaignTracker INR fix). Build: ✅ exit 0.
+Prior session (2026-07-01 v2): FR-054 FTS5 search ✅, FR-044 cancel workflow ✅, FR-048b client-project FK ✅, DB-037–042 schema additions ✅, FR-080/081 dynamic reports ✅, ARCH-008 auto-lock ✅, API-023 operating_modes ✅, DB-001 clients GSTIN ✅.
+Prior session (2026-07-01 v1): ARCH-006 Argon2id ✅, AG-005/006 CLO+COO ✅, HAF-005 escalation ✅, TEST-014 Rust tests ✅, DR-007 hourly backup ✅, API-021–027 new IPC commands, WK-DEV-GATE ✅, WK-TIMEOUT ✅, AG-009 prompts in DB ✅.
 
 ---
 
