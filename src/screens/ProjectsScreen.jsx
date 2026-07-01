@@ -19,9 +19,83 @@ export default function ProjectsScreen({ onNavigate }) {
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
 
+  // VIS-012: Service type → tiers + pipeline + pricing
+  const SERVICE_CATALOG = {
+    'Landing Page': {
+      tiers: '1, 2, 3, 4, 8, 9, 11, 16',
+      pipeline: 'client_intake → business_analyst → blueprint_maker → website_builder ⚠️ → compliance → packager',
+      price: '₹5,000 – ₹10,000',
+      delivery: '24 – 48 hours',
+      tier: 1,
+    },
+    'Basic Website': {
+      tiers: '1–4, 5, 8, 9, 10, 11, 12, 13, 16',
+      pipeline: 'client_intake → business_analyst → blueprint_maker → proposal_maker ⚠️ → developer → website_builder ⚠️ → compliance → packager ⚠️',
+      price: '₹10,000 – ₹15,000',
+      delivery: '3 – 5 days',
+      tier: 1,
+    },
+    'E-Commerce Site': {
+      tiers: '1–5, 8, 9, 10, 11, 12, 14, 16',
+      pipeline: 'client_intake → business_analyst → blueprint_maker → proposal_maker ⚠️ → payment_handler ⚠️ → developer → website_builder ⚠️ → compliance → packager ⚠️',
+      price: '₹25,000 – ₹50,000',
+      delivery: '7 – 14 days',
+      tier: 2,
+    },
+    'SaaS Product': {
+      tiers: 'ALL 16 (mandatory)',
+      pipeline: 'client_intake → business_analyst → blueprint_maker → proposal_maker ⚠️ → payment_handler ⚠️ → developer (×multiple) → website_builder → compliance → packager ⚠️ → documentor → showcaser',
+      price: '₹50,000 – ₹1,00,000',
+      delivery: '10 – 20 days',
+      tier: 2,
+    },
+    'Custom Software': {
+      tiers: '1–5, 8, 9, 10, 11, 12, 14, 16',
+      pipeline: 'client_intake → business_analyst → blueprint_maker → proposal_maker ⚠️ → developer → compliance → packager ⚠️ → documentor',
+      price: '₹25,000 – ₹50,000',
+      delivery: '5 – 10 days',
+      tier: 2,
+    },
+    'Custom AI Agent': {
+      tiers: 'ALL 16 + Agent Governance',
+      pipeline: 'client_intake → business_analyst → blueprint_maker → proposal_maker ⚠️ → payment_handler ⚠️ → developer → compliance → packager ⚠️ → documentor → ai_call_product',
+      price: '₹50,000 – ₹1,00,000',
+      delivery: '10 – 20 days',
+      tier: 2,
+    },
+    'Meta Ads Campaign': {
+      tiers: '1, 2, 3, 4, 11, 13, 16',
+      pipeline: 'client_intake → business_analyst → service_promo → social_scheduler → proposal_maker ⚠️ → payment_handler ⚠️ → writer',
+      price: '₹5,000 – ₹15,000',
+      delivery: '24 – 48 hours',
+      tier: 1,
+    },
+    'Social Media Strategy': {
+      tiers: '1, 2, 3, 4, 16',
+      pipeline: 'client_intake → business_analyst → self_promo / service_promo → writer → social_scheduler ⚠️ → showcaser',
+      price: '₹5,000 – ₹10,000',
+      delivery: '24 – 48 hours',
+      tier: 1,
+    },
+    'Digital Product': {
+      tiers: 'Tier 3 (Fixed Price)',
+      pipeline: 'ai_call_product → compliance → packager ⚠️ → documentor',
+      price: '₹1,000 – ₹10,000',
+      delivery: 'Instant – 24 hours',
+      tier: 3,
+    },
+    'Maintenance': {
+      tiers: 'Add-On',
+      pipeline: 'notification → developer → compliance → packager → notification',
+      price: '₹2,000 – ₹10,000',
+      delivery: '24 – 48 hours',
+      tier: 1,
+    },
+  };
+
   // New Project Form state
   const [newProjName, setNewProjName] = useState('');
-  const [newProjType, setNewProjType] = useState('Website');
+  const [newProjType, setNewProjType] = useState('Landing Page');
   const [newProjClient, setNewProjClient] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -569,9 +643,9 @@ export default function ProjectsScreen({ onNavigate }) {
       {/* New Project Creator Overlay Modal */}
       {isNewModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
-          <form 
+          <form
             onSubmit={handleCreateProject}
-            className="w-full max-w-md p-6 rounded-[28px] border border-white/10 shadow-2xl relative overflow-hidden space-y-4" 
+            className="w-full max-w-lg p-6 rounded-[28px] border border-white/10 shadow-2xl relative overflow-hidden space-y-4"
             style={glassStyle({ glow: 'warning' })}
           >
             <div className="flex justify-between items-center pb-2 border-b border-white/5">
@@ -598,22 +672,41 @@ export default function ProjectsScreen({ onNavigate }) {
             </div>
 
             <div>
-              <label className="block text-xs text-gray-400 font-bold mb-1 uppercase tracking-wider">Product Type</label>
-              <select 
+              <label className="block text-xs text-gray-400 font-bold mb-1 uppercase tracking-wider">Service Type</label>
+              <select
                 value={newProjType}
                 onChange={(e) => setNewProjType(e.target.value)}
-                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                className="w-full px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                style={{ colorScheme: 'dark' }}
               >
-                <option value="Website">Website</option>
-                <option value="Landing page">Landing page</option>
-                <option value="App">App</option>
-                <option value="Software">Software</option>
-                <option value="AI agent">AI agent</option>
-                <option value="Browser extension">Browser extension</option>
-                <option value="Automation tool">Automation tool</option>
-                <option value="Digital product">Digital product</option>
-                <option value="Client delivery pack">Client delivery pack</option>
+                {Object.keys(SERVICE_CATALOG).map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
               </select>
+
+              {/* VIS-012: Show tiers, pipeline, price based on selected service */}
+              {SERVICE_CATALOG[newProjType] && (() => {
+                const svc = SERVICE_CATALOG[newProjType];
+                const tierColor = svc.tier === 1 ? '#10B981' : svc.tier === 2 ? '#F59E0B' : '#8B5CF6';
+                return (
+                  <div className="mt-2 p-3 rounded-xl space-y-2" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${tierColor}20`, color: tierColor }}>
+                        Tier {svc.tier} · {svc.delivery}
+                      </span>
+                      <span className="text-[10px] font-bold text-white">{svc.price}</span>
+                    </div>
+                    <div>
+                      <p className="text-[9px] uppercase tracking-wider mb-1" style={{ color: 'rgba(148,163,184,0.5)' }}>Required Tiers</p>
+                      <p className="text-[10px]" style={{ color: 'rgba(148,163,184,0.8)' }}>{svc.tiers}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] uppercase tracking-wider mb-1" style={{ color: 'rgba(148,163,184,0.5)' }}>Worker Pipeline <span style={{ color: '#F59E0B' }}>⚠️ = approval gate</span></p>
+                      <p className="text-[10px] break-words leading-5" style={{ color: 'rgba(148,163,184,0.8)' }}>{svc.pipeline}</p>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             <div>
