@@ -259,6 +259,12 @@ export default function DashboardScreen({ onNavigate }) {
     loadDashboardData();
     fetchApprovals();
 
+    // FR-036: Auto-refresh dashboard data every 60 seconds
+    const refreshInterval = setInterval(() => {
+      loadDashboardData();
+      fetchApprovals();
+    }, 60000);
+
     // Listen for incoming approvals with robust unmount race condition handling
     let active = true;
     let unlistenApprovals = null;
@@ -319,6 +325,7 @@ export default function DashboardScreen({ onNavigate }) {
 
     return () => {
       active = false;
+      clearInterval(refreshInterval);
       if (unlistenApprovals) unlistenApprovals();
       if (unlistenSkill) unlistenSkill();
     };

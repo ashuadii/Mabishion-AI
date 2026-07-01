@@ -1115,12 +1115,10 @@ export async function addLead(name, emailOrSource, phoneOrValue, sourceOrRequire
   let finalNotes = '';
 
   if (arguments.length <= 4) {
-    // Old signature fallback: addLead(name, source, value, requirement)
     finalSource = emailOrSource || 'Manual';
     finalBudget = phoneOrValue || 'Flexible';
     finalNotes = JSON.stringify([{ id: crypto.randomUUID(), text: sourceOrRequirement || 'Captured manually.', timestamp: now, type: 'system' }]);
   } else {
-    // New signature
     finalEmail = emailOrSource || '';
     finalPhone = phoneOrValue || '';
     finalSource = sourceOrRequirement || 'Manual';
@@ -1130,8 +1128,26 @@ export async function addLead(name, emailOrSource, phoneOrValue, sourceOrRequire
     finalNotes = notes || '';
   }
 
+  // FR-002: Email format validation
+  if (finalEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(finalEmail)) {
+    throw new Error(`Invalid email format: "${finalEmail}"`);
+  }
+
+  // FR-013: Duplicate detection — check by email (if provided) or name
+  if (finalEmail) {
+    const existing = await db.select('SELECT id FROM leads WHERE LOWER(email) = LOWER($1) LIMIT 1', [finalEmail]);
+    if (existing && existing.length > 0) {
+      throw new Error(`A lead with email "${finalEmail}" already exists.`);
+    }
+  } else if (finalName) {
+    const existing = await db.select('SELECT id FROM leads WHERE LOWER(name) = LOWER($1) LIMIT 1', [finalName]);
+    if (existing && existing.length > 0) {
+      throw new Error(`A lead named "${finalName}" already exists. Add email to distinguish.`);
+    }
+  }
+
   await db.execute(
-    `INSERT INTO leads (id, name, email, phone, source, status, score, budget, notes, created_at, last_contacted) 
+    `INSERT INTO leads (id, name, email, phone, source, status, score, budget, notes, created_at, last_contacted)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
     [id, finalName, finalEmail, finalPhone, finalSource, finalStatus, finalScore, finalBudget, finalNotes, now, now]
   );

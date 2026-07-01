@@ -62,7 +62,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | BRD-013 | Pricing Tier 1 (Standard, ₹5K–₹15K) | High | ⚠️ | Invoice creation supports any amount; no tier enforcement | `invoices` | Invoices | — | — | — |
 | BRD-014 | Pricing Tier 2 (Premium, ₹15K–₹1L) | Medium | ⚠️ | No tier-based pricing logic; manual invoice amount | `invoices` | Invoices | — | — | — |
 | BRD-015 | Digital products catalog | Medium | ❌ | No product catalog screen | — | — | — | — | — |
-| BRD-016 | Revenue recognition on delivery | High | ⚠️ | `addRevenue()` exists; not automatically triggered | `revenue` | Finance | — | — | — |
+| BRD-016 | Revenue recognition on delivery | High | ✅ | `packagerWorker.js`: on project set to Delivered, queries paid invoice amount and calls `addRevenue(projectId, amount, 'delivery')` automatically | `revenue`, `invoices` | Finance | `packagerWorker` | — | — |
 | BRD-017 | Proposal → Invoice auto-draft | High | ✅ | `ApprovalDetailDrawer.jsx` on proposal approval → navigate to Invoices | `approvals`, `invoices` | Approval Center, Invoices | — | — | — |
 | BRD-018 | Lead scoring formula | High | ✅ | `db.js` calculateLeadScore() budget+source+stage+recency=100pts | `leads` | Leads | — | — | — |
 | BRD-019 | GST DPDP Act 2023 compliance | Critical | ⚠️ | `consents` table added; PII masking in `logAudit()`; no full DPDP enforcement | `consents`, `audit_logs` | — | — | — | — |
@@ -76,7 +76,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | Req ID | Description | Priority | Status | Evidence | DB Tables | UI Screens | Workers | Cortex | Mickii |
 |---|---|---|---|---|---|---|---|---|---|
 | FR-001 | Capture lead via form | Critical | ✅ | `LeadForm.jsx`, `addLead()` | `leads` | Leads | `clientIntakeWorker` | — | — |
-| FR-002 | Validate lead data | Critical | ⚠️ | Basic validation in LeadForm; no email format regex | `leads` | Leads | — | — | — |
+| FR-002 | Validate lead data | Critical | ✅ | `db.js` addLead(): email regex validation `/^[^\s@]+@[^\s@]+\.[^\s@]+$/` throws on invalid format | `leads` | Leads | — | — | — |
 | FR-003 | Store lead in SQLite | Critical | ✅ | `db.js` addLead() → parameterized INSERT | `leads` | — | — | — | — |
 | FR-004 | Auto-trigger worker for budget >₹5K | High | ❌ | No automatic worker trigger on lead create | — | — | — | — | — |
 | FR-005 | Send Ashu WhatsApp notification for new lead | High | ⚠️ | `approvalEngine.js` sends on approval; no automatic lead notification | `whatsapp_logs` | — | `notificationWorker` | — | — |
@@ -87,7 +87,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | FR-010 | CAPTCHA validation | Low | ❌ | No CAPTCHA (single-user app — appropriate to defer) | — | — | — | — | — |
 | FR-011 | SQL injection prevention | Critical | ✅ | `db.js` parameterized queries throughout; `sanitizeSqlValue()` in BaseWorker | All | — | `baseWorker.js` | — | — |
 | FR-012 | Store client IP address | Low | ❌ | No IP tracking (local desktop app — appropriate to defer) | — | — | — | — | — |
-| FR-013 | Duplicate lead detection | Medium | ❌ | No duplicate check before insert | `leads` | — | — | — | — |
+| FR-013 | Duplicate lead detection | Medium | ✅ | `db.js` addLead(): checks existing lead by email (LOWER match); falls back to name check if no email; throws with clear message | `leads` | Leads | — | — | — |
 | FR-014 | Merge duplicate leads | Low | ❌ | Not implemented | — | — | — | — | — |
 | FR-015 | Export leads to CSV | Low | ❌ | No CSV export for leads | — | — | — | — | — |
 | FR-016 | Search leads by email/company | Medium | ⚠️ | No FTS5 search; basic JS filter in LeadTable | `leads` | Leads | — | — | — |
@@ -106,7 +106,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | FR-033 | Dashboard: revenue MTD | Critical | ✅ | `getTotalRevenue()` on load | `revenue`, `invoices` | Dashboard | — | — | — |
 | FR-034 | Dashboard: activity feed | High | ⚠️ | Worker logs shown; no unified 50-event activity feed | `worker_logs`, `audit_logs` | Dashboard | — | — | — |
 | FR-035 | Dashboard: quick action buttons | High | ✅ | Quick Skill Execution cards on Dashboard | — | Dashboard | All | — | — |
-| FR-036 | Dashboard: auto-refresh 60s | Medium | ❌ | No setInterval auto-refresh; only on load | — | Dashboard | — | — | — |
+| FR-036 | Dashboard: auto-refresh 60s | Medium | ✅ | `DashboardScreen.jsx`: setInterval(loadDashboardData + fetchApprovals, 60000); clearInterval on unmount | — | Dashboard | — | — | — |
 | FR-037 | Dashboard: cost gauge | Critical | ✅ | AG-CFO Cost Monitor card with ProgressBar | `execution_spans` | Dashboard | — | `getDailyCostTotal()` | — |
 | FR-038 | Dashboard: LLM status indicator | Medium | ⚠️ | Settings shows test buttons; no real-time status badge on Dashboard | `settings` | Dashboard | — | — | — |
 | FR-039 | Mickii: natural language command input | Critical | ✅ | `DashboardScreen.jsx` chat input; `useMickiiAgent.js` → `cortex.js` | `project_memory` | Dashboard | — | Full ReAct | `mickii.js` |
@@ -337,7 +337,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | CGF-001 | `execution_spans` as canonical cost table | Critical | ✅ | `db_schema_upgrade.js` line 81; `logExecutionSpan()` in db.js |
 | CGF-002 | Real-time cost logging per API call | Critical | ✅ | `cortex.js` post-call `logExecutionSpan()` |
 | CGF-003 | Daily hard stop at ₹150 (15,000 paise) | Critical | ✅ | `cortex.js` pre-check throws COST_LIMIT_EXCEEDED |
-| CGF-004 | Monthly hard stop at ₹1,500 | Critical | ⚠️ | `getMonthlyCostTotal()` exists; no hard stop in code (only display) |
+| CGF-004 | Monthly hard stop at ₹1,500 | Critical | ✅ | `cortex.js` pre-check: `getMonthlyCostTotal() >= 150000` throws MONTHLY_COST_LIMIT_EXCEEDED before any LLM call |
 | CGF-005 | 80% alert / 90% alert / 100% hard stop UI | High | ✅ | AG-CFO prompt injected at 12,000 paise (80%); `cronService.js` `runCostAlertJob()` fires `nexious_cost_alert` CustomEvent at 80%/90%/100%; `ScreenHeader.jsx` listens and shows dismissible banner |
 | CGF-006 | Per-worker ₹50/day cap | High | ✅ | `workers/index.js` execution_spans check before slot acquire |
 | CGF-007 | Cost dashboard widget | Critical | ✅ | AG-CFO Cost Monitor on Dashboard with ProgressBar |

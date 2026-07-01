@@ -187,18 +187,24 @@ export class LLMProvider {
   }
 
   async chat(systemPrompt, messages, tools = []) {
-    // ── Cost Pre-Check (Tier 1 — fail-open) ──────────────────────────────────
+    // ── Cost Pre-Check (CGF-003 daily + CGF-004 monthly — fail-open) ────────
     try {
       const dailyTotal = await getDailyCostTotal();
       this._lastDailyCostPaise = dailyTotal;
       if (dailyTotal >= 15000) {
         const err = new Error('Daily AI cost limit reached (₹150). Please wait until tomorrow or switch to Ollama.');
         err.code = 'COST_LIMIT_EXCEEDED';
-        err.dailyTotal = dailyTotal;
+        throw err;
+      }
+      const { getMonthlyCostTotal } = await import('../data/db.js');
+      const monthlyTotal = await getMonthlyCostTotal();
+      if (monthlyTotal >= 150000) {
+        const err = new Error('Monthly AI cost limit reached (₹1,500). No further LLM calls this month.');
+        err.code = 'MONTHLY_COST_LIMIT_EXCEEDED';
         throw err;
       }
     } catch (costCheckErr) {
-      if (costCheckErr.code === 'COST_LIMIT_EXCEEDED') throw costCheckErr;
+      if (costCheckErr.code === 'COST_LIMIT_EXCEEDED' || costCheckErr.code === 'MONTHLY_COST_LIMIT_EXCEEDED') throw costCheckErr;
       console.warn('[Cortex] Cost pre-check failed (fail-open):', costCheckErr.message);
     }
 

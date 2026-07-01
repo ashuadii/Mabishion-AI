@@ -1,5 +1,5 @@
 import { BaseWorker } from './baseWorker.js';
-import { getDb } from '../../data/db.js';
+import { getDb, addRevenue } from '../../data/db.js';
 import { executeLlmWithFallback } from '../../services/llmManager.js';
 import JSZip from 'jszip';
 import { writeFile, BaseDirectory } from '@tauri-apps/plugin-fs';
@@ -351,6 +351,18 @@ Date         : _______________________`;
     );
 
     await db.execute("UPDATE projects SET stage = 'Delivered' WHERE id = $1", [projectId]).catch(() => {});
+
+    // BRD-016: Auto-recognize revenue on delivery — log to revenue table
+    try {
+      const invoice = await db.select(
+        `SELECT amount FROM invoices WHERE project_id = $1 AND status = 'paid' ORDER BY created_at DESC LIMIT 1`,
+        [projectId]
+      );
+      const amount = invoice?.[0]?.amount || 0;
+      if (amount > 0) {
+        await addRevenue(projectId, amount, 'delivery');
+      }
+    } catch (_) { /* non-blocking — delivery succeeds regardless */ }
 
     return {
       deliverableId,
