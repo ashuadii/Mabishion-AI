@@ -8,7 +8,7 @@ import Icon from '../components/Icon';
 import MickiiOrb from '../components/MickiiOrb';
 import ProgressBar from '../components/ProgressBar';
 import QuickCommandBar from '../components/QuickCommandBar';
-import { getProjects, getLeads, getInvoices, getTotalRevenue, getDailyCostTotal } from '../data/db.js';
+import { getProjects, getLeads, getInvoices, getTotalRevenue, getDailyCostTotal, getWeeklyTrendData, getTopOpportunities } from '../data/db.js';
 
 function Sparkline({ points, tone = "gold" }) {
   const color = tone === "success" ? C.success : tone === 'info' ? C.info : tone === "danger" ? C.danger : C.warning;
@@ -33,13 +33,18 @@ function Sparkline({ points, tone = "gold" }) {
 export default function ReportsScreen({ onNavigate }) {
   const [kpiCards, setKpiCards] = useState([]);
   const [loadingKpi, setLoadingKpi] = useState(true);
+  const [trendData, setTrendData] = useState(null);
+  const [opportunities, setOpportunities] = useState([]);
+  const [weeklyVerdict, setWeeklyVerdict] = useState(null);
 
   useEffect(() => {
     const load = async () => {
       setLoadingKpi(true);
       try {
-        const [projects, leads, invoices, totalRev, dailyCost] = await Promise.all([
-          getProjects(), getLeads(), getInvoices(), getTotalRevenue(), getDailyCostTotal()
+        const [projects, leads, invoices, totalRev, dailyCost, trend, opps] = await Promise.all([
+          getProjects(), getLeads(), getInvoices(), getTotalRevenue(), getDailyCostTotal(),
+          getWeeklyTrendData().catch(() => null),
+          getTopOpportunities().catch(() => []),
         ]);
         const activeProjects = (projects || []).filter(p => p.stage !== 'Completed' && p.status !== 'completed');
         const hotLeads = (leads || []).filter(l => (l.score || 0) >= 80 || l.status === 'Negotiating');
@@ -52,6 +57,39 @@ export default function ReportsScreen({ onNavigate }) {
           { label: 'Hot Leads', value: String(hotLeads.length), change: `${leads?.length || 0} pipeline`, tone: 'success', icon: 'users' },
           { label: 'Pending Invoices', value: String(pendingInv), change: 'awaiting payment', tone: pendingInv > 0 ? 'danger' : 'success', icon: 'orders' },
         ]);
+
+        setTrendData(trend);
+        setOpportunities(opps || []);
+
+        // Generate dynamic weekly verdict from real data
+        const convRate = (leads || []).length > 0
+          ? Math.round((hotLeads.length / (leads || []).length) * 100)
+          : 0;
+        const hasRevenue = paidRevenue > 0;
+        const hasBlocked = (projects || []).some(p => p.health === 'Blocked');
+        setWeeklyVerdict({
+          verdict: hasBlocked
+            ? `Revenue pipeline active but ${(projects||[]).filter(p=>p.health==='Blocked').length} project(s) are blocked. Address bottlenecks before new client intake.`
+            : hasRevenue
+              ? `Revenue is flowing. ${hotLeads.length} hot lead${hotLeads.length !== 1 ? 's' : ''} at ${convRate}% conversion rate. Focus on proposal-to-win speed.`
+              : `No revenue recorded yet. ${(leads||[]).length} leads in pipeline — prioritize converting top-scoring leads into proposals.`,
+          worked: hotLeads.length > 0
+            ? `${hotLeads.length} high-score lead${hotLeads.length !== 1 ? 's' : ''} in pipeline (score ≥ 80). Lead scoring system is working.`
+            : `${(leads||[]).length} lead${(leads||[]).length!==1?'s':''} captured and scored.`,
+          failed: pendingInv > 0
+            ? `${pendingInv} invoice${pendingInv!==1?'s':''} still unpaid. Follow up on outstanding payments immediately.`
+            : activeProjects.length === 0 ? 'No active projects this week.' : 'No critical failures detected.',
+          rootCause: hasBlocked
+            ? 'Blocked projects need approval gate resolution or client clarification before pipeline can flow.'
+            : convRate < 30
+              ? 'Lead-to-proposal conversion is low. Faster follow-up and better qualification needed.'
+              : 'Pipeline health is acceptable. Maintain current velocity.',
+          nextAction: opps.length > 0
+            ? `Run proposal worker on "${opps[0].name}" (score: ${opps[0].score || 'N/A'}) — highest ROI opportunity.`
+            : pendingInv > 0
+              ? 'Send payment reminders for outstanding invoices.'
+              : 'Add new leads or run research on target market segments.',
+        });
       } catch (e) {
         console.error('[ReportsScreen KPI]', e);
         setKpiCards([]);
@@ -90,53 +128,81 @@ export default function ReportsScreen({ onNavigate }) {
           </div>
         </div>
 
-        {/* Weekly Report */}
+        {/* Weekly Report — FR-080 dynamic from DB */}
         <div className="col-span-8 p-5" style={glassStyle({ glow: 'info' })}>
-          <div className="mb-5 flex items-center justify-between"><h3 className="font-black">Weekly Performance Report</h3><Badge tone="danger">No sugar-coating</Badge></div>
+          <div className="mb-5 flex items-center justify-between">
+            <h3 className="font-black">Weekly Performance Report</h3>
+            <Badge tone={loadingKpi ? 'muted' : 'info'}>{loadingKpi ? 'Loading…' : 'Live DB'}</Badge>
+          </div>
           <div className="mb-5 rounded-[24px] p-5" style={{ backgroundColor: `${C.warning}10`, border: `1px solid ${C.warning}33` }}>
             <p className="text-xs font-black uppercase tracking-[0.16em]" style={{ color: C.warning }}>Verdict</p>
-            <h3 className="mt-3 text-2xl font-black">Growth is visible, but conversion is leaking at follow-up stage.</h3>
+            <h3 className="mt-3 text-2xl font-black">
+              {weeklyVerdict?.verdict || 'Loading business insights from your data…'}
+            </h3>
           </div>
           <div className="grid grid-cols-2 gap-4">
             {[
-              { title: "What worked", body: "Agency Kit testing improved product confidence. Showroom proof posts generated warmer lead signals.", tone: "success" },
-              { title: "What failed", body: "Lead Engine blocker delayed follow-up drafts. Warm leads waited too long before clear offer CTA.", tone: "danger" },
-              { title: "Root cause", body: "Marketing is creating attention, but handoff speed into Leads and Projects is still inconsistent.", tone: 'primary' },
-              { title: "Next action", body: "Fix Lead Engine approval gate first, then run one Showroom proof campaign for 48 hours.", tone: 'warning' },
+              { title: 'What worked', body: weeklyVerdict?.worked, tone: 'success' },
+              { title: 'What failed', body: weeklyVerdict?.failed, tone: 'danger' },
+              { title: 'Root cause', body: weeklyVerdict?.rootCause, tone: 'primary' },
+              { title: 'Next action', body: weeklyVerdict?.nextAction, tone: 'warning' },
             ].map((section) => (
               <div key={section.title} className="rounded-[22px] p-5"
-                style={{ backgroundColor: section.tone === "danger" ? `${C.danger}10` : section.tone === "success" ? `${C.success}0F` : section.tone === 'primary' ? `${C.primary}10` : `${C.warning}10`, border: `1px solid ${C.glassBorder}` }}>
+                style={{ backgroundColor: section.tone === 'danger' ? `${C.danger}10` : section.tone === 'success' ? `${C.success}0F` : section.tone === 'primary' ? `${C.primary}10` : `${C.warning}10`, border: `1px solid ${C.glassBorder}` }}>
                 <div className="mb-3 flex items-center gap-2">
-                  <Icon name={section.tone === "danger" ? "warning" : section.tone === "success" ? "check" : section.tone === 'primary' ? "target" : "sparkles"} size={18} style={{ color: section.tone === "danger" ? C.danger : section.tone === "success" ? C.success : section.tone === 'primary' ? C.primary : C.warning }} />
+                  <Icon name={section.tone === 'danger' ? 'warning' : section.tone === 'success' ? 'check' : section.tone === 'primary' ? 'target' : 'sparkles'} size={18}
+                    style={{ color: section.tone === 'danger' ? C.danger : section.tone === 'success' ? C.success : section.tone === 'primary' ? C.primary : C.warning }} />
                   <p className="font-black">{section.title}</p>
                 </div>
-                <p className="text-sm leading-6" style={{ color: C.textMuted }}>{section.body}</p>
+                <p className="text-sm leading-6" style={{ color: C.textMuted }}>
+                  {section.body || (loadingKpi ? 'Calculating…' : 'No data available.')}
+                </p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Opportunity + Trends */}
+        {/* Opportunity + Trends — FR-080 + FR-081 from real DB */}
         <div className="col-span-4 space-y-5">
           <div className="p-5" style={glassStyle({ glow: 'warning' })}>
-            <div className="mb-4 flex items-center justify-between"><h3 className="font-black">Opportunity Spotlight</h3><Badge tone="gold">Ranked</Badge></div>
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-black">Opportunity Spotlight</h3>
+              <Badge tone="gold">{opportunities.length > 0 ? `${opportunities.length} leads` : 'No data'}</Badge>
+            </div>
             <div className="space-y-3">
-              {[{ title: "Package Proposal OS", score: 87, reason: "Small paid starter product. Low build effort, clear buyer pain." }, { title: "Showroom Case Study", score: 82, reason: "Proof asset can lift trust before pricing." }].map((item, i) => (
-                <div key={item.title} className="rounded-[20px] p-4" style={{ backgroundColor: i === 0 ? `${C.warning}10` : "rgba(255,255,255,.04)", border: `1px solid ${i === 0 ? `${C.warning}44` : C.glassBorder}` }}>
-                  <div className="mb-2 flex items-center justify-between"><p className="font-black">{item.title}</p><Badge tone={i === 0 ? "gold" : "muted"}>{item.score}</Badge></div>
-                  <p className="text-xs leading-5" style={{ color: C.textMuted }}>{item.reason}</p>
+              {opportunities.length > 0 ? opportunities.slice(0, 3).map((item, i) => (
+                <div key={item.name + i} className="rounded-[20px] p-4"
+                  style={{ backgroundColor: i === 0 ? `${C.warning}10` : 'rgba(255,255,255,.04)', border: `1px solid ${i === 0 ? `${C.warning}44` : C.glassBorder}` }}>
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="font-black text-sm truncate max-w-[120px]">{item.name}</p>
+                    <Badge tone={i === 0 ? 'gold' : 'muted'}>{item.score || '—'}</Badge>
+                  </div>
+                  <p className="text-xs leading-5" style={{ color: C.textMuted }}>
+                    {item.budget || 'Budget TBD'} · {item.status || 'New'}
+                  </p>
                 </div>
-              ))}
+              )) : (
+                <p className="text-sm py-4 text-center" style={{ color: C.textMuted }}>Add leads to see opportunities here.</p>
+              )}
             </div>
           </div>
           <div className="p-5" style={glassStyle({ glow: 'primary' })}>
-            <div className="mb-4 flex items-center justify-between"><h3 className="font-black">Trend Snapshot</h3><Badge tone="violet">7 days</Badge></div>
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-black">Trend Snapshot</h3>
+              <Badge tone="violet">7 days</Badge>
+            </div>
             <div className="space-y-3">
-              {[{ label: "Revenue", points: [38, 44, 41, 62, 58, 72, 78], tone: 'warning' }, { label: "Leads", points: [52, 48, 65, 61, 70, 66, 73], tone: 'info' }, { label: "Projects", points: [25, 32, 40, 43, 51, 60, 71], tone: "success" }].map((line) => (
-                <div key={line.label} className="rounded-[18px] p-3" style={{ border: `1px solid ${C.glassBorder}`, backgroundColor: "rgba(255,255,255,.04)" }}>
+              {[
+                { label: 'Revenue', points: trendData?.revenuePoints || [0,0,0,0,0,0,0], tone: 'warning' },
+                { label: 'Leads', points: trendData?.leadPoints || [0,0,0,0,0,0,0], tone: 'info' },
+                { label: 'Projects', points: trendData?.projectPoints || [0,0,0,0,0,0,0], tone: 'success' },
+              ].map((line) => (
+                <div key={line.label} className="rounded-[18px] p-3" style={{ border: `1px solid ${C.glassBorder}`, backgroundColor: 'rgba(255,255,255,.04)' }}>
                   <div className="mb-2 flex items-center justify-between">
                     <p className="text-sm font-bold">{line.label}</p>
-                    <Badge tone={line.tone === 'info' ? "cyan" : line.tone}>{line.points[line.points.length - 1]}%</Badge>
+                    <Badge tone={line.tone === 'info' ? 'cyan' : line.tone}>
+                      {line.points[line.points.length - 1]}%
+                    </Badge>
                   </div>
                   <Sparkline points={line.points} tone={line.tone} />
                 </div>

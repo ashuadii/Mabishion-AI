@@ -3,6 +3,9 @@ import { C } from '../components/consts';
 import mabishionLogo from '../assets/Mabishion-logo.png';
 import { setupPin, verifyPin, isPinSetup } from '../data/db.js';
 
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS = 5 * 60 * 1000; // 5 minutes lockout
+
 export default function LoginScreen({ onUnlock }) {
   const [mode, setMode] = useState('checking'); // checking | setup | login | confirm
   const [pin, setPin] = useState('');
@@ -10,6 +13,9 @@ export default function LoginScreen({ onUnlock }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const inputRef = useRef(null);
+  // NFR-019: Brute force protection — track failed attempts in session
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockedUntil, setLockedUntil] = useState(null);
 
   useEffect(() => {
     isPinSetup().then(setup => {
@@ -50,11 +56,31 @@ export default function LoginScreen({ onUnlock }) {
 
       if (mode === 'login') {
         if (pin.length < 4) { setError('PIN daalo'); setLoading(false); return; }
+
+        // NFR-019: Check lockout before attempting verification
+        if (lockedUntil && Date.now() < lockedUntil) {
+          const remaining = Math.ceil((lockedUntil - Date.now()) / 1000 / 60);
+          setError(`Account locked. ${remaining} minute${remaining !== 1 ? 's' : ''} baad try karo.`);
+          setPin('');
+          setLoading(false);
+          return;
+        }
+
         const { valid, firstTime } = await verifyPin(pin);
         if (firstTime || valid) {
+          setFailedAttempts(0);
+          setLockedUntil(null);
           onUnlock();
         } else {
-          setError('Galat PIN. Dobara try karo.');
+          const newCount = failedAttempts + 1;
+          setFailedAttempts(newCount);
+          if (newCount >= MAX_ATTEMPTS) {
+            const unlockAt = Date.now() + LOCKOUT_MS;
+            setLockedUntil(unlockAt);
+            setError(`${MAX_ATTEMPTS} galat attempts. Account 5 minutes ke liye lock ho gaya.`);
+          } else {
+            setError(`Galat PIN. ${MAX_ATTEMPTS - newCount} attempts baaki hain.`);
+          }
           setPin('');
           setTimeout(() => inputRef.current?.focus(), 100);
         }

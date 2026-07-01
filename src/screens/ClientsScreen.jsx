@@ -8,7 +8,7 @@ import { glassStyle, C } from '../components/consts';
 import { getClients, addClient, updateClient, deleteClient } from '../data/db.js';
 import { SkeletonGrid } from '../components/SkeletonCard.jsx';
 
-const EMPTY_FORM = { name: '', business: '', budget: '', preferences: '' };
+const EMPTY_FORM = { name: '', business: '', budget: '', preferences: '', email: '', phone: '', gstin: '', city: '', state: '', tier: 'standard', status: 'active', consent_given: 0 };
 
 export default function ClientsScreen({ onNavigate }) {
   const [clients, setClients] = useState([]);
@@ -46,6 +46,14 @@ export default function ClientsScreen({ onNavigate }) {
       business: client.business || '',
       budget: client.budget != null ? String(client.budget) : '',
       preferences: client.preferences || '',
+      email: client.email || '',
+      phone: client.phone || '',
+      gstin: client.gstin || '',
+      city: client.city || '',
+      state: client.state || '',
+      tier: client.tier || 'standard',
+      status: client.status || 'active',
+      consent_given: client.consent_given || 0,
     });
     setEditTarget(client.id);
     setShowForm(true);
@@ -145,19 +153,44 @@ export default function ClientsScreen({ onNavigate }) {
                 </div>
               </div>
 
-              {client.budget > 0 && (
-                <p className="text-sm font-bold mb-2" style={{ color: C.warning }}>
-                  Budget: ₹{Number(client.budget).toLocaleString('en-IN')}
-                </p>
-              )}
+              <div className="space-y-1 mb-2">
+                {client.email && (
+                  <p className="text-xs" style={{ color: C.info }}>{client.email}</p>
+                )}
+                {client.phone && (
+                  <p className="text-xs" style={{ color: C.textMuted }}>📞 {client.phone}</p>
+                )}
+                {client.gstin && (
+                  <p className="text-[10px] font-mono px-2 py-0.5 rounded-md inline-block" style={{ background: 'rgba(16,185,129,0.1)', color: C.success }}>
+                    GSTIN: {client.gstin}
+                  </p>
+                )}
+                {client.budget > 0 && (
+                  <p className="text-sm font-bold" style={{ color: C.warning }}>
+                    Budget: ₹{Number(client.budget).toLocaleString('en-IN')}
+                  </p>
+                )}
+              </div>
               {client.preferences && (
                 <p className="text-xs leading-5" style={{ color: C.textMuted }}>
-                  {client.preferences.slice(0, 100)}{client.preferences.length > 100 ? '…' : ''}
+                  {client.preferences.slice(0, 80)}{client.preferences.length > 80 ? '…' : ''}
                 </p>
               )}
-              <p className="text-[10px] mt-3" style={{ color: C.textMuted }}>
-                Added {client.created_at ? new Date(Number(client.created_at)).toLocaleDateString('en-IN') : '—'}
-              </p>
+              <div className="flex items-center justify-between mt-3">
+                <p className="text-[10px]" style={{ color: C.textMuted }}>
+                  Added {client.created_at ? new Date(Number(client.created_at)).toLocaleDateString('en-IN') : '—'}
+                </p>
+                <div className="flex gap-1">
+                  {client.consent_given ? (
+                    <Badge tone="success">DPDP ✓</Badge>
+                  ) : (
+                    <Badge tone="warning">No Consent</Badge>
+                  )}
+                  {client.tier && client.tier !== 'standard' && (
+                    <Badge tone={client.tier === 'enterprise' ? 'gold' : 'info'}>{client.tier}</Badge>
+                  )}
+                </div>
+              </div>
             </div>
           ))}
         </div>
@@ -220,6 +253,56 @@ export default function ClientsScreen({ onNavigate }) {
                   className="w-full px-4 py-2 rounded-xl text-sm bg-slate-900 border border-white/10 text-white outline-none focus:border-indigo-500 placeholder-slate-600"
                 />
               </div>
+              {/* New fields from DB Spec */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] uppercase font-bold block mb-1" style={{ color: C.textMuted }}>Email</label>
+                  <input type="email" placeholder="client@company.com" value={form.email}
+                    onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-xl text-sm bg-slate-900 border border-white/10 text-white outline-none focus:border-indigo-500 placeholder-slate-600" />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase font-bold block mb-1" style={{ color: C.textMuted }}>Phone</label>
+                  <input type="text" placeholder="+91 98xxx xxxxx" value={form.phone}
+                    onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-xl text-sm bg-slate-900 border border-white/10 text-white outline-none focus:border-indigo-500 placeholder-slate-600" />
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] uppercase font-bold block mb-1" style={{ color: C.textMuted }}>
+                  GSTIN <span className="text-[9px] normal-case">(15 chars, for GST invoice)</span>
+                </label>
+                <input type="text" placeholder="e.g. 22AAAAA0000A1Z5" maxLength={15} value={form.gstin}
+                  onChange={e => setForm(p => ({ ...p, gstin: e.target.value.toUpperCase() }))}
+                  className="w-full px-4 py-2 rounded-xl text-sm bg-slate-900 border border-white/10 text-white outline-none focus:border-indigo-500 placeholder-slate-600 font-mono" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] uppercase font-bold block mb-1" style={{ color: C.textMuted }}>City</label>
+                  <input type="text" placeholder="e.g. Delhi" value={form.city}
+                    onChange={e => setForm(p => ({ ...p, city: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-xl text-sm bg-slate-900 border border-white/10 text-white outline-none focus:border-indigo-500 placeholder-slate-600" />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase font-bold block mb-1" style={{ color: C.textMuted }}>State</label>
+                  <input type="text" placeholder="e.g. Delhi" value={form.state}
+                    onChange={e => setForm(p => ({ ...p, state: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-xl text-sm bg-slate-900 border border-white/10 text-white outline-none focus:border-indigo-500 placeholder-slate-600" />
+                </div>
+              </div>
+              {/* DPDP Act 2023 consent (Security Architecture §6.2) */}
+              <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: form.consent_given ? 'rgba(16,185,129,0.08)' : 'rgba(255,255,255,0.03)', border: `1px solid ${form.consent_given ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.06)'}` }}>
+                <input
+                  type="checkbox"
+                  id="consent_given"
+                  checked={!!form.consent_given}
+                  onChange={e => setForm(p => ({ ...p, consent_given: e.target.checked ? 1 : 0 }))}
+                  className="w-4 h-4 accent-emerald-500"
+                />
+                <label htmlFor="consent_given" className="text-xs cursor-pointer" style={{ color: C.textMuted }}>
+                  <span className="font-bold text-white">DPDP Consent </span>— Client ne data storage aur processing ke liye consent diya hai (DPDP Act 2023)
+                </label>
+              </div>
               <div>
                 <label className="text-[10px] uppercase font-bold block mb-1" style={{ color: C.textMuted }}>
                   Notes / Preferences
@@ -228,7 +311,7 @@ export default function ClientsScreen({ onNavigate }) {
                   placeholder="e.g. Prefers dark theme, needs GST invoice, contact on WhatsApp"
                   value={form.preferences}
                   onChange={e => setForm(p => ({ ...p, preferences: e.target.value }))}
-                  rows={3}
+                  rows={2}
                   className="w-full px-4 py-2 rounded-xl text-sm bg-slate-900 border border-white/10 text-white outline-none focus:border-indigo-500 placeholder-slate-600 resize-none"
                 />
               </div>

@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Sidebar from './Sidebar';
 import { C } from './consts';
 import { getSetting, setSetting } from '../data/db.js';
+
+const AUTO_LOCK_MS = 10 * 60 * 1000; // ARCH-008: 10 minutes of inactivity
 
 const MODES = [
   { id: 'agency',     label: 'Agency',     emoji: '🏭', color: '#6366F1' },
@@ -67,6 +69,26 @@ function OperatingModeBar() {
 }
 
 export default function AppShell({ activeNavId, onNavigate, commandBar, children }) {
+  const idleTimer = useRef(null);
+
+  const resetIdleTimer = useCallback(() => {
+    if (idleTimer.current) clearTimeout(idleTimer.current);
+    idleTimer.current = setTimeout(() => {
+      // ARCH-008: Lock after 10 min inactivity — navigate to login screen
+      if (onNavigate) onNavigate('login');
+    }, AUTO_LOCK_MS);
+  }, [onNavigate]);
+
+  useEffect(() => {
+    resetIdleTimer();
+    const events = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(e => window.addEventListener(e, resetIdleTimer, { passive: true }));
+    return () => {
+      if (idleTimer.current) clearTimeout(idleTimer.current);
+      events.forEach(e => window.removeEventListener(e, resetIdleTimer));
+    };
+  }, [resetIdleTimer]);
+
   return (
     <div className="h-screen overflow-hidden antialiased">
       <div className="pointer-events-none fixed left-[18%] top-[-140px] h-80 w-80 rounded-full blur-3xl bg-warning/10" />

@@ -9,7 +9,7 @@ import MickiiOrb from '../components/MickiiOrb';
 import ProgressBar from '../components/ProgressBar';
 import QuickCommandBar from '../components/QuickCommandBar';
 import { KANBAN_COLS } from '../data/mockData.jsx';
-import { getProjects, addProject, updateProjectStage, updateProjectProgress } from '../data/db.js';
+import { getProjects, addProject, updateProjectStage, updateProjectProgress, getClients } from '../data/db.js';
 import { generatePdfInvoice, generateProposalPdf, generateZipDeliverable, saveFileToUserDirectory } from '../services/fileOperationService';
 import { runWorker } from '../engine/workers/index.js';
 
@@ -97,6 +97,8 @@ export default function ProjectsScreen({ onNavigate }) {
   const [newProjName, setNewProjName] = useState('');
   const [newProjType, setNewProjType] = useState('Landing Page');
   const [newProjClient, setNewProjClient] = useState('');
+  const [newProjClientId, setNewProjClientId] = useState('');
+  const [clientsList, setClientsList] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
 
   // Selected Project Details Edit state
@@ -116,6 +118,7 @@ export default function ProjectsScreen({ onNavigate }) {
 
   useEffect(() => {
     loadProjects();
+    getClients().then(rows => setClientsList(rows || [])).catch(() => {});
   }, []);
 
   // Filter projects by search query
@@ -148,10 +151,11 @@ export default function ProjectsScreen({ onNavigate }) {
 
     try {
       setIsSaving(true);
-      await addProject(newProjName, newProjType, newProjClient);
+      await addProject(newProjName, newProjType, newProjClient, newProjClientId || null);
       setNewProjName('');
       setNewProjType('Website');
       setNewProjClient('');
+      setNewProjClientId('');
       setIsNewModalOpen(false);
       await loadProjects();
     } catch (err) {
@@ -709,15 +713,34 @@ export default function ProjectsScreen({ onNavigate }) {
               })()}
             </div>
 
+            {/* FR-048: Client-project linking — dropdown from clients table */}
             <div>
-              <label className="block text-xs text-gray-400 font-bold mb-1 uppercase tracking-wider">Client Name (Optional)</label>
-              <input 
-                type="text" 
-                placeholder="e.g. Priya Sharma"
-                value={newProjClient}
-                onChange={(e) => setNewProjClient(e.target.value)}
-                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
-              />
+              <label className="block text-xs text-gray-400 font-bold mb-1 uppercase tracking-wider">Link Client (Optional)</label>
+              {clientsList.length > 0 ? (
+                <select
+                  value={newProjClientId}
+                  onChange={e => {
+                    const id = e.target.value;
+                    setNewProjClientId(id);
+                    const client = clientsList.find(c => c.id === id);
+                    setNewProjClient(client ? client.name : '');
+                  }}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                >
+                  <option value="">— No client (Internal) —</option>
+                  {clientsList.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}{c.business ? ` · ${c.business}` : ''}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  placeholder="e.g. Priya Sharma (add clients in Clients screen)"
+                  value={newProjClient}
+                  onChange={e => setNewProjClient(e.target.value)}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                />
+              )}
             </div>
 
             <div className="pt-4 flex gap-3">

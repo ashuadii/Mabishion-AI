@@ -6,13 +6,14 @@ import Badge from '../components/Badge';
 import Icon from '../components/Icon';
 import { glassStyle, C } from '../components/consts';
 import { SkeletonList } from '../components/SkeletonCard.jsx';
-import { getDb } from '../data/db.js';
+import { getDb, searchKnowledge } from '../data/db.js';
 
 const STATUS_TONE = { Queued: 'muted', Processing: 'info', Ready: 'success', Failed: 'danger' };
 const TYPE_ICON = { web: 'screen', pdf: 'picture_as_pdf', note: 'edit', research: 'chart', competitor: 'target' };
 
 export default function KnowledgeBaseScreen({ onNavigate }) {
   const [sources, setSources] = useState([]);
+  const [allSources, setAllSources] = useState([]);
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('sources');
@@ -20,6 +21,8 @@ export default function KnowledgeBaseScreen({ onNavigate }) {
   const [form, setForm] = useState({ title: '', source_type: 'web', source_url: '', notes: '' });
   const [saving, setSaving] = useState(false);
   const [selected, setSelected] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searching, setSearching] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -30,6 +33,7 @@ export default function KnowledgeBaseScreen({ onNavigate }) {
         db.select('SELECT * FROM analyst_reports ORDER BY created_at DESC').catch(() => []),
       ]);
       setSources(src || []);
+      setAllSources(src || []);
       setReports(rep || []);
     } catch (e) {
       console.error('[KnowledgeBase]', e);
@@ -39,6 +43,22 @@ export default function KnowledgeBaseScreen({ onNavigate }) {
   };
 
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) { setSources(allSources); return; }
+    const t = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const results = await searchKnowledge(searchQuery);
+        setSources(results || []);
+      } catch (e) {
+        console.error('[KB search]', e);
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchQuery, allSources]);
 
   const handleAdd = async () => {
     if (!form.title.trim()) return;
@@ -50,8 +70,16 @@ export default function KnowledgeBaseScreen({ onNavigate }) {
         'INSERT INTO knowledge_sources (id, title, source_type, source_url, status, notes, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7)',
         [id, form.title, form.source_type, form.source_url || '', 'Queued', form.notes || '', new Date().toISOString()]
       );
+      // Index in FTS5
+      try {
+        await db.execute(
+          'INSERT INTO knowledge_fts (source_id, title, notes, source_type) VALUES ($1,$2,$3,$4)',
+          [id, form.title, form.notes || '', form.source_type]
+        );
+      } catch (_) {}
       setShowAdd(false);
       setForm({ title: '', source_type: 'web', source_url: '', notes: '' });
+      setSearchQuery('');
       await load();
     } catch (e) {
       console.error('[KnowledgeBase add]', e);
@@ -63,6 +91,7 @@ export default function KnowledgeBaseScreen({ onNavigate }) {
   const handleDelete = async (id) => {
     const db = await getDb();
     await db.execute('DELETE FROM knowledge_sources WHERE id=$1', [id]);
+    try { await db.execute('DELETE FROM knowledge_fts WHERE source_id=$1', [id]); } catch (_) {}
     await load();
   };
 
@@ -78,6 +107,24 @@ export default function KnowledgeBaseScreen({ onNavigate }) {
         onPrimaryClick={() => setShowAdd(true)}
         extraBadges={<><Badge tone="info">{sources.length} Sources</Badge><Badge tone="success">{reports.length} Reports</Badge></>}
       />
+
+      {/* Search bar — FR-028 FTS5 keyword search */}
+      <div className="relative mb-4">
+        <Icon name="search" size={14} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: C.textMuted }} />
+        <input
+          type="text"
+          placeholder="Search knowledge base (FTS5)…"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-slate-900 border border-white/10 text-white outline-none focus:border-indigo-500 placeholder-slate-600"
+        />
+        {searching && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px]" style={{ color: C.textMuted }}>searching…</span>}
+        {searchQuery && !searching && (
+          <button onClick={() => setSearchQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
+            <Icon name="close" size={12} />
+          </button>
+        )}
+      </div>
 
       {/* Tabs */}
       <div className="flex gap-2 mb-5">

@@ -8,6 +8,27 @@ const MAX_CONCURRENT = 2;
 let _activeWorkers = 0;
 const _waitQueue = [];
 
+// ── Active Run Registry for cancel support (FR-016) ──────────────────────────
+const _activeRuns = new Map(); // runId → { controller, workerName, startedAt }
+
+export function getActiveRuns() {
+  return Array.from(_activeRuns.entries()).map(([runId, meta]) => ({
+    runId,
+    workerName: meta.workerName,
+    startedAt: meta.startedAt,
+  }));
+}
+
+export function cancelWorker(runId) {
+  const run = _activeRuns.get(runId);
+  if (run) {
+    run.controller.abort();
+    _activeRuns.delete(runId);
+    return true;
+  }
+  return false;
+}
+
 function acquireSlot() {
   return new Promise(resolve => {
     if (_activeWorkers < MAX_CONCURRENT) {
@@ -254,9 +275,15 @@ export async function runWorker(workerName, input, config = {}, hooks = {}) {
   worker.approvalSeverity = registry.policy.approvalSeverity;
 
   // Merge context config parameters (such as requirements_override) with hooks so they reach worker.run()
+  // abortSignal passed so workers can check cancellation in their execute() loop
   const runParams = { ...config, ...hooks };
 
   if (hooks.onStatus) hooks.onStatus(`Starting ${registry.name}...`);
+
+  // Register AbortController for cancel support (FR-016)
+  const runId = crypto.randomUUID();
+  const controller = new AbortController();
+  _activeRuns.set(runId, { controller, workerName: actualWorkerName, startedAt: new Date().toISOString() });
 
   // Per-worker daily cost cap: ₹50/day (5000 paise) — BRD v1.4 §14.2
   try {
@@ -284,9 +311,10 @@ export async function runWorker(workerName, input, config = {}, hooks = {}) {
 
   let result;
   try {
-    result = await worker.run(input, runParams);
+    result = await worker.run(input, { ...runParams, abortSignal: controller.signal });
   } finally {
     releaseSlot();
+    _activeRuns.delete(runId);
   }
 
   if (hooks.onStatus) hooks.onStatus(`${registry.name} complete!`);

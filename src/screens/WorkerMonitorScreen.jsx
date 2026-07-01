@@ -5,7 +5,7 @@ import Badge from '../components/Badge';
 import Icon from '../components/Icon';
 import { glassStyle, C } from '../components/consts';
 import { getWorkerLogs, getLlmUsage, getDailyCostTotal } from '../data/db.js';
-import { getActiveWorkerCount, getQueuedWorkerCount } from '../engine/workers/index.js';
+import { getActiveWorkerCount, getQueuedWorkerCount, getActiveRuns, cancelWorker } from '../engine/workers/index.js';
 
 const STATUS_TONE = {
   running: 'info',
@@ -31,6 +31,7 @@ export default function WorkerMonitorScreen({ onNavigate }) {
   const [dailyCostPaise, setDailyCostPaise] = useState(0);
   const [activeCount, setActiveCount] = useState(0);
   const [queueCount, setQueueCount] = useState(0);
+  const [liveRuns, setLiveRuns] = useState([]);
 
   const load = async () => {
     setLoading(true);
@@ -43,6 +44,7 @@ export default function WorkerMonitorScreen({ onNavigate }) {
       setDailyCostPaise(daily || 0);
       setActiveCount(getActiveWorkerCount());
       setQueueCount(getQueuedWorkerCount());
+      setLiveRuns(getActiveRuns());
     } catch (e) {
       console.error('[WorkerMonitorScreen]', e);
     } finally {
@@ -50,9 +52,17 @@ export default function WorkerMonitorScreen({ onNavigate }) {
     }
   };
 
+  const handleCancel = (runId) => {
+    cancelWorker(runId);
+    setLiveRuns(getActiveRuns());
+  };
+
   useEffect(() => {
     load();
-    const timer = setInterval(load, 10000); // auto-refresh every 10s
+    const timer = setInterval(() => {
+      load();
+      setLiveRuns(getActiveRuns()); // poll live runs every 5s
+    }, 5000);
     return () => clearInterval(timer);
   }, []);
 
@@ -80,6 +90,31 @@ export default function WorkerMonitorScreen({ onNavigate }) {
           <Badge tone="success">{successRate}% Success</Badge>
         </>}
       />
+
+      {/* Live Running Workers — FR-016 Cancel support */}
+      {liveRuns.length > 0 && (
+        <div className="mb-5 p-4 rounded-2xl border border-indigo-500/30" style={{ background: 'rgba(99,102,241,0.07)' }}>
+          <p className="text-xs font-bold uppercase mb-3" style={{ color: C.primary }}>⚡ Running Now ({liveRuns.length})</p>
+          <div className="space-y-2">
+            {liveRuns.map(run => (
+              <div key={run.runId} className="flex items-center justify-between">
+                <div>
+                  <span className="text-sm font-bold text-white">{run.workerName}</span>
+                  <span className="text-[10px] ml-2" style={{ color: C.textMuted }}>
+                    Started {run.startedAt ? new Date(run.startedAt).toLocaleTimeString('en-IN') : '—'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => handleCancel(run.runId)}
+                  className="px-3 py-1 rounded-lg text-xs font-bold border border-red-500/40 text-red-400 hover:bg-red-500/20 transition-all"
+                >
+                  ✕ Cancel
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">

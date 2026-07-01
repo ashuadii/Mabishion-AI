@@ -99,12 +99,22 @@ export class BaseWorker {
         }
       } catch (e) { /* table might not exist yet */ }
 
+      // FR-016: Check abort signal before starting execution
+      if (cleanParams.abortSignal?.aborted) {
+        throw new Error(`Worker ${this.name} cancelled before execution.`);
+      }
+
       // B18: 5-minute per-task timeout (ARCHITECTURE §6.2 — default timeout: 300s)
       const timeoutMs = 5 * 60 * 1000;
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error(`Worker timeout: ${this.name} exceeded ${timeoutMs / 1000}s limit`)), timeoutMs)
       );
-      const result = await Promise.race([this.execute(cleanTargetId, cleanParams), timeoutPromise]);
+      // FR-016: AbortSignal cancellation race
+      const abortSignal = cleanParams.abortSignal;
+      const cancelPromise = abortSignal
+        ? new Promise((_, reject) => abortSignal.addEventListener('abort', () => reject(new Error(`Worker ${this.name} cancelled.`))))
+        : new Promise(() => {});
+      const result = await Promise.race([this.execute(cleanTargetId, cleanParams), timeoutPromise, cancelPromise]);
 
       const durationMs = Date.now() - startTime;
       this.status = 'completed';

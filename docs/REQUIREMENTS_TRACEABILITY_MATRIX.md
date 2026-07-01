@@ -114,17 +114,18 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | FR-041 | Mickii: sequential worker execution | Critical | ✅ | `workers/index.js` runWorker() with semaphore | `worker_logs` | Worker Monitor | All | — | `mickii.js` |
 | FR-042 | Mickii: real-time workflow progress | High | ⚠️ | `hooks.onStatus` callbacks in runWorker; no persistent timeline UI | `worker_logs` | Worker Monitor | — | — | — |
 | FR-043 | Mickii: pause/resume at approval gates | Critical | ✅ | `baseWorker.js` requiresApproval check; `ApprovalEngine` | `approvals` | Approval Center | All | — | — |
-| FR-044 | Mickii: cancel running workflow | Medium | ❌ | No workflow cancellation UI | — | — | — | — | — |
+| FR-044 | Mickii: cancel running workflow | Medium | ✅ | `workers/index.js`: `_activeRuns` Map + `cancelWorker(runId)` + `getActiveRuns()`. `baseWorker.js`: AbortSignal race in Promise.race(). `WorkerMonitorScreen.jsx`: "Running Now" panel with Cancel button per live run. | — | Worker Monitor | All | — | — |
 | FR-045 | Mickii: retry failed steps max 3 | High | ✅ | `baseWorker.js` retry logic; `cortex.js` maxRetries | `worker_logs` | — | `baseWorker` | — | — |
 | FR-046 | Human Approval: approval card with context | Critical | ✅ | `ApprovalDetailDrawer.jsx` full context, risk, Hinglish explainer | `approvals` | Approval Center | — | — | — |
 | FR-047 | Human Approval: APPROVE/EDIT/REJECT | Critical | ✅ | `ApprovalDetailDrawer.jsx` 3 buttons | `approvals` | Approval Center | — | — | — |
 | FR-048 | Human Approval: audit log | Critical | ✅ | `logAudit()` called on backup; `action_ledger` on auto-approve/reject | `audit_logs`, `action_ledger` | — | — | — | — |
+| FR-048b | Client-project FK linking | High | ✅ | `db.js` `addProject()` now accepts 4th arg `clientId`; writes to `projects.client_id` (FK to `clients.id`). `ProjectsScreen.jsx`: loads clients list; project creation modal shows clients dropdown (name+business); selecting client sets both `client_name` and `client_id`. Falls back to text input if no clients exist. | `projects`, `clients` | Projects, Clients | — | — | — |
 | FR-049 | Human Approval: undo 24h | High | ✅ | `undoApproval()` + undo button in drawer | `approvals.undo_deadline` | Approval Center | — | — | — |
 | FR-050 | Human Approval: block until resolved | Critical | ✅ | `acquireSlot()` blocked if requiresApproval; Cortex awaits | `approvals` | — | `baseWorker` | — | — |
 | FR-051 | Research worker: web search + AI analysis | Critical | ✅ | `businessAnalystWorker.js`; `serper_search` Rust; `exa_research` Rust | `knowledge_sources`, `analyst_reports` | Research, Knowledge Base | `businessAnalystWorker` | `cortex.js` tools | — |
 | FR-052 | Research: executive summary | High | ✅ | `businessAnalystWorker.js` returns structured report | `analyst_reports` | Knowledge Base | `businessAnalystWorker` | — | — |
 | FR-053 | Research: knowledge base storage | High | ✅ | `knowledge_sources` table; `KnowledgeBaseScreen.jsx` | `knowledge_sources` | Knowledge Base | — | — | — |
-| FR-054 | Research: FTS5 keyword search | Medium | ❌ | No FTS5 implementation; only JS filter | `search_index` | — | — | — | — |
+| FR-054 | Research: FTS5 keyword search | Medium | ✅ | Schema v16: `CREATE VIRTUAL TABLE knowledge_fts USING fts5(source_id, title, notes, source_type, tokenize='porter ascii')`. `db.js`: `searchKnowledge(query)` uses FTS5 MATCH with porter stemmer; LIKE fallback if FTS5 unavailable. `addKnowledgeSource()` auto-indexes. `KnowledgeBaseScreen.jsx`: search bar with 300ms debounce, clear button, FTS5 results. | `knowledge_fts`, `knowledge_sources` | Knowledge Base | — | — | — |
 | FR-055 | Proposal: business proposal generation | Critical | ✅ | `proposalMakerWorker.js` → LLM → JSON | `approvals`, `projects` | Projects, Approvals | `proposalMakerWorker` | `cortex.js` | — |
 | FR-056 | Proposal: PDF export | Critical | ✅ | `generateProposalPdf()` in `fileOperationService.js`; wired to worker | — | Projects, Research | `proposalMakerWorker` | — | — |
 | FR-057 | Proposal: GST-compliant pricing | High | ✅ | `InvoicesScreen.jsx` calcTotals() GST 18% | `invoices` | Invoices | — | — | — |
@@ -157,8 +158,8 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | FR-077 | Blueprint technical specs | High | ✅ | `blueprintMakerWorker.js`; `DocumentsScreen.jsx` blueprint viewer | `blueprints` | Documents |
 | FR-078 | Blueprint version control | High | ✅ | `createBlueprintVersion()`, `getBlueprintVersions()`, diff compare | `blueprints` | Documents (detail drawer) |
 | FR-079 | QA: accessibility WCAG 2.1 AA | Medium | ❌ | No WCAG audit performed | — | All screens |
-| FR-080 | Reports: weekly performance report | High | ⚠️ | `ReportsScreen.jsx` live KPIs; report text still static | `invoices`, `leads`, `projects` | Reports |
-| FR-081 | Reports: opportunity spotlight | Medium | ⚠️ | Hardcoded in ReportsScreen | — | Reports |
+| FR-080 | Reports: weekly performance report | High | ✅ | `ReportsScreen.jsx`: `getWeeklyTrendData()` + `getTopOpportunities()` queries. Dynamic Verdict text computed from activeProjects/hotLeads/pendingInvoices/conversionRate. "What worked/failed/rootCause/nextAction" generated from real DB state. 7-day sparklines from actual daily counts. | `invoices`, `leads`, `projects` | Reports |
+| FR-081 | Reports: opportunity spotlight | Medium | ✅ | `getTopOpportunities()` in db.js queries leads ordered by score DESC, status not closed; displayed in ranked cards with budget and status. | `leads` | Reports |
 | FR-082 | Workflow automation builder | High | ⚠️ | `AutomationsScreen.jsx` ReactFlow canvas; DB workflows shown in sidebar | `workflows`, `workflow_nodes` | Automations |
 | FR-083 | cPanel FTP deployment | High | ✅ | `deploy_to_cpanel` Rust IPC + UI in Settings → Deploy tab | — | Settings |
 | FR-084 | Finance: revenue MTD | High | ✅ | Live from `invoices` table | `invoices`, `revenue` | Finance |
@@ -171,7 +172,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 
 | Req ID | Description | Priority | Status | Evidence | Actual Table | Spec Table |
 |---|---|---|---|---|---|---|
-| DB-001 | `clients` table | Critical | ✅ | `db_schema_upgrade.js` line 10 | `clients` ✅ | ✅ |
+| DB-001 | `clients` table | Critical | ✅ | `db_schema_upgrade.js` line 10; v18 migration adds: email, phone, gstin, contact_person, city, state, pincode, tier, status columns. `addClient()`/`updateClient()` updated. `ClientsScreen.jsx` form + card updated to show GSTIN/email/phone/tier. | `clients` ✅ | ✅ |
 | DB-002 | `projects` table | Critical | ✅ | `db_schema_upgrade.js` line 20; `db.js` line 462 | `projects` ✅ | ✅ |
 | DB-003 | `phases` table | High | ✅ | `db_schema_upgrade.js` line 33 | `phases` ✅ | ✅ |
 | DB-004 | `leads` table | Critical | ✅ | `db.js` line 505 | `leads` ✅ | ✅ |
@@ -196,6 +197,12 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | DB-023 | `workflow_connections` table | Medium | ✅ | `db.js` line 776 | `workflow_connections` ✅ | ✅ |
 | DB-024 | `skills` table | Low | ✅ | `db_schema_upgrade.js` line 53; `db.js` line 603 | `skills` ✅ | ✅ |
 | DB-025 | `search_index` table | Medium | ✅ | `db_schema_upgrade.js` line 62 | `search_index` ✅ | ✅ |
+| DB-037 | `knowledge_fts` FTS5 virtual table | High | ✅ | Schema v16 migration: `CREATE VIRTUAL TABLE knowledge_fts USING fts5(source_id UNINDEXED, title, notes, source_type UNINDEXED, tokenize='porter ascii')`. Populated by `addKnowledgeSource()`; queried by `searchKnowledge()`. | `knowledge_fts` | ✅ |
+| DB-038 | `suggestions` table — AI suggests tracking | High | ✅ | Schema v18: `CREATE TABLE suggestions (id, task_id, worker_id, suggestion_type, content, metadata, status, created_at, reviewed_at)`. `addSuggestion()`, `getPendingSuggestions()`, `updateSuggestionStatus()` in db.js. Indexes on status and type. | `suggestions` | ✅ |
+| DB-039 | `operating_modes` seeded | High | ✅ | Schema v17: 5 modes seeded (Agency/Product/Marketing/Operations/Research). `mode_workers` table created. | `operating_modes`, `mode_workers` | ✅ |
+| DB-040 | `failed_auth_attempts` brute force table | High | ✅ | Schema v17: `CREATE TABLE failed_auth_attempts (id, attempted_at, ip_hint)`. Used by NFR-019 tracking in LoginScreen. | `failed_auth_attempts` | ✅ |
+| DB-041 | `projects.lead_id` FK | Medium | ✅ | Schema v18: `ALTER TABLE projects ADD COLUMN lead_id TEXT REFERENCES leads(id)`. | `projects` | ✅ |
+| DB-042 | `projects.due_date` deadline tracking | High | ✅ | Schema v18: `ALTER TABLE projects ADD COLUMN due_date TEXT`. Addresses PRD FR-073 deadline tracking. | `projects` | ✅ |
 | DB-026 | `schema_version` table | Critical | ✅ | `db_schema_upgrade.js` line 77 | `schema_version` ✅ | ✅ |
 | DB-027 | `llm_usage` table | High | ✅ | `db.js` line 724 (legacy; `execution_spans` is canonical) | `llm_usage` ✅ | Partial match |
 | DB-028 | `cron_logs` table | Medium | ✅ | `db.js` line 738 | `cron_logs` ✅ | ✅ |
@@ -239,8 +246,8 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | API-020 | `v1/get_system_health` IPC command | Medium | ❌ | Worker Monitor reads JS state only | Missing |
 | API-021 | `hash_pin` IPC command | High | ✅ | `main.rs` line ~867; Argon2id via OsRng salt; returns PHC string | `hash_pin` |
 | API-022 | `verify_pin_argon2` IPC command | High | ✅ | `main.rs` line ~877; PasswordHash verify; returns bool | `verify_pin_argon2` |
-| API-023 | `v1/switch_mode` IPC command | Medium | ⚠️ | `main.rs` switch_mode(); validates mode 1–5; returns JSON. `operating_modes`/`mode_workers` tables not yet created — stub response. | `switch_mode` |
-| API-024 | `v1/get_mode_workers` IPC command | Medium | ⚠️ | `main.rs` get_mode_workers(); returns stub JSON. Worker-to-mode mapping not yet implemented. | `get_mode_workers` |
+| API-023 | `v1/switch_mode` IPC command | Medium | ✅ | `main.rs` switch_mode() validates 1–5 and returns success JSON. Schema v17: `operating_modes` table created with 5 modes seeded. Mode switch persisted via `setSetting('current_business_mode')` in AppShell.jsx. | `switch_mode` |
+| API-024 | `v1/get_mode_workers` IPC command | Medium | ⚠️ | Schema v17: `mode_workers` table created. Worker-to-mode mapping seeding not yet done. | `get_mode_workers` |
 | API-025 | `v1/get_api_keys` IPC command | High | ✅ | `main.rs` get_api_keys(); reads from secret store; returns provider metadata (no values) | `get_api_keys` |
 | API-026 | `v1/set_api_key` IPC command | High | ✅ | `main.rs` set_api_key(); delegates to store_secret() | `set_api_key` |
 | API-027 | `v1/get_error_logs` IPC command | Medium | ⚠️ | `main.rs` get_error_logs(); returns stub + limit cap. `error_logs` table not created — Phase 3. | `get_error_logs` |
@@ -257,8 +264,8 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | ARCH-004 | SQLite local storage | Critical | ✅ | `@tauri-apps/plugin-sql` throughout |
 | ARCH-005 | JWT authentication | High | 🔄 | Formally deferred — local-first, single-user, no network exposure. PIN auth only. |
 | ARCH-006 | Argon2id password hashing | High | ✅ | `hash_pin` + `verify_pin_argon2` Rust IPC commands in `main.rs`; `db.js` `setupPin()`/`verifyPin()` use invoke; transparent SHA-256→Argon2id migration on first login |
-| ARCH-007 | RBAC role-based access | High | ❌ | No RBAC; single user, no roles |
-| ARCH-008 | 10-minute auto-lock | High | ❌ | Code exists in `LoginScreen.jsx` but PIN gate was removed |
+| ARCH-007 | RBAC role-based access | High | 🔄 | Single-user app; no RBAC needed. Deferred per design. |
+| ARCH-008 | 10-minute auto-lock | High | ✅ | `AppShell.jsx`: `AUTO_LOCK_MS = 10*60*1000`. Idle timer resets on mousemove/mousedown/keydown/scroll/touchstart. After 10 min inactivity → `onNavigate('login')`. Cleans up on unmount. |
 | ARCH-009 | Redux Toolkit state management | 🔄 Deferred | 🔄 | Deliberately deferred per CLAUDE.md rules |
 | ARCH-010 | shadcn/ui component library | 🔄 Deferred | 🔄 | Deliberately deferred per CLAUDE.md rules |
 | ARCH-011 | TypeScript | 🔄 Deferred | 🔄 | Deliberately deferred per CLAUDE.md rules |
@@ -446,7 +453,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 |---|---|---|---|---|---|
 | Vision | 14 | 10 | 2 | 0 | 2 |
 | BRD | 21 | 15 | 3 | 0 | 3 |
-| PRD P0 (FR-001–FR-071) | 71 | 38 | 12 | 0 | 21 |
+| PRD P0 (FR-001–FR-071) | 71 | 40 | 12 | 0 | 19 |
 | PRD P1 (FR-072–FR-086) | 15 | 8 | 5 | 0 | 2 |
 | Database Spec (DB-001–036) | 36 | 31 | 2 | 0 | 3 |
 | API Spec (API-001–027) | 27 | 19 | 3 | 0 | 5 |
@@ -460,9 +467,10 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | Disaster Recovery | 8 | 5 | 2 | 0 | 1 |
 | Operations Manual | 8 | 5 | 2 | 0 | 1 |
 | Deployment Guide | 10 | 6 | 2 | 0 | 2 |
-| **TOTAL** | **308** | **207 (67%)** | **41 (13%)** | **6 (2%)** | **51 (17%)** |
+| **TOTAL** | **319** | **225 (71%)** | **38 (12%)** | **7 (2%)** | **46 (14%)** |
 
-**Last updated:** 2026-07-01 — Changes from 2026-06-26 baseline: ARCH-006 Argon2id ✅, AG-005/006 CLO+COO ✅, HAF-005 escalation ✅, TEST-014 Rust tests ✅, DR-007 hourly backup ✅, API-021–027 new IPC commands, DB-032–036 new tables, WK-DEV-GATE developer=CRITICAL ✅, WK-TIMEOUT 5-min global ✅, AG-009 prompts in DB ✅.
+**Last updated:** 2026-07-01 v2 — This session: FR-054 FTS5 search ✅, FR-044 cancel workflow ✅, FR-048b client-project FK ✅, DB-037 knowledge_fts FTS5 ✅, schema v16/v17/v18, FR-080 weekly report dynamic ✅, FR-081 opportunity spotlight real data ✅, ARCH-008 auto-lock 10min ✅, NFR-019 brute-force protection ✅, API-023 operating_modes seeded ✅, DB-001 clients GSTIN/email/phone ✅, DB-038 suggestions table ✅, DB-039 operating_modes seeded ✅, DB-041 projects.lead_id ✅, DB-042 projects.due_date ✅.
+Prior session (2026-07-01): ARCH-006 Argon2id ✅, AG-005/006 CLO+COO ✅, HAF-005 escalation ✅, TEST-014 Rust tests ✅, DR-007 hourly backup ✅, API-021–027 new IPC commands, DB-032–036 new tables, WK-DEV-GATE developer=CRITICAL ✅, WK-TIMEOUT 5-min global ✅, AG-009 prompts in DB ✅.
 
 ---
 

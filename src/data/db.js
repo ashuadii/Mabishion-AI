@@ -1090,12 +1090,12 @@ export async function logWhatsAppAttempt(phone, message, status, attempt = 1) {
   return id;
 }
 
-export async function addProject(name, type, clientName) {
+export async function addProject(name, type, clientName, clientId = null) {
   const db = await getDb();
   const id = crypto.randomUUID();
   await db.execute(
-    "INSERT INTO projects (id, name, type, client_name, stage, progress, health) VALUES ($1, $2, $3, $4, 'Research', 0, 'Stable')",
-    [id, name, type || 'Internal Product', clientName || 'Internal']
+    "INSERT INTO projects (id, name, type, client_name, client_id, stage, progress, health) VALUES ($1, $2, $3, $4, $5, 'Research', 0, 'Stable')",
+    [id, name, type || 'Internal Product', clientName || 'Internal', clientId || null]
   );
   return id;
 }
@@ -1217,7 +1217,36 @@ export async function addKnowledgeSource(title, sourceType, sourceUrl, notes = '
     'INSERT INTO knowledge_sources (id, title, source_type, source_url, status, notes) VALUES ($1, $2, $3, $4, $5, $6)',
     [id, title, sourceType, sourceUrl, 'Queued', notes]
   );
+  // Index in FTS5 for keyword search (FR-028)
+  try {
+    await db.execute(
+      'INSERT INTO knowledge_fts (source_id, title, notes, source_type) VALUES ($1, $2, $3, $4)',
+      [id, title, notes || '', sourceType]
+    );
+  } catch (_) { /* FTS5 table may not exist on older DBs */ }
   return id;
+}
+
+export async function searchKnowledge(query) {
+  if (!query || !query.trim()) return null;
+  const db = await getDb();
+  try {
+    const rows = await db.select(
+      `SELECT ks.* FROM knowledge_sources ks
+       JOIN knowledge_fts fts ON fts.source_id = ks.id
+       WHERE knowledge_fts MATCH $1
+       ORDER BY rank`,
+      [query.trim()]
+    );
+    return rows;
+  } catch (_) {
+    // FTS5 not available — fall back to LIKE search
+    const q = `%${query.trim()}%`;
+    return await db.select(
+      'SELECT * FROM knowledge_sources WHERE title LIKE $1 OR notes LIKE $2 ORDER BY created_at DESC',
+      [q, q]
+    );
+  }
 }
 
 export async function getAnalystReports(projectId = null) {
@@ -1804,9 +1833,13 @@ export async function addClient(data) {
   const id = crypto.randomUUID();
   const now = Date.now();
   await db.execute(
-    `INSERT INTO clients (id, name, business, budget, preferences, history, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-    [id, data.name, data.business || '', Number(data.budget || 0), data.preferences || '', '', now, now]
+    `INSERT INTO clients (id, name, business, budget, preferences, history, email, phone, gstin, contact_person, city, state, pincode, tier, status, consent_given, consent_at, created_at, updated_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)`,
+    [id, data.name, data.business || '', Number(data.budget || 0), data.preferences || '', '',
+     data.email || '', data.phone || '', data.gstin || '', data.contact_person || '',
+     data.city || '', data.state || '', data.pincode || '',
+     data.tier || 'standard', data.status || 'active',
+     data.consent_given ? 1 : 0, data.consent_given ? new Date().toISOString() : null, now, now]
   );
   return id;
 }
@@ -1814,8 +1847,11 @@ export async function addClient(data) {
 export async function updateClient(id, data) {
   const db = await getDb();
   await db.execute(
-    `UPDATE clients SET name=$1, business=$2, budget=$3, preferences=$4, updated_at=$5 WHERE id=$6`,
-    [data.name, data.business || '', Number(data.budget || 0), data.preferences || '', Date.now(), id]
+    `UPDATE clients SET name=$1, business=$2, budget=$3, preferences=$4, email=$5, phone=$6, gstin=$7, contact_person=$8, city=$9, state=$10, pincode=$11, tier=$12, status=$13, consent_given=$14, updated_at=$15 WHERE id=$16`,
+    [data.name, data.business || '', Number(data.budget || 0), data.preferences || '',
+     data.email || '', data.phone || '', data.gstin || '', data.contact_person || '',
+     data.city || '', data.state || '', data.pincode || '',
+     data.tier || 'standard', data.status || 'active', data.consent_given ? 1 : 0, Date.now(), id]
   );
 }
 
@@ -2036,4 +2072,89 @@ export async function getAgentPrompt(agentId) {
     const rows = await db.select('SELECT system_prompt FROM workers WHERE id = $1 LIMIT 1', [agentId]);
     return rows?.[0]?.system_prompt || null;
   } catch { return null; }
+}
+
+// DB-Spec §4.1: Suggestions table — "AI Suggests, Human Decides" (FR-1.2)
+export async function addSuggestion(type, content, workerId = null, taskId = null, metadata = null) {
+  const db = await getDb();
+  const id = crypto.randomUUID();
+  await db.execute(
+    'INSERT INTO suggestions (id, task_id, worker_id, suggestion_type, content, metadata, status) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+    [id, taskId, workerId, type, content, metadata ? JSON.stringify(metadata) : null, 'pending']
+  ).catch(() => {});
+  return id;
+}
+
+export async function getPendingSuggestions() {
+  const db = await getDb();
+  return await db.select(
+    "SELECT * FROM suggestions WHERE status='pending' ORDER BY created_at DESC LIMIT 50"
+  ).catch(() => []);
+}
+
+export async function updateSuggestionStatus(id, status) {
+  const db = await getDb();
+  await db.execute(
+    "UPDATE suggestions SET status=$1, reviewed_at=datetime('now') WHERE id=$2",
+    [status, id]
+  ).catch(() => {});
+}
+
+// FR-080: 7-day trend data for Reports screen — returns per-day counts for revenue, leads, projects
+export async function getWeeklyTrendData() {
+  const db = await getDb();
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    days.push(d.toISOString().slice(0, 10));
+  }
+  const start = days[0] + 'T00:00:00.000Z';
+  const end = new Date().toISOString();
+
+  const [invRows, leadRows, projRows] = await Promise.all([
+    db.select(
+      `SELECT date(created_at) as day, SUM(total_inr)/100.0 as amount
+       FROM invoices WHERE status='paid' AND created_at>=$1 GROUP BY day`,
+      [start]
+    ).catch(() => []),
+    db.select(
+      `SELECT date(created_at) as day, COUNT(*) as cnt
+       FROM leads WHERE created_at>=$1 GROUP BY day`,
+      [start]
+    ).catch(() => []),
+    db.select(
+      `SELECT date(updated_at) as day, COUNT(*) as cnt
+       FROM projects WHERE updated_at>=$1 GROUP BY day`,
+      [start]
+    ).catch(() => []),
+  ]);
+
+  const revMap = Object.fromEntries((invRows || []).map(r => [r.day, r.amount || 0]));
+  const leadMap = Object.fromEntries((leadRows || []).map(r => [r.day, r.cnt || 0]));
+  const projMap = Object.fromEntries((projRows || []).map(r => [r.day, r.cnt || 0]));
+
+  const maxRev = Math.max(1, ...days.map(d => revMap[d] || 0));
+  const maxLead = Math.max(1, ...days.map(d => leadMap[d] || 0));
+  const maxProj = Math.max(1, ...days.map(d => projMap[d] || 0));
+
+  return {
+    days,
+    revenuePoints: days.map(d => Math.round(((revMap[d] || 0) / maxRev) * 100)),
+    leadPoints: days.map(d => Math.round(((leadMap[d] || 0) / maxLead) * 100)),
+    projectPoints: days.map(d => Math.round(((projMap[d] || 0) / maxProj) * 100)),
+    weekRevenue: days.reduce((s, d) => s + (revMap[d] || 0), 0),
+    weekLeads: days.reduce((s, d) => s + (leadMap[d] || 0), 0),
+  };
+}
+
+// FR-080: Top opportunities from leads table — high score leads not yet converted
+export async function getTopOpportunities() {
+  const db = await getDb();
+  const rows = await db.select(
+    `SELECT name, budget, source, score, status, notes FROM leads
+     WHERE status NOT IN ('Closed Won','Closed Lost','Delivered')
+     ORDER BY score DESC LIMIT 5`,
+  ).catch(() => []);
+  return rows || [];
 }

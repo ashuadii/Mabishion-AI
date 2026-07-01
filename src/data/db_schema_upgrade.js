@@ -4,7 +4,7 @@
  * Creates tables if they do not exist. No destructive changes.
  */
 
-export const SCHEMA_VERSION = 15;
+export const SCHEMA_VERSION = 18;
 
 export const CREATE_TABLES_SQL = [
   `CREATE TABLE IF NOT EXISTS clients (
@@ -280,6 +280,116 @@ export async function upgradeDatabase(db) {
     if (currentVersion < 15) {
       try { await db.execute('ALTER TABLE execution_spans ADD COLUMN provider_used TEXT'); } catch (_) {}
       try { await db.execute('ALTER TABLE execution_spans ADD COLUMN project_id TEXT'); } catch (_) {}
+    }
+
+    // v16: FTS5 virtual table for knowledge_sources full-text keyword search (PRD FR-028)
+    if (currentVersion < 16) {
+      try {
+        await db.execute(`
+          CREATE VIRTUAL TABLE IF NOT EXISTS knowledge_fts USING fts5(
+            source_id UNINDEXED,
+            title,
+            notes,
+            source_type UNINDEXED,
+            tokenize='porter ascii'
+          )
+        `);
+      } catch (_) { /* FTS5 not compiled in — graceful fallback */ }
+    }
+
+    // v17: operating_modes + mode_workers tables (SRD §4.1 / API-023/024)
+    // Also: performance indexes (SRD §4.1) and brute force protection table (NFR-019)
+    if (currentVersion < 17) {
+      // Operating modes table
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS operating_modes (
+          id INTEGER PRIMARY KEY,
+          name TEXT NOT NULL UNIQUE,
+          description TEXT NOT NULL
+        )
+      `).catch(() => {});
+      // Seed 5 operating modes
+      const modes = [
+        [1, 'Agency', 'Full-service digital agency mode: client projects, proposals, deliverables.'],
+        [2, 'Product', 'Own product development: SaaS, digital products, internal tools.'],
+        [3, 'Marketing', 'Content creation, social media, ad campaigns, brand building.'],
+        [4, 'Operations', 'Finance, admin, compliance, backup, system health.'],
+        [5, 'Research', 'Market research, competitor analysis, knowledge base building.'],
+      ];
+      for (const [id, name, description] of modes) {
+        await db.execute(
+          'INSERT OR IGNORE INTO operating_modes (id, name, description) VALUES ($1, $2, $3)',
+          [id, name, description]
+        ).catch(() => {});
+      }
+      // Mode-workers junction table
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS mode_workers (
+          id TEXT PRIMARY KEY,
+          mode_id INTEGER NOT NULL REFERENCES operating_modes(id),
+          worker_id TEXT NOT NULL REFERENCES workers(id),
+          is_primary INTEGER DEFAULT 0
+        )
+      `).catch(() => {});
+      // Performance indexes (SRD §4.1 NFR-005)
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_leads_email ON leads(email)').catch(() => {});
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_projects_client_id ON projects(client_id)').catch(() => {});
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_invoices_project_id ON invoices(project_id)').catch(() => {});
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_execution_spans_date ON execution_spans(timestamp)').catch(() => {});
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_audit_logs_ts ON audit_logs(timestamp)').catch(() => {});
+      // Brute force protection table (SRD NFR-019)
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS failed_auth_attempts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          attempted_at TEXT NOT NULL DEFAULT (datetime('now')),
+          ip_hint TEXT
+        )
+      `).catch(() => {});
+    }
+
+    // v18: Extend clients table with DB Spec fields (DB-Spec §4.2); add suggestions table (DB-Spec §4.1)
+    if (currentVersion < 18) {
+      // Extend clients with compliance + contact fields
+      const clientsAlters = [
+        'ALTER TABLE clients ADD COLUMN email TEXT',
+        'ALTER TABLE clients ADD COLUMN phone TEXT',
+        'ALTER TABLE clients ADD COLUMN gstin TEXT',
+        'ALTER TABLE clients ADD COLUMN contact_person TEXT',
+        'ALTER TABLE clients ADD COLUMN city TEXT',
+        'ALTER TABLE clients ADD COLUMN state TEXT',
+        'ALTER TABLE clients ADD COLUMN pincode TEXT',
+        "ALTER TABLE clients ADD COLUMN tier TEXT DEFAULT 'standard'",
+        "ALTER TABLE clients ADD COLUMN status TEXT DEFAULT 'active'",
+      ];
+      for (const sql of clientsAlters) {
+        await db.execute(sql).catch(() => {});
+      }
+      // Add lead_id FK to projects (SRD §4.1)
+      await db.execute('ALTER TABLE projects ADD COLUMN lead_id TEXT REFERENCES leads(id)').catch(() => {});
+      // Add due_date to projects for deadline tracking (PRD FR-073)
+      await db.execute('ALTER TABLE projects ADD COLUMN due_date TEXT').catch(() => {});
+      // suggestions table (DB-Spec §4.1 — "AI Suggests, Human Decides" core philosophy)
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS suggestions (
+          id TEXT PRIMARY KEY,
+          task_id TEXT,
+          worker_id TEXT,
+          suggestion_type TEXT NOT NULL DEFAULT 'other',
+          content TEXT NOT NULL,
+          metadata TEXT,
+          status TEXT NOT NULL DEFAULT 'pending',
+          created_at TEXT DEFAULT (datetime('now')),
+          reviewed_at TEXT
+        )
+      `).catch(() => {});
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_suggestions_status ON suggestions(status)').catch(() => {});
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_suggestions_type ON suggestions(suggestion_type)').catch(() => {});
+      // DPDP Act 2023: consent_given field (Security Architecture §6.2)
+      await db.execute("ALTER TABLE clients ADD COLUMN consent_given INTEGER DEFAULT 0").catch(() => {});
+      await db.execute("ALTER TABLE clients ADD COLUMN consent_at TEXT").catch(() => {});
+      // Clients indexes (DB-Spec §4.2)
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_clients_email ON clients(email)').catch(() => {});
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_clients_status ON clients(status)').catch(() => {});
     }
 
     // Insert or update version
