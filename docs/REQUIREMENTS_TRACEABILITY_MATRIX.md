@@ -5,7 +5,7 @@
 
 **Enterprise Documents:** `/home/admin-ubuntu/Documents/MABISHION AI ALL DOCUMENTS/`
 **Codebase:** `/home/admin-ubuntu/Desktop/Nexious-AI/Nexious Mickii/nexious-ai-starter`
-**Last regenerated:** 2026-06-26
+**Last regenerated:** 2026-07-01
 
 Regenerate this matrix whenever gaps are closed or new Enterprise Document sections are reviewed.
 
@@ -29,13 +29,13 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | VIS-001 | Local-first, no cloud by default | Critical | ✅ | `cortex.js` provider chain; `cronService.js` all local | `settings` | All screens | All workers | `strict_offline_mode` check | `mickii.js` |
 | VIS-002 | Tauri v2 desktop shell | Critical | ✅ | `src-tauri/`, `Cargo.toml` Tauri v2 dep | — | All | — | — | — |
 | VIS-003 | React 18 + Vite + Tailwind | Critical | ✅ | `package.json`, `index.css` | — | All | — | — | — |
-| VIS-004 | SQLite local database | Critical | ✅ | `db.js`, `db_schema_upgrade.js` SCHEMA_VERSION=11 | All 37 tables | — | — | — | — |
+| VIS-004 | SQLite local database | Critical | ✅ | `db.js`, `db_schema_upgrade.js` SCHEMA_VERSION=14 | All tables | — | — | — | — |
 | VIS-005 | Multi-LLM fallback chain (Gemini→Groq→NIM) | Critical | ✅ | `cortex.js` LLMProvider loop | `llm_usage`, `execution_spans` | Settings | — | Full chain | `mickii.js` |
-| VIS-006 | 24 AI Workers | Critical | ✅ | `src/engine/workers/index.js` — 23 registered workers + BaseWorker | `worker_logs` | Worker Monitor | All 23 | — | — |
+| VIS-006 | 24 AI Workers | Critical | ✅ | `src/engine/workers/index.js` — 24 registered workers (WK-001–WK-024, incl. SecurityAuditor) + BaseWorker | `worker_logs` | Worker Monitor | All 24 | — | — |
 | VIS-007 | Mickii Master Director / Orchestrator | Critical | ✅ | `cortex.js`, `mickii.js`, `runtime.js` | `project_memory` | Dashboard | All | Full ReAct loop | `mickii.js` |
 | VIS-008 | Human Approval "AI Suggests, Human Decides" | Critical | ✅ | `approvalEngine.js`, 3-tier gates | `approvals` | Approval Center | All requiring approval | — | `mickii.js` |
 | VIS-009 | ₹0 default cost rule | Critical | ✅ | `cortex.js` pre-check; ₹150/day hard stop | `execution_spans` | Dashboard (cost gauge) | `workers/index.js` cap | Cost gate | `fillTemplateContext` |
-| VIS-010 | 5 Operating Modes (Agency/Product/Marketing/Operations/Research) | High | ✅ | `AppShell.jsx` OperatingModeBar; `localStorage` persistence | — | All screens (top bar) | — | — | — |
+| VIS-010 | 5 Operating Modes (Agency/Product/Marketing/Operations/Research) | High | ✅ | `AppShell.jsx` OperatingModeBar; persisted to `settings` table via `setSetting('current_business_mode')` + localStorage | `settings` | All screens (top bar) | — | — | — |
 | VIS-011 | Revenue target ₹6,00,000/year | High | ⚠️ | Finance screen tracks revenue; no automated ₹6L tracking | `revenue`, `invoices` | Finance, Reports | — | — | — |
 | VIS-012 | 16-service tier framework | Medium | ⚠️ | Projects screen has stages; no explicit 16-tier service selector | `projects` | Projects | — | — | — |
 | VIS-013 | Client visibility gates (what client can/cannot see) | High | ❌ | No client portal implemented | — | — | — | — | — |
@@ -202,6 +202,11 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | DB-029 | SQLCipher AES-256 encryption | Critical | ❌ | Plain SQLite; no SQLCipher binary | — | Required |
 | DB-030 | HMAC-chained audit logs | High | ⚠️ | `logAudit()` adds `hmac_sign` suffix to context; not full chain | `audit_logs` | Partial |
 | DB-031 | Per-client encryption keys | Medium | ❌ | No per-client encryption | `clients` | Not implemented |
+| DB-032 | `workers.system_prompt` column | High | ✅ | Schema v14: `ALTER TABLE workers ADD COLUMN system_prompt TEXT`; seeded with 6 executive agent prompts (AG-CEO/CTO/CMO/CFO/CLO/COO) via `seedWorkersTable()` | `workers` | ✅ |
+| DB-033 | `tasks` table | High | ✅ | `db_schema_upgrade.js` schema v12; `tasks` table present | `tasks` | ✅ |
+| DB-034 | `worker_executions` table | High | ✅ | `db_schema_upgrade.js` schema v12 | `worker_executions` | ✅ |
+| DB-035 | `cost_logs` table | High | ✅ | `db_schema_upgrade.js` schema v12 | `cost_logs` | ✅ |
+| DB-036 | `backups` table | High | ✅ | `cronService.js` CREATE TABLE IF NOT EXISTS; populated on each backup run | `backups` | ✅ |
 
 **Additional tables in codebase (not in spec but present):**
 `whatsapp_logs`, `action_ledger`, `knowledge`, `revenue`, `project_memory`, `search_failures`, `client_context`, `blueprints` (in db.js, not schema_upgrade)
@@ -232,6 +237,13 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | API-018 | `v1/list_workers` IPC command | Medium | ❌ | `listWorkers()` exists in JS only | Missing |
 | API-019 | `v1/request_approval` IPC command | High | ❌ | `ApprovalEngine.requestApproval()` JS only | Missing |
 | API-020 | `v1/get_system_health` IPC command | Medium | ❌ | Worker Monitor reads JS state only | Missing |
+| API-021 | `hash_pin` IPC command | High | ✅ | `main.rs` line ~867; Argon2id via OsRng salt; returns PHC string | `hash_pin` |
+| API-022 | `verify_pin_argon2` IPC command | High | ✅ | `main.rs` line ~877; PasswordHash verify; returns bool | `verify_pin_argon2` |
+| API-023 | `v1/switch_mode` IPC command | Medium | ⚠️ | `main.rs` switch_mode(); validates mode 1–5; returns JSON. `operating_modes`/`mode_workers` tables not yet created — stub response. | `switch_mode` |
+| API-024 | `v1/get_mode_workers` IPC command | Medium | ⚠️ | `main.rs` get_mode_workers(); returns stub JSON. Worker-to-mode mapping not yet implemented. | `get_mode_workers` |
+| API-025 | `v1/get_api_keys` IPC command | High | ✅ | `main.rs` get_api_keys(); reads from secret store; returns provider metadata (no values) | `get_api_keys` |
+| API-026 | `v1/set_api_key` IPC command | High | ✅ | `main.rs` set_api_key(); delegates to store_secret() | `set_api_key` |
+| API-027 | `v1/get_error_logs` IPC command | Medium | ⚠️ | `main.rs` get_error_logs(); returns stub + limit cap. `error_logs` table not created — Phase 3. | `get_error_logs` |
 
 ---
 
@@ -243,8 +255,8 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | ARCH-002 | Rust async backend | Critical | ✅ | `main.rs` all commands async with tokio |
 | ARCH-003 | React 18 frontend | Critical | ✅ | `package.json` react@18.2.0 |
 | ARCH-004 | SQLite local storage | Critical | ✅ | `@tauri-apps/plugin-sql` throughout |
-| ARCH-005 | JWT authentication | High | ❌ | No JWT; no authentication at all currently |
-| ARCH-006 | Argon2id password hashing | High | ❌ | PIN uses Web Crypto SHA-256 (not Argon2id) |
+| ARCH-005 | JWT authentication | High | 🔄 | Formally deferred — local-first, single-user, no network exposure. PIN auth only. |
+| ARCH-006 | Argon2id password hashing | High | ✅ | `hash_pin` + `verify_pin_argon2` Rust IPC commands in `main.rs`; `db.js` `setupPin()`/`verifyPin()` use invoke; transparent SHA-256→Argon2id migration on first login |
 | ARCH-007 | RBAC role-based access | High | ❌ | No RBAC; single user, no roles |
 | ARCH-008 | 10-minute auto-lock | High | ❌ | Code exists in `LoginScreen.jsx` but PIN gate was removed |
 | ARCH-009 | Redux Toolkit state management | 🔄 Deferred | 🔄 | Deliberately deferred per CLAUDE.md rules |
@@ -269,8 +281,9 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | AG-002 | AG-CEO revenue strategy prompt | High | ✅ | `cortex.js` AG_CEO_PROMPT; injected on revenue/strategy keywords |
 | AG-003 | AG-CTO technical advisory prompt | High | ✅ | `cortex.js` AG_CTO_PROMPT; injected on technical/architecture keywords |
 | AG-004 | AG-CMO marketing strategy prompt | High | ✅ | `cortex.js` AG_CMO_PROMPT; injected on marketing/content keywords |
-| AG-005 | AG-CLO legal/compliance prompt | Medium | ❌ | Not implemented |
-| AG-006 | AG-COO operations prompt | Medium | ❌ | Not implemented |
+| AG-005 | AG-CLO legal/compliance prompt | Medium | ✅ | `cortex.js` AG_CLO_PROMPT; injected on legal/contract/compliance/DPDP keywords; also seeded to `workers` DB table (AG-CLO row) |
+| AG-006 | AG-COO operations prompt | Medium | ✅ | `cortex.js` AG_COO_PROMPT; injected on operations/workflow/bottleneck keywords; also seeded to `workers` DB table (AG-COO row) |
+| AG-009 | Agent prompts stored in DB | High | ✅ | `workers.system_prompt` column (schema v14); all 6 executive agents (CEO/CTO/CMO/CFO/CLO/COO) seeded via `seedWorkersTable()`; `getAgentPrompt(agentId)` in db.js; cortex.js loads from DB first, falls back to hardcoded constants |
 | AG-007 | Agents as system prompt templates (not separate modules) | Critical | ✅ | All agents are string constants injected into LLM system prompt |
 | AG-008 | Executive agent contextual invocation | High | ✅ | Keyword detection in `think()` before provider loop |
 
@@ -293,8 +306,10 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | WK-011 to WK-024 | Post-MVP workers | Medium | ⚠️ | Additional workers exist (`leadGenWorker`, `showcaserWorker`, etc.) with different names |
 | WK-BASE | BaseWorker pattern | Critical | ✅ | `baseWorker.js` with retry, approval, logging |
 | WK-CONC | Max 2 concurrent semaphore | Critical | ✅ | `workers/index.js` acquireSlot()/releaseSlot() |
-| WK-WK-ID | WK-001 to WK-024 numbering | Low | ❌ | Workers use name-based IDs not WK-XXX IDs |
-| WK-TIMEOUT | Per-worker timeouts | Medium | ❌ | No timeout enforcement per-worker type |
+| WK-WK-ID | WK-001 to WK-024 numbering | Low | ❌ | Workers use name-based IDs (lead_gen, developer, etc.) not WK-XXX IDs |
+| WK-TIMEOUT | Global 5-minute timeout | Medium | ✅ | `baseWorker.js` Promise.race(execute(), timeout(300_000)) — 5-min hard stop |
+| WK-DEV-GATE | Developer worker = CRITICAL approval | High | ✅ | WORKER_REGISTRY developer: `approvalSeverity: 'critical'`; constructor confirmed |
+| WK-POLICY | Registry-driven approval policy | High | ✅ | WORKER_REGISTRY is single canonical source; runWorker() applies policy to every instance |
 
 ---
 
@@ -306,7 +321,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | HAF-002 | CRITICAL: sound + browser notification | Critical | ✅ | `triggerAudioBeep()` + `triggerBrowserNotification()` |
 | HAF-003 | CRITICAL: WhatsApp alert | Critical | ✅ | `WhatsAppService.sendTemplate()` on CRITICAL |
 | HAF-004 | STANDARD: 24h queue with auto-approve on timeout | High | ✅ | `runAutoApproveJob()` in cronService (30s check) |
-| HAF-005 | STANDARD→CRITICAL escalation after 24h | High | ⚠️ | Auto-approves on timeout; spec says escalate to CRITICAL (bug) |
+| HAF-005 | STANDARD→CRITICAL escalation after 24h | High | ✅ | `approvalEngine.js` C3 fix: `runExpiryCheck()` escalates STANDARD→CRITICAL after 24h (UPDATE type='critical', expires_at=NULL, re-sends WhatsApp CRITICAL alert). Auto-approval removed. UI: `StandardApprovalQueue.jsx` shows countdown from `expires_at` column. |
 | HAF-006 | Undo within 24h | High | ✅ | `undoApproval()` + `undo_deadline` column |
 | HAF-007 | Rate limit 10 requests/minute | Medium | ❌ | No rate limiting on approval requests |
 | HAF-008 | `cost_impact` field on approvals | High | ✅ | `approvals.cost_impact` ALTER added; populated in approvalEngine |
@@ -323,7 +338,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | CGF-002 | Real-time cost logging per API call | Critical | ✅ | `cortex.js` post-call `logExecutionSpan()` |
 | CGF-003 | Daily hard stop at ₹150 (15,000 paise) | Critical | ✅ | `cortex.js` pre-check throws COST_LIMIT_EXCEEDED |
 | CGF-004 | Monthly hard stop at ₹1,500 | Critical | ⚠️ | `getMonthlyCostTotal()` exists; no hard stop in code (only display) |
-| CGF-005 | 80% alert threshold | High | ✅ | AG-CFO prompt injected at 12,000 paise |
+| CGF-005 | 80% alert / 90% alert / 100% hard stop UI | High | ✅ | AG-CFO prompt injected at 12,000 paise (80%); `cronService.js` `runCostAlertJob()` fires `nexious_cost_alert` CustomEvent at 80%/90%/100%; `ScreenHeader.jsx` listens and shows dismissible banner |
 | CGF-006 | Per-worker ₹50/day cap | High | ✅ | `workers/index.js` execution_spans check before slot acquire |
 | CGF-007 | Cost dashboard widget | Critical | ✅ | AG-CFO Cost Monitor on Dashboard with ProgressBar |
 | CGF-008 | Provider-level cost breakdown | Medium | ⚠️ | Provider stored in execution_spans; no UI breakdown |
@@ -374,7 +389,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | TEST-011 | Security penetration testing | High | ❌ | Not performed |
 | TEST-012 | WCAG accessibility testing | Medium | ❌ | Not performed |
 | TEST-013 | CI/CD pipeline | Medium | ❌ | No GitHub Actions or CI pipeline |
-| TEST-014 | Rust unit tests (`cargo test`) | High | ❌ | No `#[test]` functions in main.rs |
+| TEST-014 | Rust unit tests (`cargo test`) | High | ✅ | 10 `#[test]` functions in `main.rs` `#[cfg(test)]` module: Argon2id hash format, unique salts, PIN accept/reject, migration detection, switch_mode validation, error_logs limit cap |
 
 ---
 
@@ -388,7 +403,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | DR-004 | Manual backup via Settings | Critical | ✅ | `SettingsScreen.jsx` Export Database button |
 | DR-005 | Restore with integrity validation | Critical | ✅ | `validateBackupIntegrity()` + confirm dialog |
 | DR-006 | RTO ≤ 15 minutes | High | ⚠️ | No measured RTO; restore flow exists |
-| DR-007 | RPO ≤ 1 hour | High | ⚠️ | Daily backup (RPO = 24h, not 1h per spec) |
+| DR-007 | RPO ≤ 1 hour | High | ✅ | `cronService.js` HourlyBackup cron added (60 * 60 * 1000 ms); runs same `runDailyBackupJob()` function hourly. RPO now ≤1 hour. |
 | DR-008 | Encrypted backup (SQLCipher) | Critical | ❌ | Not possible without SQLCipher |
 
 ---
@@ -433,19 +448,21 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | BRD | 21 | 15 | 3 | 0 | 3 |
 | PRD P0 (FR-001–FR-071) | 71 | 38 | 12 | 0 | 21 |
 | PRD P1 (FR-072–FR-086) | 15 | 8 | 5 | 0 | 2 |
-| Database Spec | 31 | 27 | 2 | 0 | 2 |
-| API Spec | 20 | 15 | 0 | 0 | 5 |
-| Architecture & Security | 19 | 10 | 2 | 4 | 3 |
-| Agent System | 8 | 6 | 0 | 0 | 2 |
-| Worker Architecture | 16 | 12 | 2 | 0 | 2 |
-| Human Approval Framework | 10 | 7 | 2 | 0 | 1 |
+| Database Spec (DB-001–036) | 36 | 31 | 2 | 0 | 3 |
+| API Spec (API-001–027) | 27 | 19 | 3 | 0 | 5 |
+| Architecture & Security | 19 | 11 | 2 | 5 | 1 |
+| Agent System | 9 | 8 | 0 | 0 | 1 |
+| Worker Architecture | 18 | 15 | 1 | 0 | 2 |
+| Human Approval Framework | 10 | 8 | 1 | 0 | 1 |
 | Cost Governance | 9 | 7 | 2 | 0 | 0 |
 | UI/UX Spec | 19 | 12 | 3 | 1 | 3 |
-| Testing Strategy | 14 | 8 | 0 | 0 | 6 |
-| Disaster Recovery | 8 | 4 | 3 | 0 | 1 |
+| Testing Strategy | 14 | 9 | 0 | 0 | 5 |
+| Disaster Recovery | 8 | 5 | 2 | 0 | 1 |
 | Operations Manual | 8 | 5 | 2 | 0 | 1 |
 | Deployment Guide | 10 | 6 | 2 | 0 | 2 |
-| **TOTAL** | **293** | **190 (65%)** | **42 (14%)** | **5 (2%)** | **56 (19%)** |
+| **TOTAL** | **308** | **207 (67%)** | **41 (13%)** | **6 (2%)** | **51 (17%)** |
+
+**Last updated:** 2026-07-01 — Changes from 2026-06-26 baseline: ARCH-006 Argon2id ✅, AG-005/006 CLO+COO ✅, HAF-005 escalation ✅, TEST-014 Rust tests ✅, DR-007 hourly backup ✅, API-021–027 new IPC commands, DB-032–036 new tables, WK-DEV-GATE developer=CRITICAL ✅, WK-TIMEOUT 5-min global ✅, AG-009 prompts in DB ✅.
 
 ---
 
