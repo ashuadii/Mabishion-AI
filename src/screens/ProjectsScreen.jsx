@@ -98,6 +98,8 @@ export default function ProjectsScreen({ onNavigate }) {
   const [newProjType, setNewProjType] = useState('Landing Page');
   const [newProjClient, setNewProjClient] = useState('');
   const [newProjClientId, setNewProjClientId] = useState('');
+  const [newProjDueDate, setNewProjDueDate] = useState(''); // FR-073
+  const [newProjMilestone, setNewProjMilestone] = useState(''); // FR-072
   const [clientsList, setClientsList] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -151,11 +153,13 @@ export default function ProjectsScreen({ onNavigate }) {
 
     try {
       setIsSaving(true);
-      await addProject(newProjName, newProjType, newProjClient, newProjClientId || null);
+      await addProject(newProjName, newProjType, newProjClient, newProjClientId || null, newProjDueDate || null, newProjMilestone || null);
       setNewProjName('');
       setNewProjType('Website');
       setNewProjClient('');
       setNewProjClientId('');
+      setNewProjDueDate('');
+      setNewProjMilestone('');
       setIsNewModalOpen(false);
       await loadProjects();
     } catch (err) {
@@ -446,6 +450,14 @@ export default function ProjectsScreen({ onNavigate }) {
                               {p.client_name && <span className="max-w-[80px] truncate">{p.client_name}</span>}
                             </div>
                             <ProgressBar value={p.progress || 0} tone={ht} />
+                            {/* FR-073: Due date display */}
+                            {p.due_date && (
+                              <div className={`mt-1.5 flex items-center gap-1 text-[9px] font-bold ${new Date(p.due_date) < new Date() ? 'text-red-400' : 'text-slate-500'}`}>
+                                <Icon name="calendar" size={10} />
+                                Due: {new Date(p.due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                {new Date(p.due_date) < new Date() && ' ⚠️ Overdue'}
+                              </div>
+                            )}
                           </div>
                         );
                       })}
@@ -741,6 +753,33 @@ export default function ProjectsScreen({ onNavigate }) {
                   className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
                 />
               )}
+            </div>
+
+            {/* FR-073: Due Date */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-gray-400 font-bold mb-1 uppercase tracking-wider">Due Date (FR-073)</label>
+                <input
+                  type="date"
+                  value={newProjDueDate}
+                  onChange={e => setNewProjDueDate(e.target.value)}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                  style={{ colorScheme: 'dark' }}
+                  aria-label="Project due date"
+                />
+              </div>
+              {/* FR-072: First Milestone */}
+              <div>
+                <label className="block text-xs text-gray-400 font-bold mb-1 uppercase tracking-wider">First Milestone (FR-072)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Design approved"
+                  value={newProjMilestone}
+                  onChange={e => setNewProjMilestone(e.target.value)}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                  aria-label="First project milestone"
+                />
+              </div>
             </div>
 
             <div className="pt-4 flex gap-3">

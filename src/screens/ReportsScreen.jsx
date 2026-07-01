@@ -36,6 +36,8 @@ export default function ReportsScreen({ onNavigate }) {
   const [trendData, setTrendData] = useState(null);
   const [opportunities, setOpportunities] = useState([]);
   const [weeklyVerdict, setWeeklyVerdict] = useState(null);
+  const [rawLeads, setRawLeads] = useState([]);
+  const [rawProjects, setRawProjects] = useState([]);
 
   useEffect(() => {
     const load = async () => {
@@ -60,6 +62,8 @@ export default function ReportsScreen({ onNavigate }) {
 
         setTrendData(trend);
         setOpportunities(opps || []);
+        setRawLeads(leads || []);
+        setRawProjects(projects || []);
 
         // Generate dynamic weekly verdict from real data
         const convRate = (leads || []).length > 0
@@ -100,6 +104,32 @@ export default function ReportsScreen({ onNavigate }) {
     load();
   }, []);
 
+  // FR-076: Filtered CSV export
+  const handleExportCsv = (type) => {
+    let rows, filename;
+    if (type === 'leads') {
+      const headers = ['Name','Email','Phone','Source','Status','Score','Budget','Created'];
+      rows = [headers.join(','), ...rawLeads.map(l => [
+        `"${l.name||''}"`, `"${l.email||''}"`, `"${l.phone||''}"`,
+        `"${l.source||''}"`, `"${l.status||''}"`, l.score||0,
+        `"${l.budget||''}"`, `"${l.created_at||''}"`
+      ].join(','))];
+      filename = `Mabishion_Leads_${new Date().toISOString().split('T')[0]}.csv`;
+    } else {
+      const headers = ['Name','Type','Client','Stage','Progress','Health','Due Date'];
+      rows = [headers.join(','), ...rawProjects.map(p => [
+        `"${p.name||''}"`, `"${p.type||''}"`, `"${p.client_name||''}"`,
+        `"${p.stage||''}"`, p.progress||0, `"${p.health||''}"`, `"${p.due_date||''}"`
+      ].join(','))];
+      filename = `Mabishion_Projects_${new Date().toISOString().split('T')[0]}.csv`;
+    }
+    const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <AppShell activeNavId="reports" onNavigate={onNavigate}
       commandBar={<QuickCommandBar contextLabel="Reports Context" placeholder="Ask Mickii: generate weekly report, explain KPI drop, find opportunity, export PDF..." />}>
@@ -108,7 +138,18 @@ export default function ReportsScreen({ onNavigate }) {
         badgeLabel="Analytics · weekly reality check"
         primaryAction="Generate Report" primaryIcon="chart"
         secondaryAction="Export PDF" secondaryIcon="export"
-        extraBadges={<><Badge tone="gold">Reality Check</Badge><Badge tone="danger">No Sugar-coating</Badge><Badge tone="violet">Export Approval</Badge></>}
+        extraBadges={
+          <>
+            <Badge tone="gold">Reality Check</Badge>
+            <Badge tone="danger">No Sugar-coating</Badge>
+            <button onClick={() => handleExportCsv('leads')} className="px-2 py-1 rounded-lg text-[10px] font-bold bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all" aria-label="Export leads CSV">
+              ↓ Leads CSV
+            </button>
+            <button onClick={() => handleExportCsv('projects')} className="px-2 py-1 rounded-lg text-[10px] font-bold bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all" aria-label="Export projects CSV">
+              ↓ Projects CSV
+            </button>
+          </>
+        }
       />
       <section className="grid grid-cols-12 gap-5">
         {/* KPI Cards */}

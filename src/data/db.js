@@ -1090,13 +1090,18 @@ export async function logWhatsAppAttempt(phone, message, status, attempt = 1) {
   return id;
 }
 
-export async function addProject(name, type, clientName, clientId = null) {
+export async function addProject(name, type, clientName, clientId = null, dueDate = null, milestone = null) {
   const db = await getDb();
   const id = crypto.randomUUID();
   await db.execute(
-    "INSERT INTO projects (id, name, type, client_name, client_id, stage, progress, health) VALUES ($1, $2, $3, $4, $5, 'Research', 0, 'Stable')",
-    [id, name, type || 'Internal Product', clientName || 'Internal', clientId || null]
+    "INSERT INTO projects (id, name, type, client_name, client_id, stage, progress, health, due_date) VALUES ($1, $2, $3, $4, $5, 'Research', 0, 'Stable', $6)",
+    [id, name, type || 'Internal Product', clientName || 'Internal', clientId || null, dueDate || null]
   );
+  // Store milestone as first project memory note if provided
+  if (milestone && milestone.trim()) {
+    await addProjectMemory(id, `Milestone: ${milestone.trim()}`).catch(() => {});
+  }
+  logAudit('INFO', `Project created: ${name}`, JSON.stringify({ id, type, clientId, dueDate })).catch(() => {});
   return id;
 }
 

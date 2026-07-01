@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { addLead, getSetting } from '../../data/db';
+import { addLead, getSetting, checkRateLimit } from '../../data/db';
 import { runWorker } from '../../engine/workers/index.js';
 import { WhatsAppService } from '../../services/whatsappService.js';
 import { C, glassStyle } from '../consts';
@@ -73,6 +73,13 @@ export default function LeadForm({ onSubmitSuccess }) {
     setSubmitLock(true);
 
     try {
+      // FR-009: Rate limit — max 5 lead submissions per minute
+      const allowed = await checkRateLimit('lead_submit', 5);
+      if (!allowed) {
+        alert('Too many leads added quickly. Please wait a minute before adding another.');
+        return;
+      }
+
       const score = calculateLeadScore(budget, timeline, source);
       const combinedNotes = JSON.stringify([
         {

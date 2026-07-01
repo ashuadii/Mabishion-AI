@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { updateLeadNotes, updateLeadStatus, deleteLead, archiveLead, restoreLead } from '../../data/db';
+import { updateLeadNotes, updateLeadStatus, deleteLead, archiveLead, restoreLead, addClient } from '../../data/db';
 import { C, glassStyle } from '../consts';
 import Icon from '../Icon';
 import Button from '../Button';
@@ -122,6 +122,30 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
       await deleteLead(lead.id);
       if (onUpdate) onUpdate();
       onClose();
+    }
+  };
+
+  // FR-026-030: Convert Won lead to Client record
+  const handleConvertToClient = async () => {
+    if (!window.confirm(`"${lead.name}" ko Client mein convert karein? Ek nayi client record banega.`)) return;
+    try {
+      await addClient({
+        name: lead.name,
+        business: lead.notes ? '' : '',
+        email: lead.email || '',
+        phone: lead.phone || '',
+        budget: lead.budget ? Number(String(lead.budget).replace(/[₹$,\s]/g, '')) || 0 : 0,
+        preferences: `Converted from Lead. Source: ${lead.source || 'Unknown'}. Budget: ${lead.budget || 'Flexible'}.`,
+        status: 'active',
+        tier: 'standard',
+        consent_given: 0,
+      });
+      await updateLeadStatus(lead.id, 'Closed Won');
+      alert(`✅ ${lead.name} ab Client ban gaya! Clients screen mein dekho.`);
+      if (onUpdate) onUpdate();
+      onClose();
+    } catch (err) {
+      alert('Convert failed: ' + err.message);
     }
   };
 
@@ -478,6 +502,19 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
           )}
 
         </div>
+
+        {/* FR-026-030: Convert to Client — show only when Won */}
+        {lead.status === 'Won' && (
+          <div className="px-6 pb-2">
+            <button
+              onClick={handleConvertToClient}
+              className="w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white transition-all"
+              aria-label="Convert this won lead to a client record"
+            >
+              ✅ Convert to Client
+            </button>
+          </div>
+        )}
 
         {/* Footer Actions — Archive / Restore / Delete */}
         <div className="p-6 border-t border-white/5 bg-black/20 flex gap-2">

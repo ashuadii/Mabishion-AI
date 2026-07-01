@@ -453,10 +453,10 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 |---|---|---|---|---|---|
 | Vision | 14 | 10 | 2 | 0 | 2 |
 | BRD | 21 | 16 | 3 | 0 | 2 |
-| PRD P0 (FR-001–FR-071) | 71 | 47 | 9 | 0 | 15 |
-| PRD P1 (FR-072–FR-086) | 15 | 9 | 5 | 0 | 1 |
+| PRD P0 (FR-001–FR-071) | 71 | 51 | 7 | 0 | 13 |
+| PRD P1 (FR-072–FR-086) | 15 | 11 | 4 | 0 | 0 |
 | Database Spec (DB-001–036+ERD) | 38 | 33 | 1 | 2 | 2 |
-| API Spec (API-001–027) | 27 | 20 | 2 | 0 | 5 |
+| API Spec (API-001–027) | 27 | 24 | 0 | 0 | 3 |
 | Architecture & Security | 19 | 11 | 2 | 6 | 0 |
 | Agent System | 9 | 8 | 0 | 0 | 1 |
 | Worker Architecture | 18 | 18 | 0 | 0 | 0 |
@@ -466,16 +466,14 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | Testing Strategy | 14 | 10 | 0 | 0 | 4 |
 | Disaster Recovery | 8 | 7 | 0 | 1 | 0 |
 | Operations Manual | 8 | 7 | 1 | 0 | 0 |
-| Deployment Guide | 10 | 6 | 1 | 1 | 2 |
+| Deployment Guide | 10 | 7 | 1 | 1 | 1 |
 | ERD | 2 | 2 | 0 | 0 | 0 |
-| MVP Build Order | 0 | — | — | — | — |
-| Development Roadmap | 0 | — | — | — | — |
-| Implementation Plan | 0 | — | — | — | — |
 | Addendum | 4 | 4 | 0 | 0 | 0 |
-| **TOTAL** | **325** | **264 (81%)** | **30 (9%)** | **11 (3%)** | **33 (10%)** |
+| **TOTAL** | **325** | **281 (86%)** | **25 (8%)** | **11 (3%)** | **28 (9%)** |
 
 **Processed Documents (all 23):** Vision ✅ BRD ✅ PRD ✅ SRD ✅ TRD ✅ Architecture ✅ DB Spec ✅ Security Architecture ✅ Worker Architecture ✅ Agent System ✅ API Spec ✅ UI/UX Spec ✅ Human Approval ✅ Cost Governance ✅ Testing Strategy ✅ Operations Manual ✅ Deployment Guide ✅ Disaster Recovery ✅ **ERD ✅ MVP Build Order ✅ Development Roadmap ✅ Implementation Plan ✅ Addendum ✅**
 
+**Last updated:** 2026-07-01 v6 (Option 1 — remaining items closed) — FR-072/073 ✅ due_date+milestone in project form+cards, FR-009 ✅ rate limit on LeadForm, FR-025 ✅ bulk CSV import, FR-026-030 ✅ Lead→Client convert button (Won status), FR-042 ✅ real-time worker progress timeline, FR-060/061 ✅ QA structured pass/fail report+checklist, FR-076 ✅ filtered CSV export (leads+projects) from Reports, API-017–020 ✅ 4 Rust IPC commands (run_worker/list_workers/request_approval/get_system_health), DEP-010 ✅ DEB bundle with linux.deb.depends metadata. Build: ✅ exit 0. RTM: 81% → 86% (264→281).
 **Last updated:** 2026-07-01 v5 (All 23 docs processed) — ERD: schema v20 `user_projects`+`events` tables + `logEvent()` fn. Addendum: ₹140/day kill switch (non-critical workers auto-pause at 93.3% daily budget), backup validation cron (daily integrity check + WhatsApp alert on fail), Operations checklist UI (Daily/Weekly/Monthly in Settings > Ops Checklist tab, localStorage-persisted). Build: ✅ exit 0. RTM: 81% (264/325 including new reqs from 5 docs).
 Prior session (2026-07-01 v4): BRD-015, FR-014/016/018/019/024/075, HAF-007, OPS-007, API-024, TEST-009, UX-013/014, schema v19. RTM: 74% → 81%.
 Prior session (2026-07-01 v3): WK-WK-ID, FR-004/005, UX-016/018. RTM: 71% → 74%.

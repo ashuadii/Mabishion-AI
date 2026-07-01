@@ -91,28 +91,57 @@ export default function WorkerMonitorScreen({ onNavigate }) {
         </>}
       />
 
-      {/* Live Running Workers — FR-016 Cancel support */}
+      {/* FR-042: Real-time workflow progress timeline */}
       {liveRuns.length > 0 && (
-        <div className="mb-5 p-4 rounded-2xl border border-indigo-500/30" style={{ background: 'rgba(99,102,241,0.07)' }}>
-          <p className="text-xs font-bold uppercase mb-3" style={{ color: C.primary }}>⚡ Running Now ({liveRuns.length})</p>
-          <div className="space-y-2">
-            {liveRuns.map(run => (
-              <div key={run.runId} className="flex items-center justify-between">
-                <div>
-                  <span className="text-sm font-bold text-white">{run.workerName}</span>
-                  <span className="text-[10px] ml-2" style={{ color: C.textMuted }}>
-                    Started {run.startedAt ? new Date(run.startedAt).toLocaleTimeString('en-IN') : '—'}
-                  </span>
-                </div>
-                <button
-                  onClick={() => handleCancel(run.runId)}
-                  className="px-3 py-1 rounded-lg text-xs font-bold border border-red-500/40 text-red-400 hover:bg-red-500/20 transition-all"
-                >
-                  ✕ Cancel
-                </button>
-              </div>
-            ))}
+        <div className="mb-5 p-4 rounded-2xl border border-indigo-500/30 animate-in fade-in duration-300" style={{ background: 'rgba(99,102,241,0.07)' }}>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-bold uppercase flex items-center gap-2" style={{ color: C.primary }}>
+              <span className="w-2 h-2 rounded-full bg-indigo-400 animate-ping inline-block" />
+              Running Now ({liveRuns.length} / 2 max)
+            </p>
+            <span className="text-[9px] text-slate-500 uppercase tracking-wider">FR-042 Live Timeline</span>
           </div>
+          <div className="space-y-3">
+            {liveRuns.map(run => {
+              const elapsed = run.startedAt ? Math.floor((Date.now() - new Date(run.startedAt).getTime()) / 1000) : 0;
+              const pct = Math.min(100, (elapsed / 300) * 100); // 300s = 5min max
+              return (
+                <div key={run.runId} className="p-3 rounded-xl bg-black/20 border border-white/5">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <span className="text-sm font-black text-white capitalize">{run.workerName?.replace(/_/g,' ')}</span>
+                      <span className="text-[10px] ml-2 text-slate-500">
+                        {elapsed < 60 ? `${elapsed}s` : `${Math.floor(elapsed/60)}m ${elapsed%60}s`} elapsed
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleCancel(run.runId)}
+                      className="px-2 py-1 rounded-lg text-[10px] font-bold border border-red-500/40 text-red-400 hover:bg-red-500/20 transition-all"
+                      aria-label={`Cancel ${run.workerName} worker`}
+                    >
+                      ✕ Cancel
+                    </button>
+                  </div>
+                  {/* Progress bar */}
+                  <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-1000"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between mt-1 text-[9px] text-slate-600">
+                    <span>Started {run.startedAt ? new Date(run.startedAt).toLocaleTimeString('en-IN') : '—'}</span>
+                    <span>{Math.round(pct)}% of max 5min</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {liveRuns.length === 0 && (
+        <div className="mb-5 p-3 rounded-2xl border border-white/5 bg-white/3 text-center text-[10px] text-slate-600 uppercase tracking-wider font-bold">
+          No workers running — koi task shuru karo Dashboard se
         </div>
       )}
 

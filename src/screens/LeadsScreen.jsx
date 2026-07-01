@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getLeads, updateLeadStatus, deleteLead, autoScoreAllLeads, getArchivedLeads, searchLeadsFts, indexLeadFts } from '../data/db.js';
+import { getLeads, updateLeadStatus, deleteLead, autoScoreAllLeads, getArchivedLeads, searchLeadsFts, indexLeadFts, addLead } from '../data/db.js';
 import AppShell from '../components/AppShell';
 import ScreenHeader from '../components/ScreenHeader';
 import Badge from '../components/Badge';
@@ -82,6 +82,37 @@ export default function LeadsScreen({ onNavigate }) {
     }
   };
 
+  // FR-025: Bulk CSV lead import
+  const handleCsvImport = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length < 2) { alert('CSV file mein koi data nahi hai.'); return; }
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
+    let imported = 0, skipped = 0;
+    for (let i = 1; i < lines.length; i++) {
+      const vals = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+      const row = {};
+      headers.forEach((h, idx) => { row[h] = vals[idx] || ''; });
+      try {
+        await addLead(
+          row['name'] || row['full name'] || `Lead ${i}`,
+          row['email'] || '',
+          row['phone'] || '',
+          row['source'] || 'CSV Import',
+          'New', 50,
+          row['budget'] || 'Flexible',
+          JSON.stringify([{ id: crypto.randomUUID(), text: row['notes'] || 'Imported from CSV', timestamp: new Date().toISOString(), type: 'system' }])
+        );
+        imported++;
+      } catch { skipped++; }
+    }
+    alert(`CSV Import complete: ${imported} imported, ${skipped} skipped (duplicates/errors).`);
+    e.target.value = '';
+    await fetchLeads();
+  };
+
   // Summarize stats
   const totalLeads = leads.length;
   const newLeads = leads.filter(l => (l.status || 'New') === 'New').length;
@@ -92,12 +123,23 @@ export default function LeadsScreen({ onNavigate }) {
     <AppShell activeNavId="leads" onNavigate={onNavigate}>
       <div className="space-y-6 max-w-7xl mx-auto p-4">
         {/* Header Section */}
-        <ScreenHeader 
-          title="Lead CRM Console" 
+        <ScreenHeader
+          title="Lead CRM Console"
           subtitle="Mabishion AI Studio Private Client Intake Scorer & Pipeline"
           primaryAction={showAddForm ? "Close Form" : "Add New Lead"}
           primaryIcon={showAddForm ? "close" : "person_add"}
           onPrimaryClick={() => setShowAddForm(!showAddForm)}
+          extraBadges={
+            <label
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all cursor-pointer text-[10px] font-bold uppercase tracking-wider"
+              title="FR-025: Bulk CSV se leads import karo"
+              aria-label="Import leads from CSV file"
+            >
+              <Icon name="upload" size={13} />
+              CSV Import
+              <input type="file" accept=".csv" className="hidden" onChange={handleCsvImport} />
+            </label>
+          }
         />
 
         {/* Lead Capture Form Section */}

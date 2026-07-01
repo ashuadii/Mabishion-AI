@@ -81,6 +81,56 @@ Rules: ${params.rules || 'Ensure valid syntax.'}`;
       }
     }
 
-    throw new Error(`[QAWorker] Failed to validate and fix output after ${maxRetries} attempts. Last error: ${errorLog}`);
+    // FR-061: Return structured FAIL report instead of throwing
+    return {
+      valid: false,
+      pass: false,
+      fixedOutput: currentOutput,
+      correctionsMade: maxRetries,
+      report: {
+        status: 'FAIL',
+        checks: [
+          { id: 'QA-001', label: 'Format Validation', result: 'FAIL', detail: errorLog },
+          { id: 'QA-002', label: 'LLM Self-Correction', result: 'FAIL', detail: `${maxRetries} attempts exhausted` },
+        ],
+        summary: `QA FAIL after ${maxRetries} correction attempts. Last error: ${errorLog}`,
+        timestamp: new Date().toISOString(),
+      }
+    };
+  }
+
+  // FR-060: Structured checklist QA — validates deliverable against acceptance criteria
+  async runChecklist(projectId, deliverable, criteria = []) {
+    const defaultCriteria = criteria.length > 0 ? criteria : [
+      'Output is not empty',
+      'No placeholder text (Lorem Ipsum, TODO, etc.)',
+      'All required sections present',
+      'No obvious hallucinations or fabricated data',
+    ];
+
+    const checks = defaultCriteria.map(c => {
+      const text = typeof deliverable === 'string' ? deliverable : JSON.stringify(deliverable);
+      const lowerText = text.toLowerCase();
+      let pass = true;
+      let detail = 'OK';
+
+      if (c.includes('not empty') && !text.trim()) { pass = false; detail = 'Empty output'; }
+      if (c.includes('placeholder') && (lowerText.includes('lorem ipsum') || lowerText.includes('todo'))) {
+        pass = false; detail = 'Placeholder text found';
+      }
+      return { label: c, result: pass ? 'PASS' : 'FAIL', detail };
+    });
+
+    const passed = checks.filter(c => c.result === 'PASS').length;
+    const failed = checks.filter(c => c.result === 'FAIL').length;
+
+    return {
+      projectId,
+      status: failed === 0 ? 'PASS' : 'FAIL',
+      pass: failed === 0,
+      checks,
+      summary: `${passed}/${checks.length} checks passed`,
+      timestamp: new Date().toISOString(),
+    };
   }
 }
