@@ -142,6 +142,7 @@ export default function DashboardScreen({ onNavigate }) {
   const [clientCount, setClientCount] = useState(0);
   const [morningBrief, setMorningBrief] = useState('');
   const [skillRunning, setSkillRunning] = useState(null); // null or skillId
+  const [llmStatus, setLlmStatus] = useState(null); // FR-038: LLM health status
 
   // Quick Plan Config Modal States
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
@@ -207,6 +208,15 @@ export default function DashboardScreen({ onNavigate }) {
         setDailyCostPaise(daily || 0);
         const monthly = await getMonthlyCostTotal();
         setMonthlyCostPaise(monthly || 0);
+
+        // FR-038: LLM status — check which provider was last used successfully
+        try {
+          const db = await getDb();
+          const llmRow = await db.select(
+            `SELECT provider_used FROM execution_spans WHERE provider_used IS NOT NULL ORDER BY timestamp DESC LIMIT 1`
+          );
+          setLlmStatus(llmRow?.[0]?.provider_used || 'Idle');
+        } catch (_) { setLlmStatus('Unknown'); }
 
         // Live counts for summary cards
         try {
@@ -597,9 +607,16 @@ Reference URL or notes: ${planUrl || "None"}
                   <h3 className="font-black text-white">AG-CFO Cost Monitor</h3>
                   <p className="text-xs mt-1" style={{ color: C.textMuted }}>Real-time AI spend vs daily/monthly limits</p>
                 </div>
-                <Badge tone={dailyPct >= 100 ? 'danger' : dailyPct >= 80 ? 'warning' : 'success'}>
-                  {dailyPct >= 100 ? 'LIMIT HIT' : dailyPct >= 80 ? 'WARNING' : 'OK'}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  {llmStatus && llmStatus !== 'Idle' && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: 'rgba(99,102,241,0.15)', color: '#818CF8' }}>
+                      {llmStatus}
+                    </span>
+                  )}
+                  <Badge tone={dailyPct >= 100 ? 'danger' : dailyPct >= 80 ? 'warning' : 'success'}>
+                    {dailyPct >= 100 ? 'LIMIT HIT' : dailyPct >= 80 ? 'WARNING' : 'OK'}
+                  </Badge>
+                </div>
               </div>
               <div className="space-y-4">
                 <div>

@@ -7,7 +7,7 @@ import Badge from '../components/Badge';
 import Icon from '../components/Icon';
 import ProgressBar from '../components/ProgressBar';
 import QuickCommandBar from '../components/QuickCommandBar';
-import { getInvoices, getTotalRevenue, getDailyCostTotal, getMonthlyCostTotal } from '../data/db.js';
+import { getInvoices, getTotalRevenue, getDailyCostTotal, getMonthlyCostTotal, getDb } from '../data/db.js';
 import { generatePdfInvoice, saveFileToUserDirectory } from '../services/fileOperationService.js';
 import { useNavigate } from 'react-router-dom';
 
@@ -21,6 +21,7 @@ export default function FinanceScreen({ onNavigate }) {
   const [monthlyCostPaise, setMonthlyCostPaise] = useState(0);
   const [loading, setLoading] = useState(true);
   const [exportingId, setExportingId] = useState(null);
+  const [providerCosts, setProviderCosts] = useState([]); // CGF-008
 
   useEffect(() => {
     const load = async () => {
@@ -36,6 +37,19 @@ export default function FinanceScreen({ onNavigate }) {
         setTotalRevenue(rev || 0);
         setDailyCostPaise(daily || 0);
         setMonthlyCostPaise(monthly || 0);
+
+        // CGF-008: Provider-level cost breakdown from execution_spans
+        try {
+          const db = await getDb();
+          const firstOfMonth = new Date(); firstOfMonth.setDate(1); firstOfMonth.setHours(0,0,0,0);
+          const rows = await db.select(
+            `SELECT provider_used, ROUND(SUM(cost_inr)/100.0, 2) as cost_rs, COUNT(*) as calls
+             FROM execution_spans WHERE timestamp >= $1 AND provider_used IS NOT NULL
+             GROUP BY provider_used ORDER BY cost_rs DESC`,
+            [firstOfMonth.toISOString()]
+          );
+          setProviderCosts(rows || []);
+        } catch (_) {}
       } catch (e) {
         console.error('[FinanceScreen]', e);
       } finally {
@@ -249,6 +263,18 @@ export default function FinanceScreen({ onNavigate }) {
                 <ProgressBar value={Math.min(100, Math.round((monthlyCostPaise / 150000) * 100))}
                   tone={monthlyCostPaise >= 150000 ? 'danger' : monthlyCostPaise >= 120000 ? 'warning' : 'success'} />
               </div>
+              {/* CGF-008: Provider-level cost breakdown */}
+              {providerCosts.length > 0 && (
+                <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${C.glassBorder}` }}>
+                  <p className="text-[10px] font-bold mb-2 uppercase tracking-wider" style={{ color: C.textMuted }}>This Month by Provider</p>
+                  {providerCosts.map(p => (
+                    <div key={p.provider_used} className="flex items-center justify-between py-1">
+                      <span className="text-xs" style={{ color: C.textMuted }}>{p.provider_used}</span>
+                      <span className="text-xs font-bold" style={{ color: C.warning }}>₹{p.cost_rs} · {p.calls} calls</span>
+                    </div>
+                  ))}
+                </div>
+              )}
               {[
                 ['Revenue Reserve (30%)', `₹${(paidRevenue * 0.3).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`],
                 ['Reinvest Budget (20%)', `₹${(paidRevenue * 0.2).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`],

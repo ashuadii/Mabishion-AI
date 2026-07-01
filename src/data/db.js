@@ -1151,6 +1151,10 @@ export async function addLead(name, emailOrSource, phoneOrValue, sourceOrRequire
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
     [id, finalName, finalEmail, finalPhone, finalSource, finalStatus, finalScore, finalBudget, finalNotes, now, now]
   );
+
+  // FR-008: Log lead intake to audit_logs
+  logAudit('INFO', `Lead created: ${finalName}`, JSON.stringify({ id, email: finalEmail, source: finalSource })).catch(() => {});
+
   return id;
 }
 
@@ -1316,7 +1320,10 @@ export async function updateLeadNotes(id, notes) {
 
 export async function deleteLead(id) {
   const db = await getDb();
+  // FR-021: Log deletion before removing (capture name for audit trail)
+  const rows = await db.select('SELECT name, email FROM leads WHERE id = $1 LIMIT 1', [id]).catch(() => []);
   await db.execute('DELETE FROM leads WHERE id = $1', [id]);
+  logAudit('WARN', `Lead deleted: ${rows?.[0]?.name || id}`, JSON.stringify({ id, email: rows?.[0]?.email })).catch(() => {});
 }
 
 export async function executeTransaction(queries) {

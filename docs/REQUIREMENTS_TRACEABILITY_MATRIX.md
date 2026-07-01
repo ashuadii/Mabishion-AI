@@ -82,20 +82,20 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | FR-005 | Send Ashu WhatsApp notification for new lead | High | ⚠️ | `approvalEngine.js` sends on approval; no automatic lead notification | `whatsapp_logs` | — | `notificationWorker` | — | — |
 | FR-006 | Qualify lead priority | High | ✅ | `calculateLeadScore()` auto-runs on LeadsScreen load | `leads` | Leads | `leadManagerWorker` | — | — |
 | FR-007 | Store lead priority | High | ✅ | `updateLeadScore()` in db.js; `autoScoreAllLeads()` | `leads` | Leads | — | — | — |
-| FR-008 | Log lead intake in audit_logs | High | ⚠️ | `logAudit()` function exists; not called on lead intake | `audit_logs` | — | — | — | — |
+| FR-008 | Log lead intake in audit_logs | High | ✅ | `db.js` addLead(): `logAudit('INFO', 'Lead created: name', {id, email, source})` — non-blocking after INSERT | `audit_logs` | — | — | — | — |
 | FR-009 | Rate-limited API submission | Medium | ❌ | No rate limiting implemented | — | — | — | — | — |
 | FR-010 | CAPTCHA validation | Low | ❌ | No CAPTCHA (single-user app — appropriate to defer) | — | — | — | — | — |
 | FR-011 | SQL injection prevention | Critical | ✅ | `db.js` parameterized queries throughout; `sanitizeSqlValue()` in BaseWorker | All | — | `baseWorker.js` | — | — |
 | FR-012 | Store client IP address | Low | ❌ | No IP tracking (local desktop app — appropriate to defer) | — | — | — | — | — |
 | FR-013 | Duplicate lead detection | Medium | ✅ | `db.js` addLead(): checks existing lead by email (LOWER match); falls back to name check if no email; throws with clear message | `leads` | Leads | — | — | — |
 | FR-014 | Merge duplicate leads | Low | ❌ | Not implemented | — | — | — | — | — |
-| FR-015 | Export leads to CSV | Low | ❌ | No CSV export for leads | — | — | — | — | — |
+| FR-015 | Export leads to CSV | Low | ✅ | `LeadTable.jsx` handleExportCSV() — generates CSV with all fields, downloads as Mabishion_Leads_[timestamp].csv | — | Leads | — | — | — |
 | FR-016 | Search leads by email/company | Medium | ⚠️ | No FTS5 search; basic JS filter in LeadTable | `leads` | Leads | — | — | — |
 | FR-017 | Filter leads by priority | Medium | ✅ | LeadTable/LeadPipeline filter by score/stage | `leads` | Leads | — | — | — |
 | FR-018 | Archive inactive leads | Low | ❌ | No archival mechanism | — | — | — | — | — |
 | FR-019 | Restore archived leads | Low | ❌ | Not implemented | — | — | — | — | — |
 | FR-020 | Delete leads with approval | High | ✅ | `deleteLead()` in db.js; button in LeadDetailDrawer | `leads` | Leads | — | — | — |
-| FR-021 | Log lead deletion | High | ⚠️ | `deleteLead()` not calling `logAudit()` | `audit_logs` | — | — | — | — |
+| FR-021 | Log lead deletion | High | ✅ | `db.js` deleteLead(): captures lead name+email before DELETE, then `logAudit('WARN', 'Lead deleted: name', {id, email})` | `audit_logs` | — | — | — | — |
 | FR-022 | Daily backup leads | High | ✅ | `backupDatabase()` includes leads; DailyBackup cron | `leads` | Settings | — | — | — |
 | FR-023 | Verify backup integrity HMAC | High | ✅ | `validateBackupIntegrity()` in db.js; Settings restore flow | — | Settings | — | — | — |
 | FR-024 | Notify on backup failure | Medium | ⚠️ | Cron logs failure to `cron_logs`; no WhatsApp notification | `cron_logs` | — | — | — | — |
@@ -108,7 +108,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | FR-035 | Dashboard: quick action buttons | High | ✅ | Quick Skill Execution cards on Dashboard | — | Dashboard | All | — | — |
 | FR-036 | Dashboard: auto-refresh 60s | Medium | ✅ | `DashboardScreen.jsx`: setInterval(loadDashboardData + fetchApprovals, 60000); clearInterval on unmount | — | Dashboard | — | — | — |
 | FR-037 | Dashboard: cost gauge | Critical | ✅ | AG-CFO Cost Monitor card with ProgressBar | `execution_spans` | Dashboard | — | `getDailyCostTotal()` | — |
-| FR-038 | Dashboard: LLM status indicator | Medium | ⚠️ | Settings shows test buttons; no real-time status badge on Dashboard | `settings` | Dashboard | — | — | — |
+| FR-038 | Dashboard: LLM status indicator | Medium | ✅ | `DashboardScreen.jsx`: queries last `provider_used` from execution_spans on load; displays as pill badge next to AG-CFO cost monitor | `execution_spans` | Dashboard | — | — | — |
 | FR-039 | Mickii: natural language command input | Critical | ✅ | `DashboardScreen.jsx` chat input; `useMickiiAgent.js` → `cortex.js` | `project_memory` | Dashboard | — | Full ReAct | `mickii.js` |
 | FR-040 | Mickii: command intent parsing | Critical | ✅ | `cortex.js` tool calling; `instant_response` Rust cache | — | Dashboard | — | Tool detection | `instant_response` |
 | FR-041 | Mickii: sequential worker execution | Critical | ✅ | `workers/index.js` runWorker() with semaphore | `worker_logs` | Worker Monitor | All | — | `mickii.js` |
@@ -326,7 +326,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | HAF-007 | Rate limit 10 requests/minute | Medium | ❌ | No rate limiting on approval requests |
 | HAF-008 | `cost_impact` field on approvals | High | ✅ | `approvals.cost_impact` ALTER added; populated in approvalEngine |
 | HAF-009 | `compliance_impact` field | High | ✅ | `approvals.compliance_impact` ALTER added |
-| HAF-010 | Approval audit with HMAC | High | ⚠️ | `logAudit()` called on backup; not on every approval decision |
+| HAF-010 | Approval audit (every decision) | High | ✅ | `db.js` updateApprovalStatus() line 1044: `logAudit('APPROVAL', 'Approval {status}', {approval_id, status, notes})` called on every approval resolution |
 
 ---
 
@@ -341,7 +341,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | CGF-005 | 80% alert / 90% alert / 100% hard stop UI | High | ✅ | AG-CFO prompt injected at 12,000 paise (80%); `cronService.js` `runCostAlertJob()` fires `nexious_cost_alert` CustomEvent at 80%/90%/100%; `ScreenHeader.jsx` listens and shows dismissible banner |
 | CGF-006 | Per-worker ₹50/day cap | High | ✅ | `workers/index.js` execution_spans check before slot acquire |
 | CGF-007 | Cost dashboard widget | Critical | ✅ | AG-CFO Cost Monitor on Dashboard with ProgressBar |
-| CGF-008 | Provider-level cost breakdown | Medium | ⚠️ | Provider stored in execution_spans; no UI breakdown |
+| CGF-008 | Provider-level cost breakdown | Medium | ✅ | `FinanceScreen.jsx`: queries execution_spans GROUP BY provider_used for current month; displays cost (₹) + call count per provider in AI Cost section |
 | CGF-009 | llmManager.js also logs (legacy) | Low | ✅ | `logLlmUsage()` called in llmManager routes; coexists with spans |
 
 ---
