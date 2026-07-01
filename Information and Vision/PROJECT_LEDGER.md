@@ -62,3 +62,5 @@ Implementation details, session logs, and verification transcripts do not belong
 **2026-07-01** — Schema v17: operating_modes (5 modes seeded) + mode_workers + failed_auth_attempts tables. Performance indexes on leads, projects, invoices, execution_spans, audit_logs.
 
 **2026-07-01** — Schema v18: clients extended with email, phone, gstin, city, state, pincode, tier, status, consent_given (DPDP Act 2023). projects.lead_id + due_date added. suggestions table (AI Suggests philosophy) created.
+
+**2026-07-01** — Worker Architecture §2.1 compliance: All 24 WORKER_REGISTRY entries now carry `wkId` (WK-001–WK-024), `category`, and per-spec `timeoutMs`. WK-WK-ID requirement closed. FR-004 implemented: LeadForm auto-triggers lead_manager for budget >₹5K. FR-005 implemented: WhatsApp owner notification on every new lead. UX-016: offline indicator (amber pill) added to ScreenHeader. UX-018: `formatINR()` utility added; CampaignTracker.jsx converted from USD to INR formatting. RTM coverage: 71% → 74% (225→236 implemented). Schema still v18 (no DB changes this session). Build: ✅ exit 0.
