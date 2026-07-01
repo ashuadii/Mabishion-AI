@@ -143,6 +143,7 @@ export default function DashboardScreen({ onNavigate }) {
   const [morningBrief, setMorningBrief] = useState('');
   const [skillRunning, setSkillRunning] = useState(null); // null or skillId
   const [llmStatus, setLlmStatus] = useState(null); // FR-038: LLM health status
+  const [visionMetrics, setVisionMetrics] = useState({ monthlyRevenue: 0, leadToProposal: 0, proposalToWin: 0, projectsDelivered: 0 }); // VIS-011
 
   // Quick Plan Config Modal States
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
@@ -217,6 +218,25 @@ export default function DashboardScreen({ onNavigate }) {
           );
           setLlmStatus(llmRow?.[0]?.provider_used || 'Idle');
         } catch (_) { setLlmStatus('Unknown'); }
+
+        // VIS-011: Vision success metrics — revenue target, conversion rates, delivered projects
+        try {
+          const db = await getDb();
+          const firstOfMonth = new Date(); firstOfMonth.setDate(1); firstOfMonth.setHours(0,0,0,0);
+          // Monthly revenue from paid invoices this month
+          const mRevRows = await db.select(
+            `SELECT COALESCE(SUM(amount),0) as total FROM revenue WHERE created_at >= $1`, [firstOfMonth.toISOString()]
+          );
+          const monthlyRevenue = Number(mRevRows?.[0]?.total || 0);
+          // Lead→Proposal: projects with blueprints / total leads
+          const totalLeads = (await db.select('SELECT COUNT(*) as c FROM leads'))?.[0]?.c || 0;
+          const withProposal = (await db.select("SELECT COUNT(*) as c FROM projects WHERE stage NOT IN ('Intake','Research')"))?.[0]?.c || 0;
+          const leadToProposal = totalLeads > 0 ? Math.round((withProposal / totalLeads) * 100) : 0;
+          // Proposal→Win: delivered projects / projects with proposals
+          const delivered = (await db.select("SELECT COUNT(*) as c FROM projects WHERE stage = 'Delivered'"))?.[0]?.c || 0;
+          const proposalToWin = withProposal > 0 ? Math.round((delivered / withProposal) * 100) : 0;
+          setVisionMetrics({ monthlyRevenue, leadToProposal, proposalToWin, projectsDelivered: Number(delivered) });
+        } catch (_) {}
 
         // Live counts for summary cards
         try {
@@ -592,6 +612,50 @@ Reference URL or notes: ${planUrl || "None"}
       />
 
       <section className="grid grid-cols-12 gap-5 pb-24">
+
+        {/* VIS-011: Vision Success Metrics — Revenue target, Conversion rates, Projects delivered */}
+        <div className="col-span-12 grid grid-cols-4 gap-3">
+          {[
+            {
+              label: 'Monthly Revenue', icon: 'currency',
+              value: `₹${(visionMetrics.monthlyRevenue).toLocaleString('en-IN')}`,
+              sub: `Target: ₹1,00,000`,
+              pct: Math.min(100, Math.round((visionMetrics.monthlyRevenue / 100000) * 100)),
+              tone: visionMetrics.monthlyRevenue >= 100000 ? '#10B981' : visionMetrics.monthlyRevenue >= 70000 ? '#F59E0B' : '#6366F1'
+            },
+            {
+              label: 'Lead → Proposal', icon: 'trending_up',
+              value: `${visionMetrics.leadToProposal}%`,
+              sub: 'Target: >30%',
+              pct: Math.min(100, Math.round((visionMetrics.leadToProposal / 30) * 100)),
+              tone: visionMetrics.leadToProposal >= 30 ? '#10B981' : '#F59E0B'
+            },
+            {
+              label: 'Proposal → Win', icon: 'handshake',
+              value: `${visionMetrics.proposalToWin}%`,
+              sub: 'Target: >40%',
+              pct: Math.min(100, Math.round((visionMetrics.proposalToWin / 40) * 100)),
+              tone: visionMetrics.proposalToWin >= 40 ? '#10B981' : '#F59E0B'
+            },
+            {
+              label: 'Projects Delivered', icon: 'inventory',
+              value: `${visionMetrics.projectsDelivered}`,
+              sub: 'Target: 50 (Year 1)',
+              pct: Math.min(100, Math.round((visionMetrics.projectsDelivered / 50) * 100)),
+              tone: visionMetrics.projectsDelivered >= 50 ? '#10B981' : '#6366F1'
+            },
+          ].map(m => (
+            <div key={m.label} className="p-4 rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: 'rgba(148,163,184,0.7)' }}>{m.label}</p>
+              <p className="text-xl font-black text-white mb-1">{m.value}</p>
+              <div className="h-1 rounded-full mb-1" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                <div className="h-1 rounded-full transition-all duration-500" style={{ width: `${m.pct}%`, background: m.tone }} />
+              </div>
+              <p className="text-[10px]" style={{ color: 'rgba(148,163,184,0.6)' }}>{m.sub}</p>
+            </div>
+          ))}
+        </div>
+
         {/* AG-CFO Cost Gauge */}
         {(() => {
           const dailyRupees = (dailyCostPaise / 100).toFixed(2);

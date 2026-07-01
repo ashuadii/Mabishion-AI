@@ -36,8 +36,8 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | VIS-008 | Human Approval "AI Suggests, Human Decides" | Critical | ✅ | `approvalEngine.js`, 3-tier gates | `approvals` | Approval Center | All requiring approval | — | `mickii.js` |
 | VIS-009 | ₹0 default cost rule | Critical | ✅ | `cortex.js` pre-check; ₹150/day hard stop | `execution_spans` | Dashboard (cost gauge) | `workers/index.js` cap | Cost gate | `fillTemplateContext` |
 | VIS-010 | 5 Operating Modes (Agency/Product/Marketing/Operations/Research) | High | ✅ | `AppShell.jsx` OperatingModeBar; persisted to `settings` table via `setSetting('current_business_mode')` + localStorage | `settings` | All screens (top bar) | — | — | — |
-| VIS-011 | Revenue target ₹6,00,000/year | High | ⚠️ | Finance screen tracks revenue; no automated ₹6L tracking | `revenue`, `invoices` | Finance, Reports | — | — | — |
-| VIS-012 | 16-service tier framework | Medium | ⚠️ | Projects screen has stages; no explicit 16-tier service selector | `projects` | Projects | — | — | — |
+| VIS-011 | Revenue target + conversion rate tracking | High | ✅ | `DashboardScreen.jsx`: 4-card Vision Metrics bar — Monthly Revenue vs ₹1,00,000 target, Lead→Proposal%, Proposal→Win%, Projects Delivered/50. Live from `revenue`, `leads`, `projects` tables with progress bars. | `revenue`, `leads`, `projects` | Dashboard | — | — | — |
+| VIS-012 | 16-service tier framework | Medium | ⚠️ | Service pipelines defined in WORKSPACE_RULES.md; Projects Kanban shows stages; no in-app service selector showing required tiers. BRD document next. | `projects` | Projects | — | — | — |
 | VIS-013 | Client visibility gates (what client can/cannot see) | High | ❌ | No client portal implemented | — | — | — | — | — |
 | VIS-014 | Morning brief automation | Medium | ✅ | `cronService.js` MorningBrief cron; Dashboard displays it | `audit_logs` | Dashboard | — | — | `fillTemplateContext` |
 
@@ -59,13 +59,13 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | BRD-010 | Approval undo within 24h | High | ✅ | `db.js` undoApproval(); `ApprovalDetailDrawer.jsx` Undo button | `approvals.undo_deadline` | Approval Center | — | — | — |
 | BRD-011 | WhatsApp APPROVE/REJECT webhook | High | ✅ | `approvalEngine.js` handleIncomingWhatsAppMessage() regex parser | `approvals`, `whatsapp_logs` | — | — | — | — |
 | BRD-012 | WhatsApp owner phone config | High | ✅ | `SettingsScreen.jsx` wa_personal_number; `approvalEngine.js` reads wa_personal_number | `settings` | Settings | — | — | — |
-| BRD-013 | Pricing Tier 1 (Standard, ₹5K–₹15K) | High | ⚠️ | Invoice creation supports any amount; no tier enforcement | `invoices` | Invoices | — | — | — |
-| BRD-014 | Pricing Tier 2 (Premium, ₹15K–₹1L) | Medium | ⚠️ | No tier-based pricing logic; manual invoice amount | `invoices` | Invoices | — | — | — |
+| BRD-013 | Pricing Tier 1 (Standard, ₹5K–₹15K) | High | ✅ | `InvoicesScreen.jsx`: BRD Pricing Guide panel shown in invoice creation form with Tier 1/2/3 ranges, service types, and delivery timelines | `invoices` | Invoices | — | — | — |
+| BRD-014 | Pricing Tier 2/3 guidance | Medium | ✅ | Same — Pricing Guide panel covers all 3 tiers | `invoices` | Invoices | — | — | — |
 | BRD-015 | Digital products catalog | Medium | ❌ | No product catalog screen | — | — | — | — | — |
 | BRD-016 | Revenue recognition on delivery | High | ✅ | `packagerWorker.js`: on project set to Delivered, queries paid invoice amount and calls `addRevenue(projectId, amount, 'delivery')` automatically | `revenue`, `invoices` | Finance | `packagerWorker` | — | — |
 | BRD-017 | Proposal → Invoice auto-draft | High | ✅ | `ApprovalDetailDrawer.jsx` on proposal approval → navigate to Invoices | `approvals`, `invoices` | Approval Center, Invoices | — | — | — |
 | BRD-018 | Lead scoring formula | High | ✅ | `db.js` calculateLeadScore() budget+source+stage+recency=100pts | `leads` | Leads | — | — | — |
-| BRD-019 | GST DPDP Act 2023 compliance | Critical | ⚠️ | `consents` table added; PII masking in `logAudit()`; no full DPDP enforcement | `consents`, `audit_logs` | — | — | — | — |
+| BRD-019 | GST DPDP Act 2023 compliance | Critical | ⚠️ | `consents` table + PII masking + `deleteProjectData(projectId)` purge function (Right to Erasure). Breach notification not automated. | `consents`, `audit_logs`, all project tables | — | — | — | — |
 | BRD-020 | Backup daily, 30-day retention | High | ⚠️ | `cronService.js` DailyBackup cron; JSON format (not encrypted .sql) | `audit_logs` | Settings | — | — | — |
 | BRD-021 | Emergency lockdown | High | ✅ | `SettingsScreen.jsx` Emergency Lockdown button → strict_offline_mode=true | `settings` | Settings | — | `cortex.js` strict check | — |
 

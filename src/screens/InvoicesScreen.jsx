@@ -263,6 +263,16 @@ export default function InvoicesScreen({ onNavigate }) {
                 )}
               </div>
 
+              {/* BRD §12: Pricing tier guidance */}
+              <div className="rounded-xl p-3" style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)' }}>
+                <p className="text-[10px] font-bold uppercase mb-2" style={{ color: '#818CF8' }}>BRD Pricing Guide</p>
+                <div className="grid grid-cols-3 gap-2 text-[10px]" style={{ color: 'rgba(148,163,184,0.8)' }}>
+                  <div><span className="font-bold text-white">Tier 1</span><br/>₹5K–₹15K<br/>Landing Page, SEO, Basic Website<br/><span className="text-green-400">24–48h delivery</span></div>
+                  <div><span className="font-bold text-white">Tier 2</span><br/>₹15K–₹1L<br/>E-commerce, Custom App<br/><span className="text-yellow-400">1–4 weeks</span></div>
+                  <div><span className="font-bold text-white">Tier 3</span><br/>₹1K–₹10K<br/>Digital Products, Templates<br/><span className="text-purple-400">Fixed price</span></div>
+                </div>
+              </div>
+
               {/* Due date */}
               <div>
                 <label className="text-[10px] uppercase font-bold block mb-1" style={{ color: C.textMuted }}>Due Date</label>

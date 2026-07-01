@@ -1318,6 +1318,22 @@ export async function updateLeadNotes(id, notes) {
   await db.execute('UPDATE leads SET notes = $1 WHERE id = $2', [notes, id]);
 }
 
+// BRD §15.2 DPDP Act 2023 — Right to Erasure: purge all data for a project and linked client
+export async function deleteProjectData(projectId) {
+  const db = await getDb();
+  await db.execute('DELETE FROM blueprints WHERE project_id = $1', [projectId]).catch(() => {});
+  await db.execute('DELETE FROM documents WHERE project_id = $1', [projectId]).catch(() => {});
+  await db.execute('DELETE FROM approvals WHERE project_id = $1', [projectId]).catch(() => {});
+  await db.execute('DELETE FROM invoices WHERE project_id = $1', [projectId]).catch(() => {});
+  await db.execute('DELETE FROM payments WHERE project_id = $1', [projectId]).catch(() => {});
+  await db.execute('DELETE FROM deliverables WHERE project_id = $1', [projectId]).catch(() => {});
+  await db.execute('DELETE FROM worker_logs WHERE project_id = $1', [projectId]).catch(() => {});
+  await db.execute('DELETE FROM project_memory WHERE project_id = $1', [projectId]).catch(() => {});
+  await db.execute('DELETE FROM consents WHERE client_id IN (SELECT id FROM clients WHERE project_id = $1)', [projectId]).catch(() => {});
+  await db.execute('DELETE FROM projects WHERE id = $1', [projectId]);
+  logAudit('WARN', `DPDP Erasure: project ${projectId} and all linked data deleted`, JSON.stringify({ projectId })).catch(() => {});
+}
+
 export async function deleteLead(id) {
   const db = await getDb();
   // FR-021: Log deletion before removing (capture name for audit trail)
@@ -1810,21 +1826,23 @@ export async function deleteClient(id) {
 
 // ── EXECUTION SPANS — Real-Time Cost Tracking (Tier 1) ───────────────────────
 
-export async function logExecutionSpan(workerName, provider, model, tokensUsed, costInr) {
+export async function logExecutionSpan(workerName, provider, model, tokensUsed, costInr, projectId) {
   try {
     const db = await getDb();
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
     await db.execute(
-      `INSERT INTO execution_spans (id, worker_name, provider, model, tokens_used, cost_inr, start_time, end_time, status, timestamp)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      `INSERT INTO execution_spans (id, worker_name, provider, provider_used, model, tokens_used, cost_inr, project_id, start_time, end_time, status, timestamp)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
       [
         id,
         workerName || 'cortex',
         provider || 'unknown',
+        provider || 'unknown',   // provider_used mirrors provider
         model || 'unknown',
         Number(tokensUsed || 0),
         Number(costInr || 0),
+        projectId || null,
         now,
         now,
         'completed',

@@ -4,7 +4,7 @@
  * Creates tables if they do not exist. No destructive changes.
  */
 
-export const SCHEMA_VERSION = 14;
+export const SCHEMA_VERSION = 15;
 
 export const CREATE_TABLES_SQL = [
   `CREATE TABLE IF NOT EXISTS clients (
@@ -83,9 +83,11 @@ export const CREATE_TABLES_SQL = [
     id TEXT PRIMARY KEY,
     worker_name TEXT,
     provider TEXT,
+    provider_used TEXT,
     model TEXT,
     tokens_used INTEGER DEFAULT 0,
     cost_inr INTEGER DEFAULT 0,
+    project_id TEXT,
     start_time TEXT,
     end_time TEXT,
     status TEXT DEFAULT 'completed',
@@ -272,6 +274,12 @@ export async function upgradeDatabase(db) {
       try {
         await db.execute('ALTER TABLE workers ADD COLUMN system_prompt TEXT');
       } catch (_) { /* column may already exist on fresh DBs */ }
+    }
+
+    // v15: Add provider_used and project_id to execution_spans for BRD §13 per-project cost tracking
+    if (currentVersion < 15) {
+      try { await db.execute('ALTER TABLE execution_spans ADD COLUMN provider_used TEXT'); } catch (_) {}
+      try { await db.execute('ALTER TABLE execution_spans ADD COLUMN project_id TEXT'); } catch (_) {}
     }
 
     // Insert or update version
