@@ -35,6 +35,8 @@ Implementation details, session logs, and verification transcripts do not belong
 
 **2026-07-01** — Project architecture simplified: 23 Enterprise Documents = sole Source of Truth. All Claude-invented governance (E-batches, BRFs, backlog IDs, lifecycle standards, authority gates) removed. Document-First Development model adopted. Repository reduced from 41 docs to 10. Three-layer rule system created: GLOBAL_RULES.md, PROJECT_RULES.md, WORKSPACE_RULES.md. Master Traceability Matrix promoted as navigation artifact. PROJECT_LEDGER restructured to major decisions only.
 
+**2026-07-01** — Autonomous Development Loop session: Document-by-document implementation from PRD→SRD→TRD→Architecture→Database Spec→Security Architecture. 12 files modified. RTM coverage: 67% → 71%.
+
 ---
 
 ## Releases
@@ -52,3 +54,11 @@ Implementation details, session logs, and verification transcripts do not belong
 **2026-06-29** — db_schema_upgrade.js: Schema v14 — system_prompt column added to workers table. Executive agent prompts seeded. Existing databases auto-migrate via ALTER TABLE.
 
 **2026-06-29** — Authentication: PIN hashing changed from SHA-256 to Argon2id. Existing SHA-256 hashes migrate transparently on first successful login.
+
+**2026-07-01** — Schema v15: execution_spans.provider_used + project_id columns added.
+
+**2026-07-01** — Schema v16: FTS5 virtual table `knowledge_fts` created for knowledge base keyword search (PRD FR-028).
+
+**2026-07-01** — Schema v17: operating_modes (5 modes seeded) + mode_workers + failed_auth_attempts tables. Performance indexes on leads, projects, invoices, execution_spans, audit_logs.
+
+**2026-07-01** — Schema v18: clients extended with email, phone, gstin, city, state, pincode, tier, status, consent_given (DPDP Act 2023). projects.lead_id + due_date added. suggestions table (AI Suggests philosophy) created.
