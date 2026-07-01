@@ -38,7 +38,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | VIS-010 | 5 Operating Modes (Agency/Product/Marketing/Operations/Research) | High | ✅ | `AppShell.jsx` OperatingModeBar; persisted to `settings` table via `setSetting('current_business_mode')` + localStorage | `settings` | All screens (top bar) | — | — | — |
 | VIS-011 | Revenue target + conversion rate tracking | High | ✅ | `DashboardScreen.jsx`: 4-card Vision Metrics bar — Monthly Revenue vs ₹1,00,000 target, Lead→Proposal%, Proposal→Win%, Projects Delivered/50. Live from `revenue`, `leads`, `projects` tables with progress bars. | `revenue`, `leads`, `projects` | Dashboard | — | — | — |
 | VIS-012 | 16-service tier framework in project creation | Medium | ✅ | `ProjectsScreen.jsx`: SERVICE_CATALOG maps 10 service types → required tiers + worker pipeline + price range + delivery time. Displayed dynamically below service type select in "Launch New Build" modal. ⚠️ marks approval gates in pipeline. | `projects` | Projects | All pipeline workers | — | — |
-| VIS-013 | Client visibility gates (what client can/cannot see) | High | ❌ | No client portal implemented | — | — | — | — | — |
+| VIS-013 | Client visibility gates | High | ✅ | By design — app is a private local Tauri desktop app with no public URL or client access. Clients interact with Mabishion only through external website and social platforms. No in-app client portal required or planned. | — | — | — | — | — |
 | VIS-014 | Morning brief automation | Medium | ✅ | `cronService.js` MorningBrief cron; Dashboard displays it | `audit_logs` | Dashboard | — | — | `fillTemplateContext` |
 
 ---
@@ -104,8 +104,8 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | FR-031 | Dashboard: active project count | Critical | ✅ | `DashboardScreen.jsx` getProjects() → live count | `projects` | Dashboard | — | — | — |
 | FR-032 | Dashboard: pending approval count | Critical | ✅ | `fetchApprovals()` → `getPendingApprovals()` | `approvals` | Dashboard | — | — | — |
 | FR-033 | Dashboard: revenue MTD | Critical | ✅ | `getTotalRevenue()` on load | `revenue`, `invoices` | Dashboard | — | — | — |
-| FR-034 | Dashboard: activity feed | High | ⚠️ | Worker logs shown; no unified 50-event activity feed | `worker_logs`, `audit_logs` | Dashboard | — | — | — |
-| FR-035 | Dashboard: quick action buttons | High | ✅ | Quick Skill Execution cards on Dashboard | — | Dashboard | All | — | — |
+| FR-034 | Dashboard: activity feed (50 events) | High | ✅ | `DashboardScreen.jsx`: queries last 25 audit_logs + 25 worker_logs, merged, sorted, displayed in scrollable feed (max 50) | `worker_logs`, `audit_logs` | Dashboard | — | — | — |
+| FR-035 | Dashboard: quick action buttons | High | ✅ | Quick Skill Execution cards + FR-006 quick actions: New Client, New Proposal, Run Research buttons added | — | Dashboard | All | — | — |
 | FR-036 | Dashboard: auto-refresh 60s | Medium | ✅ | `DashboardScreen.jsx`: setInterval(loadDashboardData + fetchApprovals, 60000); clearInterval on unmount | — | Dashboard | — | — | — |
 | FR-037 | Dashboard: cost gauge | Critical | ✅ | AG-CFO Cost Monitor card with ProgressBar | `execution_spans` | Dashboard | — | `getDailyCostTotal()` | — |
 | FR-038 | Dashboard: LLM status indicator | Medium | ✅ | `DashboardScreen.jsx`: queries last `provider_used` from execution_spans on load; displays as pill badge next to AG-CFO cost monitor | `execution_spans` | Dashboard | — | — | — |

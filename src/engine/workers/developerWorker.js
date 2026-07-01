@@ -29,7 +29,9 @@ export class DeveloperWorker extends BaseWorker {
     const clientName  = project.client_name || 'Client';
     const projectType = project.type        || 'Web Application';
     const moduleName  = params.module_name  || 'Dashboard Component';
-    const techStack   = params.tech_stack   || 'React 18, Tailwind CSS, Vite, SQLite';
+    // FR-038: Support Python scripts in addition to React/JS (PRD P0-F6)
+    const isPython = params.tech_stack && params.tech_stack.toLowerCase().includes('python');
+    const techStack = params.tech_stack || (isPython ? 'Python 3.11, standard library' : 'React 18, Tailwind CSS, Vite, SQLite');
 
     // ── Kimi Client Context Enrichment ───────────────────────────────────────
     const clientProfileHelper = new ClientProfile(db);

@@ -144,6 +144,8 @@ export default function DashboardScreen({ onNavigate }) {
   const [skillRunning, setSkillRunning] = useState(null); // null or skillId
   const [llmStatus, setLlmStatus] = useState(null); // FR-038: LLM health status
   const [visionMetrics, setVisionMetrics] = useState({ monthlyRevenue: 0, leadToProposal: 0, proposalToWin: 0, projectsDelivered: 0 }); // VIS-011
+  const [todayDeadlines, setTodayDeadlines] = useState([]); // FR-003
+  const [activityFeed, setActivityFeed] = useState([]); // FR-005
 
   // Quick Plan Config Modal States
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
@@ -218,6 +220,33 @@ export default function DashboardScreen({ onNavigate }) {
           );
           setLlmStatus(llmRow?.[0]?.provider_used || 'Idle');
         } catch (_) { setLlmStatus('Unknown'); }
+
+        // FR-003: Today's deadlines from invoices table
+        try {
+          const db = await getDb();
+          const today = new Date().toISOString().slice(0, 10);
+          const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+          const deadlineRows = await db.select(
+            `SELECT 'Invoice' as type, invoice_number as label, due_date, status FROM invoices
+             WHERE due_date BETWEEN $1 AND $2 AND status != 'paid'
+             ORDER BY due_date ASC LIMIT 10`,
+            [today, tomorrow]
+          );
+          setTodayDeadlines(deadlineRows || []);
+        } catch (_) {}
+
+        // FR-005: Activity feed — last 50 events from audit_logs + worker_logs combined
+        try {
+          const db = await getDb();
+          const auditRows = await db.select(
+            `SELECT 'audit' as src, level, message as label, created_at as ts FROM audit_logs ORDER BY created_at DESC LIMIT 25`
+          );
+          const workerRows = await db.select(
+            `SELECT 'worker' as src, status as level, worker_name || ': ' || COALESCE(output_summary, status) as label, created_at as ts FROM worker_logs ORDER BY created_at DESC LIMIT 25`
+          );
+          const combined = [...(auditRows || []), ...(workerRows || [])].sort((a, b) => b.ts > a.ts ? 1 : -1).slice(0, 50);
+          setActivityFeed(combined);
+        } catch (_) {}
 
         // VIS-011: Vision success metrics — revenue target, conversion rates, delivered projects
         try {
@@ -701,6 +730,76 @@ Reference URL or notes: ${planUrl || "None"}
             </div>
           );
         })()}
+
+        {/* FR-003: Today's Deadlines + FR-005: Activity Feed */}
+        <div className="col-span-12 grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {/* FR-003: Deadlines */}
+          <div className="p-5" style={glassStyle()}>
+            <h3 className="font-black text-white mb-3 flex items-center gap-2">
+              <span>📅</span> Today's Deadlines
+            </h3>
+            {todayDeadlines.length === 0 ? (
+              <p className="text-xs" style={{ color: 'rgba(148,163,184,0.6)' }}>No deadlines due today or tomorrow. ✅</p>
+            ) : (
+              <div className="space-y-2">
+                {todayDeadlines.map((d, i) => (
+                  <div key={i} className="flex items-center justify-between p-2 rounded-xl" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                    <div>
+                      <p className="text-xs font-bold text-white">{d.label}</p>
+                      <p className="text-[10px]" style={{ color: 'rgba(148,163,184,0.7)' }}>Due: {d.due_date}</p>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: 'rgba(239,68,68,0.2)', color: '#FCA5A5' }}>{d.type}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* FR-005: Activity Feed — last 50 events */}
+          <div className="p-5" style={glassStyle()}>
+            <h3 className="font-black text-white mb-3 flex items-center gap-2">
+              <span>📋</span> Activity Feed
+            </h3>
+            <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+              {activityFeed.length === 0 ? (
+                <p className="text-xs" style={{ color: 'rgba(148,163,184,0.6)' }}>No activity yet. Run a worker to get started.</p>
+              ) : activityFeed.map((e, i) => {
+                const color = e.level === 'ERROR' || e.level === 'WARN' ? '#FCA5A5' : e.level === 'completed' ? '#6EE7B7' : 'rgba(148,163,184,0.8)';
+                return (
+                  <div key={i} className="flex items-start gap-2 py-1" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <span className="text-[9px] mt-0.5 flex-shrink-0" style={{ color }}>{e.src === 'worker' ? '⚙' : '📝'}</span>
+                    <p className="text-[10px] leading-4 truncate" style={{ color }}>{e.label}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* FR-006: Quick Actions — New Client, New Proposal, Run Research */}
+        <div className="col-span-12 flex flex-wrap gap-3">
+          <button
+            onClick={() => onNavigate?.('clients')}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all hover:scale-[1.02]"
+            style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', color: '#818CF8' }}
+          >
+            <span>👤</span> New Client
+          </button>
+          <button
+            onClick={() => onNavigate?.('projects')}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all hover:scale-[1.02]"
+            style={{ background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.3)', color: '#FCD34D' }}
+          >
+            <span>📄</span> New Proposal
+          </button>
+          <button
+            onClick={() => onNavigate?.('research')}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all hover:scale-[1.02]"
+            style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', color: '#6EE7B7' }}
+          >
+            <span>🔬</span> Run Research
+          </button>
+        </div>
 
         {/* Morning Brief */}
         {morningBrief && (
