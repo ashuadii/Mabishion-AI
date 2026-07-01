@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getLeads, updateLeadStatus, deleteLead, autoScoreAllLeads } from '../data/db.js';
+import { getLeads, updateLeadStatus, deleteLead, autoScoreAllLeads, getArchivedLeads, searchLeadsFts, indexLeadFts } from '../data/db.js';
 import AppShell from '../components/AppShell';
 import ScreenHeader from '../components/ScreenHeader';
 import Badge from '../components/Badge';
@@ -18,14 +18,19 @@ export default function LeadsScreen({ onNavigate }) {
   const [viewTab, setViewTab] = useState('table'); // table | pipeline
   const [showAddForm, setShowAddForm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [showArchived, setShowArchived] = useState(false); // FR-018/019
+  const [ftsQuery, setFtsQuery] = useState(''); // FR-016: FTS5 search query
+  const [ftsResults, setFtsResults] = useState(null); // null = show all leads
 
   const fetchLeads = async () => {
     setIsLoading(true);
     try {
-      // Auto-score all leads on load (T7.1)
       await autoScoreAllLeads().catch(() => {});
-      const data = await getLeads();
-      setLeads(data || []);
+      const data = showArchived ? await getArchivedLeads() : await getLeads();
+      const active = (data || []).filter(l => showArchived ? l.archived : !l.archived);
+      setLeads(active);
+      // FR-016: re-index all leads into FTS5 on load
+      active.forEach(l => indexLeadFts(l.id, l.name, l.email, l.notes, l.source).catch(() => {}));
     } catch (e) {
       console.error('[CRM] Error loading leads:', e);
     } finally {
@@ -33,9 +38,17 @@ export default function LeadsScreen({ onNavigate }) {
     }
   };
 
+  // FR-016: FTS5 search handler with debounce
+  const handleFtsSearch = async (q) => {
+    setFtsQuery(q);
+    if (!q.trim()) { setFtsResults(null); return; }
+    const results = await searchLeadsFts(q);
+    setFtsResults(results); // null = FTS5 unavailable, fallback to JS in LeadTable
+  };
+
   useEffect(() => {
     fetchLeads();
-  }, []);
+  }, [showArchived]); // re-fetch when archive view toggles
 
   const handleUpdateStatus = async (leadId, newStatus) => {
     await updateLeadStatus(leadId, newStatus);
@@ -160,7 +173,21 @@ export default function LeadsScreen({ onNavigate }) {
               <Icon name="view_week" size={14} /> Kanban Pipeline
             </button>
           </div>
-          <Badge tone="violet">Intake Active</Badge>
+          <div className="flex items-center gap-2">
+            {/* FR-018/019: Archive toggle */}
+            <button
+              onClick={() => setShowArchived(v => !v)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 border ${
+                showArchived ? 'bg-amber-500/20 border-amber-500/40 text-amber-300' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
+              }`}
+              title={showArchived ? 'Active leads dikhao' : 'Archived leads dikhao'}
+              aria-label={showArchived ? 'Show active leads' : 'Show archived leads'}
+            >
+              <Icon name={showArchived ? 'unarchive' : 'archive'} size={13} />
+              {showArchived ? 'Archived' : 'Archive View'}
+            </button>
+            <Badge tone="violet">Intake Active</Badge>
+          </div>
         </div>
 
         {/* Main Content Area */}
@@ -172,11 +199,14 @@ export default function LeadsScreen({ onNavigate }) {
         ) : (
           <div className="animate-in fade-in duration-300">
             {viewTab === 'table' ? (
-              <LeadTable 
-                leads={leads} 
-                onSelectLead={setSelectedLead} 
+              <LeadTable
+                leads={ftsResults !== null ? ftsResults : leads}
+                onSelectLead={setSelectedLead}
                 onBulkDelete={handleBulkDelete}
                 onBulkStatusChange={handleBulkStatusChange}
+                onRefresh={fetchLeads}
+                ftsQuery={ftsQuery}
+                onFtsSearch={handleFtsSearch}
               />
             ) : (
               <LeadPipeline 

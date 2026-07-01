@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { id: 'finance', label: 'Finance Hub', icon: 'wallet' },
   { id: 'invoices', label: 'Invoices', icon: 'file' },
   { id: 'worker-monitor', label: 'Worker Monitor', icon: 'brain' },
+  { id: 'products', label: 'Products', icon: 'inventory' },
   { id: 'documents', label: 'Documents', icon: 'file' },
   { id: 'knowledge', label: 'Knowledge Base', icon: 'chart' },
   { id: 'settings', label: 'Settings', icon: 'settings' },

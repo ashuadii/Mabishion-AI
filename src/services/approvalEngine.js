@@ -1,10 +1,11 @@
-import { 
-  addApprovalExtended, 
-  getApprovalById, 
-  updateApprovalStatus, 
-  setApprovalWhatsAppSent, 
-  getPendingApprovals, 
-  getSetting 
+import {
+  addApprovalExtended,
+  getApprovalById,
+  updateApprovalStatus,
+  setApprovalWhatsAppSent,
+  getPendingApprovals,
+  getSetting,
+  checkRateLimit
 } from '../data/db.js';
 import { WhatsAppService } from './whatsappService.js';
 import { normalizeApprovalStatus, normalizeApprovalType, normalizeWorkerId } from '../utils/approvalRouting.js';
@@ -38,6 +39,13 @@ export const ApprovalEngine = {
     const approvalType = normalizeApprovalType(type);
     const workerId = normalizeWorkerId(workerName);
     console.log(`[ApprovalEngine] New Approval Requested: "${title}" | Type: ${approvalType} | Worker: ${workerId}`);
+
+    // HAF-007: Rate limit — max 10 approval requests per minute
+    const allowed = await checkRateLimit('approval_request', 10).catch(() => true);
+    if (!allowed) {
+      console.warn('[ApprovalEngine] HAF-007: Rate limit hit — 10 approval requests/min exceeded');
+      throw new Error('Too many approval requests. Please wait 60 seconds before submitting again.');
+    }
     
     // C2: AUTO-APPROVED tier — log-only, no human gate required
     if (approvalType === 'auto_approved') {

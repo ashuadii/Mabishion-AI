@@ -3,15 +3,19 @@ import Badge from '../Badge';
 import Icon from '../Icon';
 import Button from '../Button';
 import { C, glassStyle } from '../consts';
+import { mergeLeads } from '../../data/db.js';
 
-export default function LeadTable({ leads, onSelectLead, onBulkDelete, onBulkStatusChange }) {
-  const [search, setSearch]               = useState('');
+export default function LeadTable({ leads, onSelectLead, onBulkDelete, onBulkStatusChange, onRefresh, ftsQuery, onFtsSearch }) {
+  const [search, setSearch]               = useState(ftsQuery || '');
   const [filterSource, setFilterSource]   = useState('All');
   const [filterStatus, setFilterStatus]   = useState('All');
   const [filterScoreMin, setFilterScoreMin] = useState(0);
   const [sortBy, setSortBy]               = useState('score');
   const [sortOrder, setSortOrder]         = useState('desc');
   const [selectedLeadIds, setSelectedLeadIds] = useState([]);
+  const [mergeMode, setMergeMode] = useState(false);
+  const [mergeTarget, setMergeTarget] = useState(null);
+  const [isMerging, setIsMerging] = useState(false);
 
   // ─── Checkbox helpers ───────────────────────────────────────────────────────
   const handleSelectAll = (e, filteredLeads) => {
@@ -90,6 +94,34 @@ export default function LeadTable({ leads, onSelectLead, onBulkDelete, onBulkSta
   });
 
   // ─── CSV export ─────────────────────────────────────────────────────────────
+  // FR-014: Merge duplicates — find leads with same email domain / similar names
+  const getDuplicatePairs = () => {
+    const pairs = [];
+    for (let i = 0; i < leads.length; i++) {
+      for (let j = i + 1; j < leads.length; j++) {
+        const a = leads[i], b = leads[j];
+        const emailMatch = a.email && b.email && a.email.toLowerCase() === b.email.toLowerCase();
+        const nameSimilar = a.name && b.name && a.name.toLowerCase().trim() === b.name.toLowerCase().trim();
+        if (emailMatch || nameSimilar) pairs.push([a, b]);
+      }
+    }
+    return pairs.slice(0, 10); // show max 10 pairs
+  };
+
+  const handleMerge = async (primaryId, secondaryId) => {
+    if (!window.confirm('Primary lead mein merge karein? Secondary lead delete ho jaayega.')) return;
+    setIsMerging(true);
+    try {
+      await mergeLeads(primaryId, secondaryId);
+      if (onRefresh) onRefresh();
+      setMergeMode(false);
+    } catch (err) {
+      alert('Merge failed: ' + err.message);
+    } finally {
+      setIsMerging(false);
+    }
+  };
+
   const handleExportCSV = () => {
     if (sorted.length === 0) return;
     const headers = ['Name', 'Email', 'Phone', 'Source', 'Status', 'AI Score', 'Budget', 'Created At'];
@@ -123,10 +155,14 @@ export default function LeadTable({ leads, onSelectLead, onBulkDelete, onBulkSta
           <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Search Leads</label>
           <input
             type="text"
-            placeholder="Name, email, phone..."
+            placeholder="Name, email, phone... (FTS5 search)"
             className="w-full px-3 py-1.5 rounded-xl bg-slate-900 border border-white/10 text-white outline-none text-xs focus:border-violet-500 transition-all"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              if (onFtsSearch) onFtsSearch(e.target.value);
+            }}
+            aria-label="Search leads by name, email or phone"
           />
         </div>
 
@@ -221,6 +257,48 @@ export default function LeadTable({ leads, onSelectLead, onBulkDelete, onBulkSta
         </div>
       )}
 
+      {/* FR-014: Merge Duplicates Panel */}
+      {mergeMode && (() => {
+        const pairs = getDuplicatePairs();
+        return (
+          <div className="mb-4 p-4 rounded-2xl border border-amber-500/30 bg-amber-500/5">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold text-amber-300 flex items-center gap-2">
+                <Icon name="merge" size={14} /> Duplicate Leads Detected — {pairs.length} pair(s)
+              </span>
+              <button onClick={() => setMergeMode(false)} className="text-slate-400 hover:text-white text-xs">✕ Close</button>
+            </div>
+            {pairs.length === 0 ? (
+              <p className="text-xs text-slate-400">Koi duplicate nahi mila. Sab unique hain! ✅</p>
+            ) : (
+              <div className="space-y-2">
+                {pairs.map(([a, b], i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-black/30 border border-white/5 text-xs">
+                    <div className="flex-1">
+                      <span className="font-bold text-white">{a.name}</span>
+                      <span className="text-slate-400 ml-2">{a.email}</span>
+                    </div>
+                    <Icon name="merge" size={12} className="text-amber-400" />
+                    <div className="flex-1">
+                      <span className="font-bold text-white">{b.name}</span>
+                      <span className="text-slate-400 ml-2">{b.email}</span>
+                    </div>
+                    <button
+                      onClick={() => handleMerge(a.id, b.id)}
+                      disabled={isMerging}
+                      className="px-3 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 font-bold text-[10px] transition-all disabled:opacity-50"
+                      title={`${b.name} ko ${a.name} mein merge karo`}
+                    >
+                      {isMerging ? '...' : 'Merge →'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
       {/* ── Table ────────────────────────────────────────────────────────────── */}
       <div className="rounded-3xl border border-white/10 overflow-hidden" style={glassStyle({ strong: false })}>
         <div className="overflow-x-auto">
@@ -252,9 +330,14 @@ export default function LeadTable({ leads, onSelectLead, onBulkDelete, onBulkSta
                   Budget {sortBy === 'budget' && (sortOrder === 'asc' ? '▲' : '▼')}
                 </th>
                 <th className="p-4 text-right">
-                  <Button variant="soft" onClick={handleExportCSV} className="py-1 px-3 text-[10px]">
-                    <Icon name="download" size={12} /> Export CSV
-                  </Button>
+                  <div className="flex items-center gap-1 justify-end">
+                    <Button variant="soft" onClick={() => setMergeMode(v => !v)} className="py-1 px-2 text-[10px]" title="Duplicate leads merge karo" aria-label="Find and merge duplicate leads">
+                      <Icon name="merge" size={12} /> Merge
+                    </Button>
+                    <Button variant="soft" onClick={handleExportCSV} className="py-1 px-3 text-[10px]" aria-label="Export leads to CSV">
+                      <Icon name="download" size={12} /> CSV
+                    </Button>
+                  </div>
                 </th>
               </tr>
             </thead>

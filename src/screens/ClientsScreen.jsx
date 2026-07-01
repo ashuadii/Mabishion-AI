@@ -5,7 +5,7 @@ import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
 import { glassStyle, C } from '../components/consts';
-import { getClients, addClient, updateClient, deleteClient } from '../data/db.js';
+import { getClients, addClient, updateClient, deleteClient, addCommunication, getCommunications } from '../data/db.js';
 import { SkeletonGrid } from '../components/SkeletonCard.jsx';
 
 const EMPTY_FORM = { name: '', business: '', budget: '', preferences: '', email: '', phone: '', gstin: '', city: '', state: '', tier: 'standard', status: 'active', consent_given: 0 };
@@ -19,6 +19,11 @@ export default function ClientsScreen({ onNavigate }) {
   const [saving, setSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [search, setSearch] = useState('');
+  const [commClient, setCommClient] = useState(null); // FR-075: client whose comms to show
+  const [comms, setComms] = useState([]);
+  const [commNote, setCommNote] = useState('');
+  const [commType, setCommType] = useState('note');
+  const [savingComm, setSavingComm] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -33,6 +38,27 @@ export default function ClientsScreen({ onNavigate }) {
   };
 
   useEffect(() => { load(); }, []);
+
+  // FR-075: Open communication history for a client
+  const openComms = async (client) => {
+    setCommClient(client);
+    const data = await getCommunications(client.id).catch(() => []);
+    setComms(data || []);
+    setCommNote('');
+  };
+
+  const handleSaveComm = async () => {
+    if (!commNote.trim() || !commClient) return;
+    setSavingComm(true);
+    try {
+      await addCommunication(commClient.id, { type: commType, direction: 'outbound', body: commNote.trim(), channel: 'manual' });
+      const data = await getCommunications(commClient.id).catch(() => []);
+      setComms(data || []);
+      setCommNote('');
+    } finally {
+      setSavingComm(false);
+    }
+  };
 
   const openNew = () => {
     setForm(EMPTY_FORM);
@@ -138,15 +164,25 @@ export default function ClientsScreen({ onNavigate }) {
                 </div>
                 <div className="flex gap-2">
                   <button
+                    onClick={() => openComms(client)}
+                    className="p-1.5 rounded-lg hover:bg-violet-500/20 transition-all text-violet-400"
+                    title="Communication history dekho / log karo"
+                    aria-label={`View communication history for ${client.name}`}
+                  >
+                    <Icon name="chat" size={15} />
+                  </button>
+                  <button
                     onClick={() => openEdit(client)}
                     className="p-1.5 rounded-lg hover:bg-white/10 transition-all"
                     style={{ color: C.textMuted }}
+                    aria-label={`Edit ${client.name}`}
                   >
                     <Icon name="edit" size={15} />
                   </button>
                   <button
                     onClick={() => setDeleteConfirm(client.id)}
                     className="p-1.5 rounded-lg hover:bg-red-500/20 transition-all text-red-400"
+                    aria-label={`Delete ${client.name}`}
                   >
                     <Icon name="delete" size={15} />
                   </button>
@@ -356,6 +392,58 @@ export default function ClientsScreen({ onNavigate }) {
               >
                 Delete
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* FR-075: Communications History Drawer */}
+      {commClient && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm" onClick={() => setCommClient(null)}>
+          <div className="w-full max-w-md h-full flex flex-col overflow-hidden" style={glassStyle({ strong: true })} onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b border-white/10">
+              <div>
+                <h3 className="font-black text-white flex items-center gap-2"><Icon name="chat" size={16} className="text-violet-400" /> {commClient.name}</h3>
+                <p className="text-[10px] text-slate-400 mt-0.5">Communication History — FR-075</p>
+              </div>
+              <button onClick={() => setCommClient(null)} className="text-slate-400 hover:text-white" aria-label="Close communication panel">✕</button>
+            </div>
+
+            {/* Log new communication */}
+            <div className="p-4 border-b border-white/5 space-y-2">
+              <div className="flex gap-2">
+                {['note','call','email','meeting'].map(t => (
+                  <button key={t} onClick={() => setCommType(t)}
+                    className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all border ${commType === t ? 'bg-violet-600 text-white border-violet-500' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}
+                    aria-label={`Log ${t}`}
+                  >{t}</button>
+                ))}
+              </div>
+              <textarea
+                rows={2}
+                placeholder={`${commClient.name} ke saath kya baat hui? Likho...`}
+                className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-xs outline-none focus:border-violet-500 resize-none"
+                value={commNote}
+                onChange={e => setCommNote(e.target.value)}
+                aria-label="Communication note"
+              />
+              <Button onClick={handleSaveComm} disabled={savingComm || !commNote.trim()} className="w-full text-xs">
+                {savingComm ? 'Saving...' : `Log ${commType}`}
+              </Button>
+            </div>
+
+            {/* History list */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {comms.length === 0 ? (
+                <p className="text-center text-slate-400 text-xs py-8">Abhi tak koi communication log nahi hua.<br/>Upar se pehla note add karo!</p>
+              ) : comms.map(c => (
+                <div key={c.id} className="p-3 rounded-xl bg-black/20 border border-white/5">
+                  <div className="flex items-center justify-between mb-1">
+                    <Badge tone={c.type === 'call' ? 'success' : c.type === 'email' ? 'info' : c.type === 'meeting' ? 'gold' : 'muted'}>{c.type}</Badge>
+                    <span className="text-[9px] text-slate-500">{c.created_at ? new Date(c.created_at).toLocaleString('en-IN') : ''}</span>
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">{c.body}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>

@@ -598,10 +598,13 @@ Reference URL or notes: ${planUrl || "None"}
           <Badge tone="violet">Dashboard</Badge>
           <input
             className="min-w-0 flex-1 bg-transparent text-sm outline-none text-white placeholder-gray-500"
-            placeholder="Ask Mickii: run skill, check status, execute workflow..."
+            placeholder="Mickii se poocho: skill chalao, status check karo, workflow shuru karo..."
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleChatSend()}
+            aria-label="Mickii AI command input — type your instruction and press Enter"
+            role="searchbox"
+            aria-multiline="false"
           />
           <Button
             variant={isListening ? "danger" : "soft"}

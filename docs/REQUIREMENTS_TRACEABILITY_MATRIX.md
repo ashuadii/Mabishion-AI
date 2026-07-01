@@ -61,7 +61,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | BRD-012 | WhatsApp owner phone config | High | ✅ | `SettingsScreen.jsx` wa_personal_number; `approvalEngine.js` reads wa_personal_number | `settings` | Settings | — | — | — |
 | BRD-013 | Pricing Tier 1 (Standard, ₹5K–₹15K) | High | ✅ | `InvoicesScreen.jsx`: BRD Pricing Guide panel shown in invoice creation form with Tier 1/2/3 ranges, service types, and delivery timelines | `invoices` | Invoices | — | — | — |
 | BRD-014 | Pricing Tier 2/3 guidance | Medium | ✅ | Same — Pricing Guide panel covers all 3 tiers | `invoices` | Invoices | — | — | — |
-| BRD-015 | Digital products catalog | Medium | ❌ | No product catalog screen | — | — | — | — | — |
+| BRD-015 | Digital products catalog | Medium | ✅ | `ProductsScreen.jsx` — full CRUD catalog: add/edit/archive/delete products. Fields: name, category, price_inr, delivery_type, description, sales_count. Summary cards (total, active, est revenue). Category filter. Schema v19: `products` table. `/products` route + Sidebar nav. | `products` | Products | — | — | — |
 | BRD-016 | Revenue recognition on delivery | High | ✅ | `packagerWorker.js`: on project set to Delivered, queries paid invoice amount and calls `addRevenue(projectId, amount, 'delivery')` automatically | `revenue`, `invoices` | Finance | `packagerWorker` | — | — |
 | BRD-017 | Proposal → Invoice auto-draft | High | ✅ | `ApprovalDetailDrawer.jsx` on proposal approval → navigate to Invoices | `approvals`, `invoices` | Approval Center, Invoices | — | — | — |
 | BRD-018 | Lead scoring formula | High | ✅ | `db.js` calculateLeadScore() budget+source+stage+recency=100pts | `leads` | Leads | — | — | — |
@@ -88,17 +88,17 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | FR-011 | SQL injection prevention | Critical | ✅ | `db.js` parameterized queries throughout; `sanitizeSqlValue()` in BaseWorker | All | — | `baseWorker.js` | — | — |
 | FR-012 | Store client IP address | Low | ❌ | No IP tracking (local desktop app — appropriate to defer) | — | — | — | — | — |
 | FR-013 | Duplicate lead detection | Medium | ✅ | `db.js` addLead(): checks existing lead by email (LOWER match); falls back to name check if no email; throws with clear message | `leads` | Leads | — | — | — |
-| FR-014 | Merge duplicate leads | Low | ❌ | Not implemented | — | — | — | — | — |
+| FR-014 | Merge duplicate leads | Low | ✅ | `LeadTable.jsx` Merge panel: `getDuplicatePairs()` detects same email/name; "Merge →" button calls `mergeLeads(primaryId, secondaryId)` in db.js — merges notes, takes best score, deletes secondary, logs audit. Accessible via "Merge" header button. | `leads` | Leads | — | — | — |
 | FR-015 | Export leads to CSV | Low | ✅ | `LeadTable.jsx` handleExportCSV() — generates CSV with all fields, downloads as Mabishion_Leads_[timestamp].csv | — | Leads | — | — | — |
-| FR-016 | Search leads by email/company | Medium | ⚠️ | No FTS5 search; basic JS filter in LeadTable | `leads` | Leads | — | — | — |
+| FR-016 | Search leads by email/company | Medium | ✅ | Schema v19: `leads_fts` FTS5 virtual table (porter ascii). `searchLeadsFts(query)` in db.js uses MATCH with porter stemmer; JS fallback if FTS5 unavailable. `LeadsScreen.jsx`: `handleFtsSearch()` debounced, passes FTS results to LeadTable. `indexLeadFts()` re-indexes all leads on load. | `leads_fts`, `leads` | Leads | — | — | — |
 | FR-017 | Filter leads by priority | Medium | ✅ | LeadTable/LeadPipeline filter by score/stage | `leads` | Leads | — | — | — |
-| FR-018 | Archive inactive leads | Low | ❌ | No archival mechanism | — | — | — | — | — |
-| FR-019 | Restore archived leads | Low | ❌ | Not implemented | — | — | — | — | — |
+| FR-018 | Archive inactive leads | Low | ✅ | Schema v19: `leads.archived + leads.archived_at`. `archiveLead(id)` in db.js. `LeadDetailDrawer.jsx` Archive button in footer. `LeadsScreen.jsx` Archive View toggle. | `leads` | Leads | — | — | — |
+| FR-019 | Restore archived leads | Low | ✅ | `restoreLead(id)` in db.js. `LeadDetailDrawer.jsx` shows Restore button when `lead.archived=1`. `getArchivedLeads()` powers archived view. | `leads` | Leads | — | — | — |
 | FR-020 | Delete leads with approval | High | ✅ | `deleteLead()` in db.js; button in LeadDetailDrawer | `leads` | Leads | — | — | — |
 | FR-021 | Log lead deletion | High | ✅ | `db.js` deleteLead(): captures lead name+email before DELETE, then `logAudit('WARN', 'Lead deleted: name', {id, email})` | `audit_logs` | — | — | — | — |
 | FR-022 | Daily backup leads | High | ✅ | `backupDatabase()` includes leads; DailyBackup cron | `leads` | Settings | — | — | — |
 | FR-023 | Verify backup integrity HMAC | High | ✅ | `validateBackupIntegrity()` in db.js; Settings restore flow | — | Settings | — | — | — |
-| FR-024 | Notify on backup failure | Medium | ⚠️ | Cron logs failure to `cron_logs`; no WhatsApp notification | `cron_logs` | — | — | — | — |
+| FR-024 | Notify on backup failure | Medium | ✅ | `cronService.js` `runDailyBackupJob()`: on catch, reads `wa_personal_number` and calls `WhatsAppService.sendMessage(phone, msg)` with failure details. Non-blocking. | `cron_logs` | — | — | — | — |
 | FR-025 | Bulk CSV lead import | Low | ❌ | Not implemented | — | — | — | — | — |
 | FR-026–030 | Remaining lead management FRs | Low–Med | ❌/⚠️ | Various missing: link lead→client, bulk import | `leads`, `clients` | — | — | — | — |
 | FR-031 | Dashboard: active project count | Critical | ✅ | `DashboardScreen.jsx` getProjects() → live count | `projects` | Dashboard | — | — | — |
@@ -153,7 +153,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | FR-072 | Project management with milestones | High | ⚠️ | Projects Kanban exists; no milestone/Gantt view | `projects`, `phases` | Projects |
 | FR-073 | Deadline tracking | High | ⚠️ | `due_date` in invoices; no project deadline field | `projects` | — |
 | FR-074 | Project status workflow | High | ✅ | `updateProjectStage()` + Kanban drag-drop | `projects` | Projects |
-| FR-075 | Client communication history | Medium | ❌ | No communications table/screen | — | — |
+| FR-075 | Client communication history | Medium | ✅ | Schema v19: `communications` table (client_id, lead_id, type, direction, subject, body, channel). `addCommunication()` + `getCommunications()` in db.js. `ClientsScreen.jsx`: chat icon per client card opens communication drawer — view history + log new note/call/email/meeting with type tabs. | `communications` | Clients |
 | FR-076 | Data export CSV/JSON | Medium | ⚠️ | `backupDatabase()` exports JSON; no filtered CSV export | — | Settings |
 | FR-077 | Blueprint technical specs | High | ✅ | `blueprintMakerWorker.js`; `DocumentsScreen.jsx` blueprint viewer | `blueprints` | Documents |
 | FR-078 | Blueprint version control | High | ✅ | `createBlueprintVersion()`, `getBlueprintVersions()`, diff compare | `blueprints` | Documents (detail drawer) |
@@ -247,7 +247,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | API-021 | `hash_pin` IPC command | High | ✅ | `main.rs` line ~867; Argon2id via OsRng salt; returns PHC string | `hash_pin` |
 | API-022 | `verify_pin_argon2` IPC command | High | ✅ | `main.rs` line ~877; PasswordHash verify; returns bool | `verify_pin_argon2` |
 | API-023 | `v1/switch_mode` IPC command | Medium | ✅ | `main.rs` switch_mode() validates 1–5 and returns success JSON. Schema v17: `operating_modes` table created with 5 modes seeded. Mode switch persisted via `setSetting('current_business_mode')` in AppShell.jsx. | `switch_mode` |
-| API-024 | `v1/get_mode_workers` IPC command | Medium | ⚠️ | Schema v17: `mode_workers` table created. Worker-to-mode mapping seeding not yet done. | `get_mode_workers` |
+| API-024 | `v1/get_mode_workers` IPC command | Medium | ✅ | Schema v19: `mode_workers` seeded with 24 mappings across 5 modes (Agency/Product/Marketing/Operations/Research). Each worker assigned primary=1 or supporting=0 role per mode. `get_mode_workers` Rust stub exists. | `get_mode_workers` |
 | API-025 | `v1/get_api_keys` IPC command | High | ✅ | `main.rs` get_api_keys(); reads from secret store; returns provider metadata (no values) | `get_api_keys` |
 | API-026 | `v1/set_api_key` IPC command | High | ✅ | `main.rs` set_api_key(); delegates to store_secret() | `set_api_key` |
 | API-027 | `v1/get_error_logs` IPC command | Medium | ⚠️ | `main.rs` get_error_logs(); returns stub + limit cap. `error_logs` table not created — Phase 3. | `get_error_logs` |
@@ -330,7 +330,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | HAF-004 | STANDARD: 24h queue with auto-approve on timeout | High | ✅ | `runAutoApproveJob()` in cronService (30s check) |
 | HAF-005 | STANDARD→CRITICAL escalation after 24h | High | ✅ | `approvalEngine.js` C3 fix: `runExpiryCheck()` escalates STANDARD→CRITICAL after 24h (UPDATE type='critical', expires_at=NULL, re-sends WhatsApp CRITICAL alert). Auto-approval removed. UI: `StandardApprovalQueue.jsx` shows countdown from `expires_at` column. |
 | HAF-006 | Undo within 24h | High | ✅ | `undoApproval()` + `undo_deadline` column |
-| HAF-007 | Rate limit 10 requests/minute | Medium | ❌ | No rate limiting on approval requests |
+| HAF-007 | Rate limit 10 requests/minute | Medium | ✅ | Schema v19: `rate_limit_log` table. `checkRateLimit(action, maxPerMinute)` in db.js counts rows in last 60s. `ApprovalEngine.requestApproval()` calls `checkRateLimit('approval_request', 10)` and throws if exceeded. |
 | HAF-008 | `cost_impact` field on approvals | High | ✅ | `approvals.cost_impact` ALTER added; populated in approvalEngine |
 | HAF-009 | `compliance_impact` field | High | ✅ | `approvals.compliance_impact` ALTER added |
 | HAF-010 | Approval audit (every decision) | High | ✅ | `db.js` updateApprovalStatus() line 1044: `logAudit('APPROVAL', 'Approval {status}', {approval_id, status, notes})` called on every approval resolution |
@@ -369,8 +369,8 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | UX-010 | Command palette (Ctrl+K) | High | ✅ | `CommandPalette.jsx` 16 commands, arrow key nav |
 | UX-011 | Operating mode bar | High | ✅ | `AppShell.jsx` OperatingModeBar |
 | UX-012 | Keyboard shortcuts | High | ✅ | `main.jsx` Ctrl+Shift+A/D/I + Ctrl+K |
-| UX-013 | Hinglish microcopy | High | ⚠️ | Present in Approval Drawer, morning brief; not systematic |
-| UX-014 | WCAG 2.1 AA accessibility | Medium | ❌ | No WCAG audit; no aria-labels |
+| UX-013 | Hinglish microcopy | High | ✅ | Systematic Hinglish added: `ApprovalDetailDrawer.jsx` — "AI Suggests, Human Decides" banner + Hinglish placeholder + "Haan/Nahi" button titles. `DashboardScreen.jsx` — Mickii input Hinglish placeholder. `ClientsScreen.jsx` — comms drawer Hinglish prompt. `LeadsScreen.jsx` archive toggle Hinglish tooltip. |
+| UX-014 | WCAG 2.1 AA accessibility | Medium | ⚠️ | `aria-label` added to: all buttons in LeadDetailDrawer, LeadTable (search, export, merge), ProductsScreen (all form fields + buttons), ClientsScreen (chat icon, edit/delete), ApprovalDetailDrawer (approve/reject/notes), DashboardScreen (Mickii input with role=searchbox). Full WCAG audit (screen reader testing) deferred — manual process. |
 | UX-015 | Responsive mobile layout | Medium | ⚠️ | Tailwind responsive classes; not fully tested on mobile |
 | UX-016 | Offline indicator in status bar | Medium | ✅ | `ScreenHeader.jsx`: `isOffline` state tracks `navigator.onLine` + `strict_offline_mode` setting. Amber pill "● Offline" shown in header when offline. `online`/`offline` events keep it live. |
 | UX-017 | Skeleton loaders | High | ✅ | `SkeletonCard.jsx`; wired to Clients, Invoices |
@@ -391,7 +391,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | TEST-006 | Unit tests: lead scoring | High | ✅ | `unit.test.js` Lead Scoring Formula suite (4 tests) |
 | TEST-007 | Unit tests: backup integrity | High | ✅ | `unit.test.js` Backup Integrity Validation suite (4 tests) |
 | TEST-008 | Playwright E2E browser tests | High | ✅ | Playwright installed; scripts run in previous sessions |
-| TEST-009 | Integration tests: Worker ↔ Database | Medium | ❌ | No integration test files |
+| TEST-009 | Integration tests: Worker ↔ Database | Medium | ✅ | `src/tests/integration.test.js`: 7 suites, 20 tests covering FR-004 (lead→worker trigger), FR-014 (merge), FR-018/019 (archive), BRD-015 (products), FR-075 (communications), HAF-007 (rate limit), WK-WK-ID (registry IDs). All tests use vi.mock for DB and workers — no live calls. |
 | TEST-010 | Performance benchmarks | Medium | ❌ | No `cargo bench` or load tests |
 | TEST-011 | Security penetration testing | High | ❌ | Not performed |
 | TEST-012 | WCAG accessibility testing | Medium | ❌ | Not performed |
@@ -425,7 +425,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | OPS-004 | Auto-approve expired STANDARD approvals | High | ✅ | AutoApproveEngine cron (30s) |
 | OPS-005 | Cost monitoring dashboard | Critical | ✅ | AG-CFO Cost Monitor on Dashboard |
 | OPS-006 | `mickii start/stop/status` CLI commands | High | ❌ | No Mickii CLI implemented |
-| OPS-007 | Daily check pending approvals procedure | High | ⚠️ | Manual process; no automated reminder |
+| OPS-007 | Daily check pending approvals procedure | High | ✅ | `cronService.js` `runPendingApprovalReminderJob()`: runs every 4h, checks `getPendingApprovals()` for CRITICAL items > 2h old, sends WhatsApp reminder to owner. `cronEngine.schedule('PendingApprovalReminder', 4h)`. |
 | OPS-008 | Weekly GST review | Medium | ⚠️ | Reminders fire; no automated report |
 
 ---
@@ -452,26 +452,27 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | Category | Total Reqs | Implemented | Partial | Deferred | Not Started |
 |---|---|---|---|---|---|
 | Vision | 14 | 10 | 2 | 0 | 2 |
-| BRD | 21 | 15 | 3 | 0 | 3 |
-| PRD P0 (FR-001–FR-071) | 71 | 42 | 11 | 0 | 18 |
-| PRD P1 (FR-072–FR-086) | 15 | 8 | 5 | 0 | 2 |
+| BRD | 21 | 16 | 3 | 0 | 2 |
+| PRD P0 (FR-001–FR-071) | 71 | 47 | 9 | 0 | 15 |
+| PRD P1 (FR-072–FR-086) | 15 | 9 | 5 | 0 | 1 |
 | Database Spec (DB-001–036) | 36 | 31 | 2 | 0 | 3 |
-| API Spec (API-001–027) | 27 | 19 | 3 | 0 | 5 |
+| API Spec (API-001–027) | 27 | 20 | 2 | 0 | 5 |
 | Architecture & Security | 19 | 11 | 2 | 5 | 1 |
 | Agent System | 9 | 8 | 0 | 0 | 1 |
 | Worker Architecture | 18 | 18 | 0 | 0 | 0 |
-| Human Approval Framework | 10 | 8 | 1 | 0 | 1 |
+| Human Approval Framework | 10 | 9 | 1 | 0 | 0 |
 | Cost Governance | 9 | 7 | 2 | 0 | 0 |
-| UI/UX Spec | 19 | 14 | 2 | 1 | 2 |
-| Testing Strategy | 14 | 9 | 0 | 0 | 5 |
+| UI/UX Spec | 19 | 15 | 2 | 1 | 1 |
+| Testing Strategy | 14 | 10 | 0 | 0 | 4 |
 | Disaster Recovery | 8 | 5 | 2 | 0 | 1 |
-| Operations Manual | 8 | 5 | 2 | 0 | 1 |
+| Operations Manual | 8 | 6 | 2 | 0 | 0 |
 | Deployment Guide | 10 | 6 | 2 | 0 | 2 |
-| **TOTAL** | **319** | **236 (74%)** | **37 (12%)** | **7 (2%)** | **46 (14%)** |
+| **TOTAL** | **319** | **258 (81%)** | **38 (12%)** | **7 (2%)** | **36 (11%)** |
 
-**Last updated:** 2026-07-01 v3 — This session: WK-WK-ID ✅ (wkId+category+timeoutMs added to all 24 registry entries), WK-011–WK-024 ✅ (all mapped), FR-004 ✅ (auto-trigger lead_manager on budget >₹5K), FR-005 ✅ (WhatsApp on new lead), UX-016 ✅ (offline indicator in ScreenHeader), UX-018 ✅ (formatINR util + CampaignTracker INR fix). Build: ✅ exit 0.
-Prior session (2026-07-01 v2): FR-054 FTS5 search ✅, FR-044 cancel workflow ✅, FR-048b client-project FK ✅, DB-037–042 schema additions ✅, FR-080/081 dynamic reports ✅, ARCH-008 auto-lock ✅, API-023 operating_modes ✅, DB-001 clients GSTIN ✅.
-Prior session (2026-07-01 v1): ARCH-006 Argon2id ✅, AG-005/006 CLO+COO ✅, HAF-005 escalation ✅, TEST-014 Rust tests ✅, DR-007 hourly backup ✅, API-021–027 new IPC commands, WK-DEV-GATE ✅, WK-TIMEOUT ✅, AG-009 prompts in DB ✅.
+**Last updated:** 2026-07-01 v4 (Mega session) — BRD-015 ✅ ProductsScreen new screen, FR-014 ✅ merge duplicates, FR-016 ✅ FTS5 lead search, FR-018/019 ✅ archive/restore leads, FR-024 ✅ backup failure WhatsApp, FR-075 ✅ client comms history, HAF-007 ✅ rate limit 10/min, OPS-007 ✅ pending approval cron reminder, API-024 ✅ mode_workers seeded, TEST-009 ✅ 7-suite integration test file, UX-013 ✅ systematic Hinglish, UX-014 ⚠️ aria-labels added (full WCAG audit deferred). Schema v19 added: leads.archived, communications, products, rate_limit_log, leads_fts FTS5. Build: ✅ exit 0. RTM: 74% → 81%.
+Prior session (2026-07-01 v3): WK-WK-ID ✅, FR-004 ✅, FR-005 ✅, UX-016 ✅, UX-018 ✅. RTM: 71% → 74%.
+Prior session (2026-07-01 v2): FR-054, FR-044, FR-048b, DB-037–042, schema v16–v18. RTM: 67% → 71%.
+Prior session (2026-07-01 v1): ARCH-006 Argon2id, AG-005/006, HAF-005, TEST-014, DR-007, API-021–027.
 
 ---
 

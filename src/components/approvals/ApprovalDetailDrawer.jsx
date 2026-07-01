@@ -387,21 +387,29 @@ export default function ApprovalDetailDrawer({ approval, onClose, onResolve, onU
       {/* Action Decision buttons (Rendered only if Pending) */}
       {isPending ? (
         <div className="space-y-4 pt-4 border-t border-white/5">
+          {/* UX-013: Hinglish decision helper */}
+          <div className="p-3 rounded-xl bg-violet-500/5 border border-violet-500/20 text-[10px] text-slate-400">
+            💡 <strong className="text-violet-300">AI Suggests, Human Decides.</strong> Approve karne se kaam shuru hoga. Reject karne se worker ruk jaayega. Notes optional hain.
+          </div>
+
           <div className="space-y-1.5 text-left">
-            <label className="text-[10px] uppercase font-bold text-slate-400 block">Resolution Feedback Notes</label>
+            <label className="text-[10px] uppercase font-bold text-slate-400 block">Resolution Feedback Notes (Optional)</label>
             <textarea
               value={ownerNotes}
               onChange={(e) => setOwnerNotes(e.target.value)}
-              placeholder="Enter feedback notes or request changes here..."
+              placeholder="Koi feedback ya changes chahiye? Yahan likho..."
               className="w-full h-16 px-4 py-2 text-xs bg-slate-900 border border-white/10 rounded-xl focus:border-violet-500 text-white outline-none placeholder-slate-600 resize-none transition-all"
+              aria-label="Resolution feedback notes"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <Button 
+            <Button
               onClick={() => onResolve(approval.id, 'rejected', ownerNotes)}
               variant="soft"
               className="py-2.5 rounded-xl text-xs font-bold text-red-400 hover:text-white border border-red-500/20 hover:bg-red-500"
+              aria-label="Reject this approval request"
+              title="Nahi — yeh kaam mat karo"
             >
               ❌ Reject
             </Button>
@@ -420,6 +428,8 @@ export default function ApprovalDetailDrawer({ approval, onClose, onResolve, onU
                 }
               }}
               className="py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 shadow-xl"
+              aria-label="Approve this request — worker will proceed"
+              title="Haan — yeh kaam karo"
             >
               ✅ Approve Action
             </Button>

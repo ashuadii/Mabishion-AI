@@ -1,4 +1,4 @@
-import { logCronExecution, getDb, backupDatabase, setSetting, logAudit } from '../data/db';
+import { logCronExecution, getDb, backupDatabase, setSetting, logAudit, getSetting, getPendingApprovals } from '../data/db';
 
 class BrowserCronEngine {
   constructor() {
@@ -211,6 +211,14 @@ export async function runDailyBackupJob() {
     }
   } catch (err) {
     console.error('[Cron DailyBackup] Backup failed:', err);
+    // FR-024: WhatsApp notification on backup failure
+    try {
+      const phone = await getSetting('wa_personal_number').catch(() => null);
+      if (phone) {
+        const { WhatsAppService } = await import('./whatsappService.js');
+        await WhatsAppService.sendMessage(phone, `🚨 Mabishion Backup FAILED: ${err.message}. Turant Settings > Backup se manually backup lo!`).catch(() => {});
+      }
+    } catch {}
     throw err; // Let cronEngine.tick() catch and log to cron_logs
   }
 }
@@ -329,3 +337,33 @@ export async function runCostAlertJob() {
 
 // Cost alert check — every 30 minutes
 cronEngine.schedule('CostAlert', 30 * 60 * 1000, runCostAlertJob);
+
+/**
+ * OPS-007: Pending Approval Reminder Job
+ * Runs every 4 hours. If there are CRITICAL pending approvals > 2h old,
+ * sends a WhatsApp reminder to the owner.
+ */
+export async function runPendingApprovalReminderJob() {
+  try {
+    const pending = await getPendingApprovals().catch(() => []);
+    const criticalOld = (pending || []).filter(a => {
+      if (a.type !== 'critical') return false;
+      const age = Date.now() - new Date(a.created_at).getTime();
+      return age > 2 * 60 * 60 * 1000; // > 2 hours old
+    });
+    if (criticalOld.length === 0) return;
+
+    const phone = await getSetting('wa_personal_number').catch(() => null);
+    if (!phone) return;
+
+    const { WhatsAppService } = await import('./whatsappService.js');
+    const msg = `⏰ ${criticalOld.length} CRITICAL approval(s) pending hai jo 2+ ghante se wait kar rahi hain! Mabishion AI kholo aur Approval Center check karo.`;
+    await WhatsAppService.sendMessage(phone, msg).catch(() => {});
+    await logAudit('INFO', `Pending approval reminder sent (${criticalOld.length} critical)`, JSON.stringify({ count: criticalOld.length })).catch(() => {});
+  } catch (err) {
+    console.warn('[OPS-007] Pending approval reminder failed:', err);
+  }
+}
+
+// OPS-007: Run every 4 hours
+cronEngine.schedule('PendingApprovalReminder', 4 * 60 * 60 * 1000, runPendingApprovalReminderJob);

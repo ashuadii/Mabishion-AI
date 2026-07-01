@@ -21,6 +21,7 @@ import DocumentsScreen from './screens/DocumentsScreen';
 import KnowledgeBaseScreen from './screens/KnowledgeBaseScreen';
 import LoginScreen from './screens/LoginScreen';
 import ProjectDetailScreen from './screens/ProjectDetailScreen';
+import ProductsScreen from './screens/ProductsScreen';
 import { BuildProvider } from './context/BuildContext';
 
 export default function App() {
@@ -83,6 +84,7 @@ export default function App() {
         <Route path="/finance/invoices" element={<InvoicesScreen onNavigate={handleNavigate} />} />
         <Route path="/documents" element={<DocumentsScreen onNavigate={handleNavigate} />} />
         <Route path="/knowledge" element={<KnowledgeBaseScreen onNavigate={handleNavigate} />} />
+        <Route path="/products" element={<ProductsScreen onNavigate={handleNavigate} />} />
       </Routes>
     </BuildProvider>
   );

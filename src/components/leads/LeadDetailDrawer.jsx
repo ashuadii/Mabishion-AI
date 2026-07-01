@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { updateLeadNotes, updateLeadStatus, deleteLead } from '../../data/db';
+import { updateLeadNotes, updateLeadStatus, deleteLead, archiveLead, restoreLead } from '../../data/db';
 import { C, glassStyle } from '../consts';
 import Icon from '../Icon';
 import Button from '../Button';
@@ -123,6 +123,22 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
       if (onUpdate) onUpdate();
       onClose();
     }
+  };
+
+  // FR-018: Archive lead (soft-delete, recoverable)
+  const handleArchiveLead = async () => {
+    if (window.confirm(`Archive "${lead.name}"? Lead will be hidden from active list but not deleted.`)) {
+      await archiveLead(lead.id);
+      if (onUpdate) onUpdate();
+      onClose();
+    }
+  };
+
+  // FR-019: Restore archived lead
+  const handleRestoreLead = async () => {
+    await restoreLead(lead.id);
+    if (onUpdate) onUpdate();
+    onClose();
   };
 
   // WhatsApp template triggers
@@ -463,14 +479,35 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
 
         </div>
 
-        {/* Footer Delete Trigger */}
+        {/* Footer Actions — Archive / Restore / Delete */}
         <div className="p-6 border-t border-white/5 bg-black/20 flex gap-2">
-          <Button 
-            variant="danger" 
+          {lead.archived ? (
+            <Button
+              variant="soft"
+              onClick={handleRestoreLead}
+              className="flex-1 text-xs font-bold"
+              aria-label="Restore archived lead"
+            >
+              <Icon name="unarchive" size={15} /> Restore Lead
+            </Button>
+          ) : (
+            <Button
+              variant="soft"
+              onClick={handleArchiveLead}
+              className="flex-1 text-xs font-bold"
+              aria-label="Archive lead — hides from active list, not deleted"
+              title="Archive karo — active list se hatega, delete nahi hoga"
+            >
+              <Icon name="archive" size={15} /> Archive
+            </Button>
+          )}
+          <Button
+            variant="danger"
             onClick={handleDeleteLead}
-            className="w-full text-xs font-bold"
+            className="flex-1 text-xs font-bold"
+            aria-label="Permanently delete this lead"
           >
-            <Icon name="delete_forever" size={15} /> Delete Lead Permanent
+            <Icon name="delete_forever" size={15} /> Delete
           </Button>
         </div>
       </div>

@@ -4,7 +4,7 @@
  * Creates tables if they do not exist. No destructive changes.
  */
 
-export const SCHEMA_VERSION = 18;
+export const SCHEMA_VERSION = 19;
 
 export const CREATE_TABLES_SQL = [
   `CREATE TABLE IF NOT EXISTS clients (
@@ -390,6 +390,115 @@ export async function upgradeDatabase(db) {
       // Clients indexes (DB-Spec §4.2)
       await db.execute('CREATE INDEX IF NOT EXISTS idx_clients_email ON clients(email)').catch(() => {});
       await db.execute('CREATE INDEX IF NOT EXISTS idx_clients_status ON clients(status)').catch(() => {});
+    }
+
+    // ── v19: Archive leads, communications, products, rate_limit_log ──────────
+    if (currentVersion < 19) {
+      // FR-018/019: Archive/Restore leads
+      await db.execute("ALTER TABLE leads ADD COLUMN archived INTEGER DEFAULT 0").catch(() => {});
+      await db.execute("ALTER TABLE leads ADD COLUMN archived_at TEXT").catch(() => {});
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_leads_archived ON leads(archived)').catch(() => {});
+
+      // FR-075: Client communication history
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS communications (
+          id TEXT PRIMARY KEY,
+          client_id TEXT REFERENCES clients(id) ON DELETE CASCADE,
+          lead_id TEXT REFERENCES leads(id) ON DELETE SET NULL,
+          type TEXT NOT NULL DEFAULT 'note',
+          direction TEXT NOT NULL DEFAULT 'outbound',
+          subject TEXT,
+          body TEXT NOT NULL,
+          channel TEXT DEFAULT 'manual',
+          created_at TEXT DEFAULT (datetime('now')),
+          created_by TEXT DEFAULT 'owner'
+        )
+      `).catch(() => {});
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_comm_client ON communications(client_id)').catch(() => {});
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_comm_lead ON communications(lead_id)').catch(() => {});
+
+      // BRD-015: Digital products catalog
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS products (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          category TEXT NOT NULL DEFAULT 'digital',
+          description TEXT,
+          price_inr INTEGER NOT NULL DEFAULT 0,
+          currency TEXT DEFAULT 'INR',
+          status TEXT NOT NULL DEFAULT 'active',
+          delivery_type TEXT DEFAULT 'download',
+          sales_count INTEGER DEFAULT 0,
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now'))
+        )
+      `).catch(() => {});
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_products_status ON products(status)').catch(() => {});
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)').catch(() => {});
+
+      // HAF-007: Rate limiting log
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS rate_limit_log (
+          id TEXT PRIMARY KEY,
+          action TEXT NOT NULL,
+          actor TEXT DEFAULT 'owner',
+          created_at TEXT DEFAULT (datetime('now'))
+        )
+      `).catch(() => {});
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_rate_limit_action ON rate_limit_log(action, created_at)').catch(() => {});
+
+      // FR-016: FTS5 for leads search
+      await db.execute(`
+        CREATE VIRTUAL TABLE IF NOT EXISTS leads_fts USING fts5(
+          lead_id UNINDEXED,
+          name,
+          email,
+          notes,
+          source,
+          tokenize='porter ascii'
+        )
+      `).catch(() => {});
+
+      // API-024: Seed mode_workers — map WK-XXX workers to operating modes
+      // Mode 1=Agency, 2=Product, 3=Marketing, 4=Operations, 5=Research
+      const modeWorkerSeeds = [
+        // Agency mode: full-stack delivery pipeline
+        [crypto.randomUUID(), 1, 'developer',       1],
+        [crypto.randomUUID(), 1, 'proposal_maker',  1],
+        [crypto.randomUUID(), 1, 'website_builder', 1],
+        [crypto.randomUUID(), 1, 'packager',        1],
+        [crypto.randomUUID(), 1, 'blueprint_maker', 0],
+        [crypto.randomUUID(), 1, 'client_intake',   0],
+        [crypto.randomUUID(), 1, 'payment_handler', 0],
+        // Product mode: build & launch own products
+        [crypto.randomUUID(), 2, 'developer',       1],
+        [crypto.randomUUID(), 2, 'website_builder', 1],
+        [crypto.randomUUID(), 2, 'ai_call_product', 1],
+        [crypto.randomUUID(), 2, 'documentor',      0],
+        [crypto.randomUUID(), 2, 'qa_worker',       0],
+        // Marketing mode: content & campaigns
+        [crypto.randomUUID(), 3, 'writer',          1],
+        [crypto.randomUUID(), 3, 'self_promo',      1],
+        [crypto.randomUUID(), 3, 'service_promo',   1],
+        [crypto.randomUUID(), 3, 'social_scheduler',1],
+        [crypto.randomUUID(), 3, 'lead_gen',        0],
+        [crypto.randomUUID(), 3, 'showcaser',       0],
+        // Operations mode: admin, finance, compliance
+        [crypto.randomUUID(), 4, 'payment_handler', 1],
+        [crypto.randomUUID(), 4, 'compliance',      1],
+        [crypto.randomUUID(), 4, 'llm_manager',     0],
+        [crypto.randomUUID(), 4, 'security_auditor',0],
+        // Research mode: market intelligence
+        [crypto.randomUUID(), 5, 'business_analyst',1],
+        [crypto.randomUUID(), 5, 'lead_manager',    1],
+        [crypto.randomUUID(), 5, 'documentor',      0],
+      ];
+      for (const [id, modeId, workerId, isPrimary] of modeWorkerSeeds) {
+        await db.execute(
+          'INSERT OR IGNORE INTO mode_workers (id, mode_id, worker_id, is_primary) VALUES (?,?,?,?)',
+          [id, modeId, workerId, isPrimary]
+        ).catch(() => {});
+      }
     }
 
     // Insert or update version

@@ -2158,3 +2158,159 @@ export async function getTopOpportunities() {
   ).catch(() => []);
   return rows || [];
 }
+
+// ── FR-014: Merge duplicate leads — keep primary, delete secondary ────────────
+export async function mergeLeads(primaryId, secondaryId) {
+  const db = await getDb();
+  // Combine notes from both leads
+  const [primary] = await db.select(`SELECT * FROM leads WHERE id=?`, [primaryId]);
+  const [secondary] = await db.select(`SELECT * FROM leads WHERE id=?`, [secondaryId]);
+  if (!primary || !secondary) throw new Error('One or both leads not found');
+
+  let mergedNotes = [];
+  try { mergedNotes = JSON.parse(primary.notes || '[]'); } catch { mergedNotes = []; }
+  let secNotes = [];
+  try { secNotes = JSON.parse(secondary.notes || '[]'); } catch { secNotes = []; }
+  mergedNotes.push(...secNotes, {
+    id: crypto.randomUUID(), text: `Merged with duplicate: ${secondary.name} (${secondary.email})`,
+    timestamp: new Date().toISOString(), type: 'system'
+  });
+
+  // Keep best score, merge contact info
+  const bestScore = Math.max(primary.score || 0, secondary.score || 0);
+  const mergedEmail = primary.email || secondary.email;
+  const mergedPhone = primary.phone || secondary.phone;
+
+  await db.execute(
+    `UPDATE leads SET score=?, email=?, phone=?, notes=? WHERE id=?`,
+    [bestScore, mergedEmail, mergedPhone, JSON.stringify(mergedNotes), primaryId]
+  );
+  await db.execute(`DELETE FROM leads WHERE id=?`, [secondaryId]);
+  logAudit('INFO', `Leads merged: ${secondary.name} into ${primary.name}`, JSON.stringify({ primaryId, secondaryId })).catch(() => {});
+}
+
+// ── FR-018: Archive lead ──────────────────────────────────────────────────────
+export async function archiveLead(id) {
+  const db = await getDb();
+  await db.execute(
+    `UPDATE leads SET archived=1, archived_at=datetime('now') WHERE id=?`, [id]
+  );
+  logAudit('WARN', `Lead archived: ${id}`, JSON.stringify({ id })).catch(() => {});
+}
+
+// FR-019: Restore archived lead
+export async function restoreLead(id) {
+  const db = await getDb();
+  await db.execute(`UPDATE leads SET archived=0, archived_at=NULL WHERE id=?`, [id]);
+  logAudit('INFO', `Lead restored: ${id}`, JSON.stringify({ id })).catch(() => {});
+}
+
+// FR-019: Get archived leads
+export async function getArchivedLeads() {
+  const db = await getDb();
+  return (await db.select(`SELECT * FROM leads WHERE archived=1 ORDER BY archived_at DESC`).catch(() => [])) || [];
+}
+
+// FR-016: FTS5 lead search — index a lead into leads_fts
+export async function indexLeadFts(id, name, email, notes, source) {
+  const db = await getDb();
+  await db.execute(
+    `INSERT OR REPLACE INTO leads_fts(lead_id, name, email, notes, source) VALUES (?,?,?,?,?)`,
+    [id, name || '', email || '', notes || '', source || '']
+  ).catch(() => {});
+}
+
+// FR-016: Search leads using FTS5 porter stemmer
+export async function searchLeadsFts(query) {
+  if (!query || !query.trim()) return null; // null = caller should show all leads
+  const db = await getDb();
+  try {
+    const rows = await db.select(
+      `SELECT l.* FROM leads l
+       JOIN leads_fts f ON f.lead_id = l.id
+       WHERE leads_fts MATCH ? AND l.archived=0
+       ORDER BY rank LIMIT 100`,
+      [query.trim() + '*']
+    );
+    return rows || [];
+  } catch {
+    return null; // FTS5 unavailable — caller falls back to JS filter
+  }
+}
+
+// ── FR-075: Client communications ────────────────────────────────────────────
+export async function addCommunication(clientId, { leadId, type, direction, subject, body, channel }) {
+  const db = await getDb();
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  await db.execute(
+    `INSERT INTO communications (id,client_id,lead_id,type,direction,subject,body,channel,created_at)
+     VALUES (?,?,?,?,?,?,?,?,?)`,
+    [id, clientId, leadId || null, type || 'note', direction || 'outbound', subject || '', body, channel || 'manual', now]
+  );
+  logAudit('INFO', `Communication logged for client ${clientId}`, JSON.stringify({ id, type })).catch(() => {});
+  return id;
+}
+
+export async function getCommunications(clientId) {
+  const db = await getDb();
+  return (await db.select(
+    `SELECT * FROM communications WHERE client_id=? ORDER BY created_at DESC LIMIT 50`, [clientId]
+  ).catch(() => [])) || [];
+}
+
+// ── BRD-015: Digital Products catalog ────────────────────────────────────────
+export async function addProduct({ name, category, description, price_inr, delivery_type }) {
+  const db = await getDb();
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  await db.execute(
+    `INSERT INTO products (id,name,category,description,price_inr,delivery_type,status,created_at,updated_at)
+     VALUES (?,?,?,?,?,?,?,?,?)`,
+    [id, name, category || 'digital', description || '', Math.round(price_inr || 0), delivery_type || 'download', 'active', now, now]
+  );
+  logAudit('INFO', `Product created: ${name}`, JSON.stringify({ id })).catch(() => {});
+  return id;
+}
+
+export async function getProducts(status = null) {
+  const db = await getDb();
+  if (status) {
+    return (await db.select(`SELECT * FROM products WHERE status=? ORDER BY created_at DESC`, [status]).catch(() => [])) || [];
+  }
+  return (await db.select(`SELECT * FROM products ORDER BY created_at DESC`).catch(() => [])) || [];
+}
+
+export async function updateProduct(id, fields) {
+  const db = await getDb();
+  const allowed = ['name','category','description','price_inr','delivery_type','status','sales_count'];
+  const sets = Object.keys(fields).filter(k => allowed.includes(k)).map(k => `${k}=?`);
+  if (!sets.length) return;
+  const vals = sets.map(s => fields[s.split('=')[0]]);
+  await db.execute(
+    `UPDATE products SET ${sets.join(',')}, updated_at=datetime('now') WHERE id=?`,
+    [...vals, id]
+  );
+}
+
+export async function deleteProduct(id) {
+  const db = await getDb();
+  await db.execute(`DELETE FROM products WHERE id=?`, [id]);
+  logAudit('WARN', `Product deleted: ${id}`, JSON.stringify({ id })).catch(() => {});
+}
+
+// ── HAF-007: Rate limit check (10 actions/min per action type) ────────────────
+export async function checkRateLimit(action, maxPerMinute = 10) {
+  const db = await getDb();
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  // Count actions in last 60 seconds
+  const rows = await db.select(
+    `SELECT COUNT(*) as cnt FROM rate_limit_log WHERE action=? AND created_at >= datetime('now', '-60 seconds')`,
+    [action]
+  ).catch(() => [{ cnt: 0 }]);
+  const count = rows[0]?.cnt || 0;
+  if (count >= maxPerMinute) return false; // rate limited
+  await db.execute(`INSERT INTO rate_limit_log (id,action,created_at) VALUES (?,?,?)`, [id, action, now]).catch(() => {});
+  return true; // allowed
+}
