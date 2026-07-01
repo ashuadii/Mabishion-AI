@@ -191,6 +191,20 @@ export class LLMProvider {
     try {
       const dailyTotal = await getDailyCostTotal();
       this._lastDailyCostPaise = dailyTotal;
+
+      // Addendum Cost Gov: ₹140/day kill switch — non-critical workers auto-paused
+      if (dailyTotal >= 14000 && dailyTotal < 15000) {
+        const workerName = this._currentWorkerName || '';
+        const isNonCritical = !['developer', 'website_builder', 'packager', 'proposal_maker', 'payment_handler', 'security_auditor'].includes(workerName);
+        if (isNonCritical) {
+          const err = new Error('Daily AI cost at ₹140 threshold. Non-critical workers paused to protect budget. Critical workers still active.');
+          err.code = 'COST_THRESHOLD_PAUSE';
+          throw err;
+        }
+        // Fire warning event for UI
+        window?.dispatchEvent(new CustomEvent('nexious_cost_alert', { detail: { level: 'threshold', period: 'daily', cost: dailyTotal, limit: 15000, percent: (dailyTotal / 15000) * 100 } }));
+      }
+
       if (dailyTotal >= 15000) {
         const err = new Error('Daily AI cost limit reached (₹150). Please wait until tomorrow or switch to Ollama.');
         err.code = 'COST_LIMIT_EXCEEDED';

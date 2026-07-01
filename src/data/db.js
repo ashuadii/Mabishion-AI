@@ -2159,6 +2159,21 @@ export async function getTopOpportunities() {
   return rows || [];
 }
 
+// ── ERD v1.4: events table — system event observability ──────────────────────
+export async function logEvent(eventType, source, payload = {}) {
+  const db = await getDb();
+  const id = crypto.randomUUID();
+  await db.execute(
+    `INSERT INTO events (id, event_type, source, payload, created_at) VALUES (?,?,?,?,datetime('now'))`,
+    [id, eventType, source || 'system', JSON.stringify(payload)]
+  ).catch(() => {});
+}
+
+export async function getRecentEvents(limit = 50) {
+  const db = await getDb();
+  return (await db.select(`SELECT * FROM events ORDER BY created_at DESC LIMIT ?`, [limit]).catch(() => [])) || [];
+}
+
 // ── FR-014: Merge duplicate leads — keep primary, delete secondary ────────────
 export async function mergeLeads(primaryId, secondaryId) {
   const db = await getDb();

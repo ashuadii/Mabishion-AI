@@ -4,7 +4,7 @@
  * Creates tables if they do not exist. No destructive changes.
  */
 
-export const SCHEMA_VERSION = 19;
+export const SCHEMA_VERSION = 20;
 
 export const CREATE_TABLES_SQL = [
   `CREATE TABLE IF NOT EXISTS clients (
@@ -499,6 +499,34 @@ export async function upgradeDatabase(db) {
           [id, modeId, workerId, isPrimary]
         ).catch(() => {});
       }
+    }
+
+    // ── v20: ERD v1.4 missing tables — user_projects + events ─────────────────
+    if (currentVersion < 20) {
+      // ERD §Priority1: user_projects junction table (users ↔ projects many-to-many)
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS user_projects (
+          user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+          role TEXT NOT NULL DEFAULT 'member',
+          assigned_at TEXT DEFAULT (datetime('now')),
+          PRIMARY KEY (user_id, project_id)
+        )
+      `).catch(() => {});
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_user_projects_project ON user_projects(project_id)').catch(() => {});
+
+      // ERD §Priority2: events table — system event observability (worker lifecycle, mode switches)
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS events (
+          id TEXT PRIMARY KEY,
+          event_type TEXT NOT NULL,
+          source TEXT,
+          payload TEXT,
+          created_at TEXT DEFAULT (datetime('now'))
+        )
+      `).catch(() => {});
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_events_type ON events(event_type)').catch(() => {});
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_events_created ON events(created_at)').catch(() => {});
     }
 
     // Insert or update version

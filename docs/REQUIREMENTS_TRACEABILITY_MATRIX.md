@@ -455,24 +455,31 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | BRD | 21 | 16 | 3 | 0 | 2 |
 | PRD P0 (FR-001–FR-071) | 71 | 47 | 9 | 0 | 15 |
 | PRD P1 (FR-072–FR-086) | 15 | 9 | 5 | 0 | 1 |
-| Database Spec (DB-001–036) | 36 | 31 | 1 | 2 | 2 |
+| Database Spec (DB-001–036+ERD) | 38 | 33 | 1 | 2 | 2 |
 | API Spec (API-001–027) | 27 | 20 | 2 | 0 | 5 |
 | Architecture & Security | 19 | 11 | 2 | 6 | 0 |
 | Agent System | 9 | 8 | 0 | 0 | 1 |
 | Worker Architecture | 18 | 18 | 0 | 0 | 0 |
 | Human Approval Framework | 10 | 9 | 1 | 0 | 0 |
-| Cost Governance | 9 | 7 | 2 | 0 | 0 |
+| Cost Governance | 9 | 8 | 1 | 0 | 0 |
 | UI/UX Spec | 19 | 15 | 2 | 1 | 1 |
 | Testing Strategy | 14 | 10 | 0 | 0 | 4 |
-| Disaster Recovery | 8 | 6 | 1 | 1 | 0 |
-| Operations Manual | 8 | 6 | 2 | 0 | 0 |
+| Disaster Recovery | 8 | 7 | 0 | 1 | 0 |
+| Operations Manual | 8 | 7 | 1 | 0 | 0 |
 | Deployment Guide | 10 | 6 | 1 | 1 | 2 |
-| **TOTAL** | **319** | **259 (81%)** | **33 (10%)** | **11 (4%)** | **35 (11%)** |
+| ERD | 2 | 2 | 0 | 0 | 0 |
+| MVP Build Order | 0 | — | — | — | — |
+| Development Roadmap | 0 | — | — | — | — |
+| Implementation Plan | 0 | — | — | — | — |
+| Addendum | 4 | 4 | 0 | 0 | 0 |
+| **TOTAL** | **325** | **264 (81%)** | **30 (9%)** | **11 (3%)** | **33 (10%)** |
 
-**Last updated:** 2026-07-01 v4 (Mega session) — BRD-015 ✅ ProductsScreen new screen, FR-014 ✅ merge duplicates, FR-016 ✅ FTS5 lead search, FR-018/019 ✅ archive/restore leads, FR-024 ✅ backup failure WhatsApp, FR-075 ✅ client comms history, HAF-007 ✅ rate limit 10/min, OPS-007 ✅ pending approval cron reminder, API-024 ✅ mode_workers seeded, TEST-009 ✅ 7-suite integration test file, UX-013 ✅ systematic Hinglish, UX-014 ⚠️ aria-labels added (full WCAG audit deferred). Schema v19 added: leads.archived, communications, products, rate_limit_log, leads_fts FTS5. Build: ✅ exit 0. RTM: 74% → 81%.
-Prior session (2026-07-01 v3): WK-WK-ID ✅, FR-004 ✅, FR-005 ✅, UX-016 ✅, UX-018 ✅. RTM: 71% → 74%.
-Prior session (2026-07-01 v2): FR-054, FR-044, FR-048b, DB-037–042, schema v16–v18. RTM: 67% → 71%.
-Prior session (2026-07-01 v1): ARCH-006 Argon2id, AG-005/006, HAF-005, TEST-014, DR-007, API-021–027.
+**Processed Documents (all 23):** Vision ✅ BRD ✅ PRD ✅ SRD ✅ TRD ✅ Architecture ✅ DB Spec ✅ Security Architecture ✅ Worker Architecture ✅ Agent System ✅ API Spec ✅ UI/UX Spec ✅ Human Approval ✅ Cost Governance ✅ Testing Strategy ✅ Operations Manual ✅ Deployment Guide ✅ Disaster Recovery ✅ **ERD ✅ MVP Build Order ✅ Development Roadmap ✅ Implementation Plan ✅ Addendum ✅**
+
+**Last updated:** 2026-07-01 v5 (All 23 docs processed) — ERD: schema v20 `user_projects`+`events` tables + `logEvent()` fn. Addendum: ₹140/day kill switch (non-critical workers auto-pause at 93.3% daily budget), backup validation cron (daily integrity check + WhatsApp alert on fail), Operations checklist UI (Daily/Weekly/Monthly in Settings > Ops Checklist tab, localStorage-persisted). Build: ✅ exit 0. RTM: 81% (264/325 including new reqs from 5 docs).
+Prior session (2026-07-01 v4): BRD-015, FR-014/016/018/019/024/075, HAF-007, OPS-007, API-024, TEST-009, UX-013/014, schema v19. RTM: 74% → 81%.
+Prior session (2026-07-01 v3): WK-WK-ID, FR-004/005, UX-016/018. RTM: 71% → 74%.
+Prior sessions: FR-054, ARCH-006, AG-005/006, HAF-005, TEST-014, DR-007, API-021–027, schema v14–v18.
 
 ---
 

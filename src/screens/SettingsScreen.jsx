@@ -86,6 +86,103 @@ function CpanelDeployPanel() {
   );
 }
 
+// Addendum Ops §3.1-3.3: Daily/Weekly/Monthly Checklists
+const OPS_CHECKLISTS = {
+  daily: [
+    { id: 'd1', label: 'Mickii Orchestrator start ho gaya — Dashboard load check karo' },
+    { id: 'd2', label: 'Worker Monitor mein koi failed jobs toh nahi hain' },
+    { id: 'd3', label: 'AI Cost gauge check karo — ₹150 limit ke andar hai?' },
+    { id: 'd4', label: 'Pending Approvals dekho — koi 2h+ se wait toh nahi kar raha' },
+    { id: 'd5', label: 'Morning Brief notification aaya ya nahi' },
+    { id: 'd6', label: 'Naye leads check karo — koi high-value lead pending toh nahi' },
+  ],
+  weekly: [
+    { id: 'w1', label: 'Manual backup lo — Settings > Database > Export' },
+    { id: 'w2', label: 'Backup file open karke validate karo (valid JSON hai?)' },
+    { id: 'w3', label: 'Security Auditor worker chalao — API keys aur gates check' },
+    { id: 'w4', label: 'GST filing reminder check karo — GSTR-1 (11th) / GSTR-3B (20th)' },
+    { id: 'w5', label: 'Lead pipeline review — Qualified leads mein follow-up pending?' },
+    { id: 'w6', label: 'Invoice status check — koi overdue payment toh nahi' },
+  ],
+  monthly: [
+    { id: 'm1', label: 'Full DR drill — backup restore test karo Settings mein' },
+    { id: 'm2', label: 'Monthly AI cost review — ₹1,500 limit ke against actual spend' },
+    { id: 'm3', label: 'GST return file karo — GSTR-1 + GSTR-3B' },
+    { id: 'm4', label: 'Client communications review — sab clients ko touch karo' },
+    { id: 'm5', label: 'Product catalog review — koi nayi product add karna hai?' },
+    { id: 'm6', label: 'Worker performance review — koi worker consistently fail toh nahi ho raha' },
+  ],
+};
+
+function OpsChecklistPanel() {
+  const storageKey = 'mabishion_ops_checklist';
+  const today = new Date().toISOString().split('T')[0];
+  const week = `${new Date().getFullYear()}-W${Math.ceil(new Date().getDate() / 7)}`;
+  const month = new Date().toISOString().slice(0, 7);
+
+  const load = () => {
+    try { return JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch { return {}; }
+  };
+
+  const [checked, setChecked] = React.useState(load);
+
+  const toggle = (period, id) => {
+    const key = `${period}-${period === 'daily' ? today : period === 'weekly' ? week : month}-${id}`;
+    const next = { ...checked, [key]: !checked[key] };
+    setChecked(next);
+    localStorage.setItem(storageKey, JSON.stringify(next));
+  };
+
+  const isChecked = (period, id) => {
+    const key = `${period}-${period === 'daily' ? today : period === 'weekly' ? week : month}-${id}`;
+    return !!checked[key];
+  };
+
+  const renderList = (period, color) => {
+    const items = OPS_CHECKLISTS[period];
+    const done = items.filter(i => isChecked(period, i.id)).length;
+    return (
+      <div className="p-5 rounded-2xl border border-white/10 bg-white/5">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-black text-white text-sm capitalize">{period} Checklist</h3>
+          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${done === items.length ? 'bg-emerald-500/20 text-emerald-300' : 'bg-white/10 text-slate-400'}`}>
+            {done}/{items.length} done
+          </span>
+        </div>
+        <div className="space-y-2">
+          {items.map(item => (
+            <label key={item.id} className="flex items-start gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={isChecked(period, item.id)}
+                onChange={() => toggle(period, item.id)}
+                className="mt-0.5 accent-violet-500 rounded shrink-0"
+                aria-label={item.label}
+              />
+              <span className={`text-xs leading-relaxed transition-all ${isChecked(period, item.id) ? 'line-through text-slate-500' : 'text-slate-300 group-hover:text-white'}`}>
+                {item.label}
+              </span>
+            </label>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="p-4 rounded-xl bg-violet-500/10 border border-violet-500/20 text-xs text-slate-300">
+        <strong className="text-violet-300">Ops Discipline:</strong> Yeh checklists har din/hafte/mahine follow karo. State browser mein save hoti hai — app restart pe bhi yaad rehta hai.
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {renderList('daily', 'blue')}
+        {renderList('weekly', 'violet')}
+        {renderList('monthly', 'emerald')}
+      </div>
+    </div>
+  );
+}
+
 const SettingsScreen = ({ onNavigate }) => {
   const [activeTab, setActiveTab] = useState('credentials'); // 'credentials' or 'mcp'
   
@@ -352,6 +449,15 @@ const SettingsScreen = ({ onNavigate }) => {
             }`}
           >
             🚀 cPanel Deploy
+          </button>
+          <button
+            onClick={() => setActiveTab('ops')}
+            className={`pb-3 px-4 text-xs font-black uppercase tracking-wider transition-all ${
+              activeTab === 'ops' ? 'text-indigo-400 border-b-2 border-indigo-400' : 'text-gray-500'
+            }`}
+            aria-label="Operations checklists"
+          >
+            📋 Ops Checklist
           </button>
         </div>
 
@@ -855,6 +961,9 @@ const SettingsScreen = ({ onNavigate }) => {
         {activeTab === 'deploy' && (
           <CpanelDeployPanel />
         )}
+
+        {/* Addendum Ops §3.1–3.3: Daily/Weekly/Monthly Operations Checklist */}
+        {activeTab === 'ops' && <OpsChecklistPanel />}
 
         {/* Global Save Button */}
         <div className="mt-8 flex justify-end">

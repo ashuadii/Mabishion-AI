@@ -318,6 +318,10 @@ export async function runCostAlertJob() {
       if (pct >= 100) {
         await logAudit('CRITICAL', `COST HARD STOP — ${period} limit reached`, JSON.stringify({ cost_paise: cost, limit_paise: limit, percent: pct }));
         window?.dispatchEvent(new CustomEvent('nexious_cost_alert', { detail: { level: 'critical', period, cost, limit, percent: pct } }));
+      } else if (pct >= 93.3) {
+        // Addendum Cost Gov: ₹140/day kill switch (93.3% of ₹150 = ₹140)
+        await logAudit('WARN', `COST KILL SWITCH — ${period} at ₹140 (non-critical workers paused)`, JSON.stringify({ cost_paise: cost, limit_paise: limit, percent: pct }));
+        window?.dispatchEvent(new CustomEvent('nexious_cost_alert', { detail: { level: 'kill_switch', period, cost, limit, percent: pct } }));
       } else if (pct >= 90) {
         await logAudit('WARN', `COST HIGH — ${period} at ${pct.toFixed(1)}%`, JSON.stringify({ cost_paise: cost, limit_paise: limit, percent: pct }));
         window?.dispatchEvent(new CustomEvent('nexious_cost_alert', { detail: { level: 'high', period, cost, limit, percent: pct } }));
@@ -367,3 +371,57 @@ export async function runPendingApprovalReminderJob() {
 
 // OPS-007: Run every 4 hours
 cronEngine.schedule('PendingApprovalReminder', 4 * 60 * 60 * 1000, runPendingApprovalReminderJob);
+
+/**
+ * Addendum DR §5.1: Daily Backup Validation — automated spot-check.
+ * Reads the most recent backup file and validates its integrity.
+ * Runs once per day (offset from main backup by 2 hours).
+ */
+export async function runBackupValidationJob() {
+  try {
+    // Read the latest backup from disk
+    const { readDir, readTextFile, BaseDirectory } = await import('@tauri-apps/plugin-fs');
+    const backupDir = 'mabishion_backups';
+
+    let files = [];
+    try {
+      files = await readDir(backupDir, { baseDir: BaseDirectory.AppLocalData });
+    } catch {
+      await logAudit('WARN', 'Backup validation: no backup directory found', '{}').catch(() => {});
+      return;
+    }
+
+    // Find most recent .json backup file
+    const jsonFiles = (files || [])
+      .filter(f => f.name && f.name.endsWith('.json'))
+      .sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+
+    if (jsonFiles.length === 0) {
+      await logAudit('WARN', 'Backup validation: no backup files found', '{}').catch(() => {});
+      return;
+    }
+
+    const latestFile = jsonFiles[0];
+    const content = await readTextFile(`${backupDir}/${latestFile.name}`, { baseDir: BaseDirectory.AppLocalData });
+
+    const { validateBackupIntegrity } = await import('../data/db.js');
+    const result = validateBackupIntegrity(content);
+
+    if (!result.valid) {
+      await logAudit('CRITICAL', `Backup validation FAILED: ${result.reason}`, JSON.stringify({ file: latestFile.name })).catch(() => {});
+      // Alert owner via WhatsApp
+      const phone = await getSetting('wa_personal_number').catch(() => null);
+      if (phone) {
+        const { WhatsAppService } = await import('./whatsappService.js');
+        await WhatsAppService.sendMessage(phone, `🚨 Backup validation FAIL: ${latestFile.name} — ${result.reason}. Turant manual backup lo!`).catch(() => {});
+      }
+    } else {
+      await logAudit('INFO', `Backup validation OK: ${latestFile.name} (${result.tableCount} tables, ${result.totalRows} rows)`, JSON.stringify(result)).catch(() => {});
+    }
+  } catch (err) {
+    console.warn('[BackupValidation] Failed (non-blocking):', err.message);
+  }
+}
+
+// Addendum DR: Run backup validation daily at offset (26h — offset from backup job)
+cronEngine.schedule('BackupValidation', 26 * 60 * 60 * 1000, runBackupValidationJob);
