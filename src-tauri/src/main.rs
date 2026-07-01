@@ -952,7 +952,7 @@ fn get_error_logs(limit: Option<u32>) -> serde_json::Value {
 // API-017: v1/run_worker — dispatch a named worker via IPC
 // Full execution handled JS-side; this command validates and acknowledges the request.
 #[tauri::command]
-fn run_worker(worker_id: String, task_id: Option<String>, input: Option<serde_json::Value>) -> serde_json::Value {
+fn run_worker(worker_id: String, task_id: Option<String>, _input: Option<serde_json::Value>) -> serde_json::Value {
     let valid_workers = vec![
         "developer","qa_worker","writer","proposal_maker","business_analyst",
         "documentor","lead_manager","notification","payment_handler","social_scheduler",

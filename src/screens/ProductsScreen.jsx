@@ -73,7 +73,7 @@ export default function ProductsScreen({ onNavigate }) {
   const activeCount = products.filter(p => p.status === 'active').length;
 
   return (
-    <AppShell onNavigate={onNavigate} currentScreen="products">
+    <AppShell activeNavId="products" onNavigate={onNavigate}>
       <ScreenHeader
         title="Digital Products"
         pageTitle="Products Catalog"

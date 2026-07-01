@@ -954,7 +954,8 @@ export async function getProjects() {
 
 export async function getLeads() {
   const db = await getDb();
-  return await db.select('SELECT * FROM leads ORDER BY score DESC');
+  // FR-018: Exclude archived leads from default list (archived=1 or archived IS NULL treated as active)
+  return await db.select('SELECT * FROM leads WHERE archived IS NULL OR archived=0 ORDER BY score DESC');
 }
 
 export async function getSkills() {

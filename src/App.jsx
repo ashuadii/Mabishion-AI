@@ -59,7 +59,6 @@ export default function App() {
         <Route path="/automations" element={<AutomationsScreen onNavigate={handleNavigate} />} />
         
         {/* Core Sidebar 8 items */}
-        <Route path="/products" element={<ProjectsScreen onNavigate={handleNavigate} />} />
         <Route path="/projects" element={<ProjectsScreen onNavigate={handleNavigate} />} />
         <Route path="/projects/:id" element={<ProjectDetailScreen onNavigate={handleNavigate} />} />
         <Route path="/leads" element={<LeadsScreen onNavigate={handleNavigate} />} />
