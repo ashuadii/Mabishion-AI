@@ -16,7 +16,6 @@ const NAV_ITEMS = [
   { id: 'sales-marketing', label: 'Sales & Marketing Hub', icon: 'megaphone' },
   { id: 'approvals', label: 'Approval Center', icon: 'approval', badge: true },
   { id: 'finance', label: 'Finance Hub', icon: 'wallet' },
-  { id: 'invoices', label: 'Invoices', icon: 'file' },
   { id: 'worker-monitor', label: 'Worker Monitor', icon: 'brain' },
   { id: 'products', label: 'Products', icon: 'inventory' },
   { id: 'documents', label: 'Documents', icon: 'file' },

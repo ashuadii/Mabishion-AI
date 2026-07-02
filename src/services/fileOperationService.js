@@ -58,72 +58,229 @@ export async function saveFileToUserDirectory(filename, blob) {
  * @returns {Promise<Blob>} The generated PDF Blob
  */
 export async function generatePdfInvoice(data) {
-  const doc = new jsPDF();
-  const title = data.title || 'Mabishion AI Proposal Summary';
-  const client = data.clientName || 'Valued Client';
-  const amount = data.amount || '$0.00';
-  const date = data.date || new Date().toLocaleDateString();
-  const items = data.items || [];
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const PW = 210; // page width
+  const M  = 15; // margin
 
-  // Draw elegant Glassmorphism-style design tokens on the PDF!
-  // Header Glow banner
-  doc.setFillColor(15, 23, 42); // Slate-900 background tint
-  doc.rect(0, 0, 210, 45, 'F');
+  // ── Extracted data ──────────────────────────────────────────────────────
+  const invoiceNo    = data.invoiceNumber || data.invoice_number || `INV-${Date.now().toString().slice(-6)}`;
+  const invoiceDate  = data.date || new Date().toLocaleDateString('en-IN');
+  const dueDate      = data.dueDate || data.due_date || '';
+  const clientName   = data.clientName || data.client_name || 'Client';
+  const clientGstin  = data.clientGstin || '';
+  const clientAddr   = data.clientAddress || '';
+  const items        = data.lineItems || data.items || [];
+  const subtotal     = data.subtotalInr  || (data.subtotal_inr  ? data.subtotal_inr  / 100 : 0);
+  const gstAmt       = data.gstAmountInr || (data.gst_amount_inr ? data.gst_amount_inr / 100 : 0);
+  const total        = data.totalInr     || (data.total_inr     ? data.total_inr     / 100 : 0);
+  const notes        = data.notes || 'Payment due within 7 days. Thank you for your business!';
 
-  // Title text with Inter-like spacing
-  doc.setTextColor(99, 102, 241); // Indigo-500
+  const fmtINR = (n) => `Rs. ${Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  // ── HEADER BAND ─────────────────────────────────────────────────────────
+  doc.setFillColor(15, 23, 42);          // dark navy
+  doc.rect(0, 0, PW, 42, 'F');
+
+  // Brand name
   doc.setFont('Helvetica', 'bold');
-  doc.setFontSize(24);
-  doc.text('MABISHION AI', 20, 20);
+  doc.setFontSize(22);
+  doc.setTextColor(255, 255, 255);
+  doc.text('Mabishion AI', M, 16);
 
-  doc.setTextColor(248, 250, 252); // Text White
-  doc.setFontSize(11);
+  // Tagline
   doc.setFont('Helvetica', 'normal');
-  doc.text('The Premium Digital Factory & Revenue Engine', 20, 28);
-  doc.text(`DATE: ${date}`, 150, 20);
+  doc.setFontSize(8);
+  doc.setTextColor(148, 163, 184);
+  doc.text('Private Digital Agency & AI Product Studio', M, 22);
+  doc.text('India · Freelance & Digital Services', M, 27);
 
-  // Client Details
-  doc.setTextColor(15, 23, 42); // Slate-900
-  doc.setFontSize(12);
+  // TAX INVOICE label — right side
   doc.setFont('Helvetica', 'bold');
-  doc.text('CLIENT SPECIFICATIONS:', 20, 60);
+  doc.setFontSize(14);
+  doc.setTextColor(99, 102, 241);
+  doc.text('TAX INVOICE', PW - M, 16, { align: 'right' });
 
+  // Invoice number + date — right side
   doc.setFont('Helvetica', 'normal');
-  doc.text(`Client Name: ${client}`, 20, 68);
-  doc.text(`Project Target: ${title}`, 20, 76);
-  doc.text(`Total Value: ${amount}`, 20, 84);
+  doc.setFontSize(8.5);
+  doc.setTextColor(200, 210, 230);
+  doc.text(`Invoice No: ${invoiceNo}`, PW - M, 24, { align: 'right' });
+  doc.text(`Date: ${invoiceDate}`, PW - M, 30, { align: 'right' });
+  if (dueDate) doc.text(`Due: ${dueDate}`, PW - M, 36, { align: 'right' });
 
-  // Divider Line
-  doc.setDrawColor(99, 102, 241); // Indigo border
-  doc.setLineWidth(0.5);
-  doc.line(20, 92, 190, 92);
-
-  // Deliverable Line Items
+  // ── BILLED TO / FROM ────────────────────────────────────────────────────
+  let y = 52;
   doc.setFont('Helvetica', 'bold');
-  doc.text('ESTIMATED DELIVERABLES & PHASES:', 20, 102);
+  doc.setFontSize(8);
+  doc.setTextColor(99, 102, 241);
+  doc.text('BILLED FROM', M, y);
+  doc.text('BILLED TO', PW / 2 + 5, y);
 
+  y += 5;
+  doc.setFont('Helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(15, 23, 42);
+  doc.text('Mabishion AI', M, y);
+  doc.text(clientName, PW / 2 + 5, y);
+
+  y += 5;
   doc.setFont('Helvetica', 'normal');
-  let yPosition = 112;
-  if (items.length === 0) {
-    doc.text('- Core Custom Web Application Build & API Engine Integration', 20, yPosition);
-    doc.text('- Business Intelligence Analysis & System Blueprint documentation', 20, yPosition + 8);
-    doc.text('- 24/7 Automated Lead Pipeline Routing with WhatsApp Alerts', 20, yPosition + 16);
-  } else {
-    items.forEach((item, index) => {
-      doc.text(`${index + 1}. ${item}`, 20, yPosition);
-      yPosition += 8;
-    });
+  doc.setFontSize(8.5);
+  doc.setTextColor(71, 85, 105);
+  doc.text('Digital Agency · AI Automation Services', M, y);
+  if (clientAddr) doc.text(clientAddr, PW / 2 + 5, y);
+
+  y += 5;
+  doc.text('India', M, y);
+  if (clientGstin) {
+    y += 4;
+    doc.setFont('Helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text(`GSTIN: ${clientGstin}`, PW / 2 + 5, y);
+    doc.setFont('Helvetica', 'normal');
+    doc.setTextColor(71, 85, 105);
   }
 
-  // Footer Disclaimer block
-  doc.setFillColor(241, 245, 249); // light surface tint
-  doc.rect(20, 240, 170, 25, 'F');
+  // ── DIVIDER ─────────────────────────────────────────────────────────────
+  y += 10;
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.3);
+  doc.line(M, y, PW - M, y);
+
+  // ── LINE ITEMS TABLE ────────────────────────────────────────────────────
+  y += 6;
+  // Table header
+  doc.setFillColor(241, 245, 249);
+  doc.rect(M, y - 4, PW - M * 2, 8, 'F');
+  doc.setFont('Helvetica', 'bold');
   doc.setFontSize(8);
-  doc.setTextColor(100, 116, 139); // Slate-500
-  doc.setFont('Helvetica', 'oblique');
-  doc.text('Mabishion AI operates as the private, high-fidelity EARNING ENGINE of the owner.', 25, 247);
-  doc.text('This document serves as an operational blueprint and commercial estimate draft.', 25, 252);
-  doc.text('All specifications are subject to owner authorization.', 25, 257);
+  doc.setTextColor(71, 85, 105);
+  doc.text('#',   M + 2, y + 1);
+  doc.text('Description / Service',    M + 10, y + 1);
+  doc.text('HSN',  PW - 85, y + 1);
+  doc.text('Qty',  PW - 65, y + 1);
+  doc.text('Rate', PW - 48, y + 1);
+  doc.text('Amount', PW - M, y + 1, { align: 'right' });
+
+  y += 8;
+  doc.setLineWidth(0.2);
+  doc.line(M, y - 3, PW - M, y - 3);
+
+  // Items
+  const lineItems = items.length > 0 ? items : [
+    { desc: data.title || 'Digital Service', hsn: '998314', qty: 1, rate: subtotal || total / 1.18 }
+  ];
+
+  doc.setFont('Helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(30, 41, 59);
+
+  lineItems.forEach((item, idx) => {
+    const desc   = typeof item === 'string' ? item.replace(/^\d+\.\s*/, '') : (item.desc || item);
+    const hsn    = item.hsn || '998314';
+    const qty    = item.qty || 1;
+    const rate   = item.rate || (item.amount ? item.amount / qty : subtotal / lineItems.length);
+    const amount = qty * rate;
+
+    if (y > 230) {
+      doc.addPage();
+      y = 20;
+    }
+
+    // Alternating row tint
+    if (idx % 2 === 0) {
+      doc.setFillColor(250, 251, 255);
+      doc.rect(M, y - 3.5, PW - M * 2, 7, 'F');
+    }
+
+    doc.text(String(idx + 1), M + 2, y + 1);
+    // Wrap long descriptions
+    const descLines = doc.splitTextToSize(desc, PW - M * 2 - 95);
+    doc.text(descLines[0], M + 10, y + 1);
+    doc.text(String(hsn),              PW - 85, y + 1);
+    doc.text(String(qty),              PW - 65, y + 1);
+    doc.text(fmtINR(rate),             PW - 48, y + 1);
+    doc.text(fmtINR(amount),           PW - M,  y + 1, { align: 'right' });
+
+    y += 8;
+    doc.setDrawColor(226, 232, 240);
+    doc.line(M, y - 1, PW - M, y - 1);
+  });
+
+  // ── TOTALS BOX ──────────────────────────────────────────────────────────
+  y += 4;
+  const boxX = PW / 2 + 10;
+  const boxW = PW - M - boxX;
+
+  const totalsData = [
+    ['Subtotal',        fmtINR(subtotal || total / 1.18)],
+    ['CGST @9%',        fmtINR((gstAmt || total - subtotal) / 2)],
+    ['SGST @9%',        fmtINR((gstAmt || total - subtotal) / 2)],
+  ];
+
+  doc.setFontSize(8.5);
+  totalsData.forEach(([label, val]) => {
+    doc.setFont('Helvetica', 'normal');
+    doc.setTextColor(71, 85, 105);
+    doc.text(label, boxX, y);
+    doc.setTextColor(30, 41, 59);
+    doc.text(val, PW - M, y, { align: 'right' });
+    y += 6;
+    doc.setDrawColor(226, 232, 240);
+    doc.line(boxX, y - 2, PW - M, y - 2);
+  });
+
+  // Total row — highlighted
+  y += 2;
+  doc.setFillColor(15, 23, 42);
+  doc.rect(boxX - 3, y - 4, boxW + 6, 10, 'F');
+  doc.setFont('Helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(255, 255, 255);
+  doc.text('TOTAL (incl. GST)',  boxX, y + 2);
+  doc.setTextColor(99, 102, 241);
+  doc.text(fmtINR(total || subtotal * 1.18), PW - M, y + 2, { align: 'right' });
+
+  // ── AMOUNT IN WORDS ─────────────────────────────────────────────────────
+  y += 16;
+  doc.setFont('Helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(100, 116, 139);
+  const totalWords = Math.round(total || subtotal * 1.18);
+  doc.text(`Amount in Words: Rupees ${totalWords.toLocaleString('en-IN')} Only`, M, y);
+
+  // ── PAYMENT & NOTES ─────────────────────────────────────────────────────
+  y += 10;
+  doc.setDrawColor(226, 232, 240);
+  doc.line(M, y, PW - M, y);
+  y += 6;
+
+  doc.setFont('Helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(15, 23, 42);
+  doc.text('Payment Terms', M, y);
+  doc.text('Notes', PW / 2 + 5, y);
+
+  y += 5;
+  doc.setFont('Helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(71, 85, 105);
+  doc.text('UPI / Bank Transfer', M, y);
+  doc.text(doc.splitTextToSize(notes, 85), PW / 2 + 5, y);
+  y += 5;
+  doc.text('Due within 7 days of invoice date', M, y);
+
+  // ── FOOTER ──────────────────────────────────────────────────────────────
+  doc.setFillColor(248, 250, 252);
+  doc.rect(0, 272, PW, 25, 'F');
+  doc.setFont('Helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(148, 163, 184);
+  doc.text('This is a computer-generated invoice. No signature required.', PW / 2, 280, { align: 'center' });
+  doc.text('Mabishion AI · Digital Services · India · DPDP Act 2023 Compliant', PW / 2, 286, { align: 'center' });
+  doc.setFont('Helvetica', 'bold');
+  doc.setTextColor(99, 102, 241);
+  doc.text('Thank you for your business!', PW / 2, 292, { align: 'center' });
 
   return doc.output('blob');
 }
