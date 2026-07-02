@@ -585,1027 +585,383 @@ Reference URL or notes: ${planUrl || "None"}
     await send(prompt);
   };
 
+  // ── Quick action nav items ──────────────────────────────────────────────────
+  const QUICK_ACTIONS = [
+    { label: 'New Lead',    icon: 'person_add', route: 'leads',    color: '#6366F1' },
+    { label: 'New Project', icon: 'rocket',     route: 'projects', color: '#F59E0B' },
+    { label: 'New Invoice', icon: 'receipt_long',route: 'invoices', color: '#10B981' },
+    { label: 'Approval',    icon: 'approval',   route: 'approvals', color: '#EF4444' },
+    { label: 'Reports',     icon: 'analytics',  route: 'analytics', color: '#8B5CF6' },
+  ];
+
+  const dailyPct  = Math.min(100, Math.round((dailyCostPaise  / 15000)  * 100));
+  const monthlyPct = Math.min(100, Math.round((monthlyCostPaise / 150000) * 100));
+  const activeProjects = projects.filter(p => p.stage !== 'Delivered' && p.stage !== 'Completed');
+
   return (
     <AppShell
       activeNavId="dashboard"
       onNavigate={onNavigate}
       commandBar={
         <div
-          className="fixed bottom-5 right-6 z-40 flex h-[64px] items-center gap-4 px-4"
-          style={{ left: 300, ...glassStyle({ strong: true, glow: 'primary' }) }}
+          className="fixed bottom-5 right-6 z-40 flex h-[58px] items-center gap-3 px-4 rounded-2xl"
+          style={{ left: 300, background: 'rgba(15,23,42,0.92)', border: '1px solid rgba(99,102,241,0.3)', backdropFilter: 'blur(20px)', boxShadow: '0 8px 32px rgba(99,102,241,0.15)' }}
         >
           <MickiiOrb isThinking={isProcessing} />
-          <Badge tone="violet">Dashboard</Badge>
           <input
-            className="min-w-0 flex-1 bg-transparent text-sm outline-none text-white placeholder-gray-500"
-            placeholder="Mickii se poocho: skill chalao, status check karo, workflow shuru karo..."
+            className="min-w-0 flex-1 bg-transparent text-sm outline-none text-white placeholder-slate-500"
+            placeholder="Mickii se poocho — website banao, lead qualify karo, invoice generate karo..."
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleChatSend()}
-            aria-label="Mickii AI command input — type your instruction and press Enter"
-            role="searchbox"
-            aria-multiline="false"
+            onKeyDown={(e) => e.key === 'Enter' && handleChatSend()}
+            aria-label="Mickii AI command input"
           />
-          <Button
-            variant={isListening ? "danger" : "soft"}
+          {isListening && <span className="text-[10px] text-red-400 font-bold animate-pulse">● REC</span>}
+          <button
             onClick={isListening ? stopListening : startListening}
+            className={`p-2 rounded-xl transition-all ${isListening ? 'bg-red-500/20 text-red-400' : 'text-slate-500 hover:text-white hover:bg-white/10'}`}
           >
-            <Icon
-              name={isListening ? "stop" : "mic"}
-              size={17}
-              className={isListening ? "animate-pulse" : ""}
-            />
-          </Button>
-          <Button onClick={handleChatSend} className="bg-indigo-600 hover:bg-indigo-500 text-white border-0">
-            <Icon name="send" size={17} />
-          </Button>
+            <Icon name="mic" size={16} />
+          </button>
+          <button
+            onClick={handleChatSend}
+            disabled={!chatInput.trim() || isProcessing}
+            className="px-4 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {isProcessing ? '...' : 'Send'}
+          </button>
         </div>
       }
     >
-      <ScreenHeader
-        title="Home"
-        pageTitle="Dashboard"
-        index="01"
-        subtitle="Command center for Mickii's private earning operations. Run custom skills, approve lead actions, and track real-time analytics."
-        badgeLabel="Offline Local Engine · Secure SQLite"
-        primaryAction="Review Approvals"
-        primaryIcon="shield"
-        secondaryAction="Skill Library"
-        secondaryIcon="brain"
-        onPrimaryClick={() => onNavigate("approvals")}
-        onSecondaryClick={() => onNavigate("system-monitor")}
-        extraBadges={
-          <>
-            <Badge tone="gold">{skills.length} Skills</Badge>
-            <Badge tone="success">Rs. 0 Cost Mode</Badge>
-            <Badge tone="violet">Mickii</Badge>
-          </>
-        }
-      />
-
-      <section className="grid grid-cols-12 gap-5 pb-24">
-
-        {/* VIS-011: Vision Success Metrics — Revenue target, Conversion rates, Projects delivered */}
-        <div className="col-span-12 grid grid-cols-4 gap-3">
-          {[
-            {
-              label: 'Monthly Revenue', icon: 'currency',
-              value: `₹${(visionMetrics.monthlyRevenue).toLocaleString('en-IN')}`,
-              sub: `Target: ₹1,00,000`,
-              pct: Math.min(100, Math.round((visionMetrics.monthlyRevenue / 100000) * 100)),
-              tone: visionMetrics.monthlyRevenue >= 100000 ? '#10B981' : visionMetrics.monthlyRevenue >= 70000 ? '#F59E0B' : '#6366F1'
-            },
-            {
-              label: 'Lead → Proposal', icon: 'trending_up',
-              value: `${visionMetrics.leadToProposal}%`,
-              sub: 'Target: >30%',
-              pct: Math.min(100, Math.round((visionMetrics.leadToProposal / 30) * 100)),
-              tone: visionMetrics.leadToProposal >= 30 ? '#10B981' : '#F59E0B'
-            },
-            {
-              label: 'Proposal → Win', icon: 'handshake',
-              value: `${visionMetrics.proposalToWin}%`,
-              sub: 'Target: >40%',
-              pct: Math.min(100, Math.round((visionMetrics.proposalToWin / 40) * 100)),
-              tone: visionMetrics.proposalToWin >= 40 ? '#10B981' : '#F59E0B'
-            },
-            {
-              label: 'Projects Delivered', icon: 'inventory',
-              value: `${visionMetrics.projectsDelivered}`,
-              sub: 'Target: 50 (Year 1)',
-              pct: Math.min(100, Math.round((visionMetrics.projectsDelivered / 50) * 100)),
-              tone: visionMetrics.projectsDelivered >= 50 ? '#10B981' : '#6366F1'
-            },
-          ].map(m => (
-            <div key={m.label} className="p-4 rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: 'rgba(148,163,184,0.7)' }}>{m.label}</p>
-              <p className="text-xl font-black text-white mb-1">{m.value}</p>
-              <div className="h-1 rounded-full mb-1" style={{ background: 'rgba(255,255,255,0.08)' }}>
-                <div className="h-1 rounded-full transition-all duration-500" style={{ width: `${m.pct}%`, background: m.tone }} />
-              </div>
-              <p className="text-[10px]" style={{ color: 'rgba(148,163,184,0.6)' }}>{m.sub}</p>
-            </div>
-          ))}
+      {/* ── Morning Brief — compact callout ────────────────────────────────── */}
+      {morningBrief && (
+        <div className="mb-5 flex items-start gap-3 px-4 py-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/5">
+          <span className="text-base mt-0.5">🌅</span>
+          <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">{morningBrief}</p>
         </div>
+      )}
 
-        {/* AG-CFO Cost Gauge */}
-        {(() => {
-          const dailyRupees = (dailyCostPaise / 100).toFixed(2);
-          const monthlyRupees = (monthlyCostPaise / 100).toFixed(2);
-          const dailyPct = Math.min(100, Math.round((dailyCostPaise / 15000) * 100));
-          const monthlyPct = Math.min(100, Math.round((monthlyCostPaise / 150000) * 100));
-          const dailyTone = dailyPct >= 100 ? C.danger : dailyPct >= 80 ? C.warning : C.success;
-          const monthlyTone = monthlyPct >= 100 ? C.danger : monthlyPct >= 80 ? C.warning : C.success;
-          return (
-            <div className="col-span-12 lg:col-span-6 p-5" style={glassStyle({ glow: dailyPct >= 80 ? 'warning' : 'none' })}>
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="font-black text-white">AG-CFO Cost Monitor</h3>
-                  <p className="text-xs mt-1" style={{ color: C.textMuted }}>Real-time AI spend vs daily/monthly limits</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {llmStatus && llmStatus !== 'Idle' && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: 'rgba(99,102,241,0.15)', color: '#818CF8' }}>
-                      {llmStatus}
-                    </span>
-                  )}
-                  <Badge tone={dailyPct >= 100 ? 'danger' : dailyPct >= 80 ? 'warning' : 'success'}>
-                    {dailyPct >= 100 ? 'LIMIT HIT' : dailyPct >= 80 ? 'WARNING' : 'OK'}
-                  </Badge>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-xs mb-1" style={{ color: C.textMuted }}>
-                    <span>Today: ₹{dailyRupees}</span>
-                    <span style={{ color: dailyTone }}>₹150 limit ({dailyPct}%)</span>
-                  </div>
-                  <ProgressBar value={dailyPct} tone={dailyPct >= 100 ? 'danger' : dailyPct >= 80 ? 'warning' : 'success'} />
-                </div>
-                <div>
-                  <div className="flex justify-between text-xs mb-1" style={{ color: C.textMuted }}>
-                    <span>This month: ₹{monthlyRupees}</span>
-                    <span style={{ color: monthlyTone }}>₹1,500 limit ({monthlyPct}%)</span>
-                  </div>
-                  <ProgressBar value={monthlyPct} tone={monthlyPct >= 100 ? 'danger' : monthlyPct >= 80 ? 'warning' : 'success'} />
-                </div>
-              </div>
+      {/* ── ZONE 1: KPI Cards ───────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        {[
+          {
+            label: 'Revenue MTD',
+            value: `₹${visionMetrics.monthlyRevenue.toLocaleString('en-IN')}`,
+            sub: `${Math.min(100, Math.round((visionMetrics.monthlyRevenue / 100000) * 100))}% of ₹1L target`,
+            icon: 'currency',
+            pct: Math.min(100, Math.round((visionMetrics.monthlyRevenue / 100000) * 100)),
+            barColor: visionMetrics.monthlyRevenue >= 100000 ? '#10B981' : '#6366F1',
+          },
+          {
+            label: 'Active Projects',
+            value: activeProjects.length,
+            sub: `${projects.length} total`,
+            icon: 'project',
+            pct: null,
+            barColor: '#F59E0B',
+          },
+          {
+            label: 'Leads Pipeline',
+            value: leads.length,
+            sub: `${leads.filter(l => l.status === 'Won').length} won`,
+            icon: 'users',
+            pct: null,
+            barColor: '#8B5CF6',
+          },
+          {
+            label: 'AI Cost Today',
+            value: `₹${(dailyCostPaise / 100).toFixed(2)}`,
+            sub: `${dailyPct}% of ₹150 limit`,
+            icon: 'health',
+            pct: dailyPct,
+            barColor: dailyPct >= 90 ? '#EF4444' : dailyPct >= 70 ? '#F59E0B' : '#10B981',
+          },
+        ].map(card => (
+          <div key={card.label} className="p-4 rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] uppercase tracking-wider text-slate-400">{card.label}</span>
+              <Icon name={card.icon} size={14} className="text-slate-600" />
             </div>
-          );
-        })()}
-
-        {/* FR-003: Today's Deadlines + FR-005: Activity Feed */}
-        <div className="col-span-12 grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* FR-003: Deadlines */}
-          <div className="p-5" style={glassStyle()}>
-            <h3 className="font-black text-white mb-3 flex items-center gap-2">
-              <span>📅</span> Today's Deadlines
-            </h3>
-            {todayDeadlines.length === 0 ? (
-              <p className="text-xs" style={{ color: 'rgba(148,163,184,0.6)' }}>No deadlines due today or tomorrow. ✅</p>
-            ) : (
-              <div className="space-y-2">
-                {todayDeadlines.map((d, i) => (
-                  <div key={i} className="flex items-center justify-between p-2 rounded-xl" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
-                    <div>
-                      <p className="text-xs font-bold text-white">{d.label}</p>
-                      <p className="text-[10px]" style={{ color: 'rgba(148,163,184,0.7)' }}>Due: {d.due_date}</p>
-                    </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: 'rgba(239,68,68,0.2)', color: '#FCA5A5' }}>{d.type}</span>
-                  </div>
-                ))}
+            <p className="text-2xl font-black text-white mb-1">{card.value}</p>
+            {card.pct !== null && (
+              <div className="h-1 rounded-full bg-white/10 mb-1.5 overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${card.pct}%`, background: card.barColor }} />
               </div>
             )}
+            <p className="text-[10px] text-slate-500">{card.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* ── ZONE 2: Approvals + Activity ────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-6">
+
+        {/* Pending Approvals — left col */}
+        <div className="lg:col-span-3 rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+          <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+            <div className="flex items-center gap-2">
+              <Icon name="approval" size={15} className="text-violet-400" />
+              <h3 className="text-sm font-black text-white">Approvals</h3>
+              {approvals.length > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-red-500/20 text-red-400">
+                  {approvals.length} pending
+                </span>
+              )}
+            </div>
+            <button onClick={fetchApprovals} className="text-slate-500 hover:text-white transition-colors" aria-label="Refresh approvals">
+              <Icon name="refresh" size={14} />
+            </button>
           </div>
 
-          {/* FR-005: Activity Feed — last 50 events */}
-          <div className="p-5" style={glassStyle()}>
-            <h3 className="font-black text-white mb-3 flex items-center gap-2">
-              <span>📋</span> Activity Feed
-            </h3>
-            <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+          <div className="divide-y divide-white/5">
+            {approvals.length === 0 ? (
+              <div className="px-5 py-10 text-center">
+                <Icon name="check_circle" size={28} className="mx-auto mb-2 text-emerald-500/40" />
+                <p className="text-xs text-slate-500">Koi pending approval nahi. ✅</p>
+              </div>
+            ) : (
+              approvals.slice(0, 5).map((app) => (
+                <div
+                  key={app.id || app.title}
+                  className="flex items-center justify-between px-5 py-3.5 hover:bg-white/5 transition-all cursor-pointer group"
+                  onClick={() => onNavigate('approvals', { selectedId: app.id })}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${(app.type === 'critical' || app.action_type === 'critical') ? 'bg-red-400' : 'bg-amber-400'}`} />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-white truncate group-hover:text-violet-300 transition-colors">
+                        {app.title || app.preview}
+                      </p>
+                      <p className="text-[10px] text-slate-500 truncate">
+                        {app.action_type || app.source || 'Worker request'} · {app.type || 'standard'}
+                      </p>
+                    </div>
+                  </div>
+                  {app.id && (
+                    <div className="flex gap-2 ml-4 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                      <button
+                        onClick={async () => { await rejectAction(app.id); fetchApprovals(); }}
+                        className="px-3 py-1 rounded-lg text-[10px] font-bold text-red-400 border border-red-500/30 hover:bg-red-500/15 transition-all"
+                        aria-label="Reject approval"
+                      >
+                        Reject
+                      </button>
+                      <button
+                        onClick={async () => { await approveAction(app.id); fetchApprovals(); }}
+                        className="px-3 py-1 rounded-lg text-[10px] font-bold text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/15 transition-all"
+                        aria-label="Approve"
+                      >
+                        Approve
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+          {approvals.length > 5 && (
+            <div className="px-5 py-3 border-t border-white/5">
+              <button onClick={() => onNavigate('approvals')} className="text-xs text-violet-400 hover:text-violet-300 font-bold transition-colors">
+                +{approvals.length - 5} aur dekho →
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Right col: Deadlines + Activity */}
+        <div className="lg:col-span-2 flex flex-col gap-4">
+
+          {/* Today's Deadlines — only if exist */}
+          {todayDeadlines.length > 0 && (
+            <div className="rounded-2xl px-4 py-3" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)' }}>
+              <p className="text-[10px] font-black uppercase tracking-wider text-red-400 mb-2 flex items-center gap-1.5">
+                <Icon name="calendar" size={11} /> Today's Deadlines
+              </p>
+              {todayDeadlines.slice(0, 3).map((d, i) => (
+                <div key={i} className="flex items-center justify-between py-1.5 border-b border-red-500/10 last:border-0">
+                  <p className="text-xs text-white font-medium truncate">{d.label}</p>
+                  <span className="text-[10px] text-red-300 font-bold shrink-0 ml-2">{d.type}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Activity Feed */}
+          <div className="flex-1 rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className="px-4 py-3.5 border-b border-white/5">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <Icon name="timeline" size={11} /> Recent Activity
+              </p>
+            </div>
+            <div className="overflow-y-auto max-h-52 divide-y divide-white/5">
               {activityFeed.length === 0 ? (
-                <p className="text-xs" style={{ color: 'rgba(148,163,184,0.6)' }}>No activity yet. Run a worker to get started.</p>
-              ) : activityFeed.map((e, i) => {
-                const color = e.level === 'ERROR' || e.level === 'WARN' ? '#FCA5A5' : e.level === 'completed' ? '#6EE7B7' : 'rgba(148,163,184,0.8)';
+                <p className="px-4 py-6 text-xs text-slate-500 text-center">Abhi koi activity nahi.</p>
+              ) : activityFeed.slice(0, 20).map((e, i) => {
+                const isError = e.level === 'ERROR' || e.level === 'WARN' || e.level === 'failed';
+                const isDone  = e.level === 'completed' || e.level === 'INFO';
                 return (
-                  <div key={i} className="flex items-start gap-2 py-1" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                    <span className="text-[9px] mt-0.5 flex-shrink-0" style={{ color }}>{e.src === 'worker' ? '⚙' : '📝'}</span>
-                    <p className="text-[10px] leading-4 truncate" style={{ color }}>{e.label}</p>
+                  <div key={i} className="flex items-start gap-2.5 px-4 py-2.5">
+                    <div className={`w-1.5 h-1.5 rounded-full mt-1 shrink-0 ${isError ? 'bg-red-400' : isDone ? 'bg-emerald-400' : 'bg-slate-600'}`} />
+                    <p className="text-[11px] text-slate-400 leading-relaxed line-clamp-1">{e.label}</p>
                   </div>
                 );
               })}
             </div>
           </div>
         </div>
+      </div>
 
-        {/* FR-006: Quick Actions — New Client, New Proposal, Run Research */}
-        <div className="col-span-12 flex flex-wrap gap-3">
+      {/* ── ZONE 3: Quick Actions ────────────────────────────────────────────── */}
+      <div className="grid grid-cols-5 gap-3 mb-6">
+        {QUICK_ACTIONS.map(a => (
           <button
-            onClick={() => onNavigate?.('clients')}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all hover:scale-[1.02]"
-            style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', color: '#818CF8' }}
+            key={a.route}
+            onClick={() => a.route === 'projects' ? setIsPlanModalOpen(true) : onNavigate(a.route)}
+            className="flex flex-col items-center gap-2 py-4 px-3 rounded-2xl transition-all hover:scale-[1.03] hover:bg-white/5 active:scale-[0.98]"
+            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
           >
-            <span>👤</span> New Client
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: `${a.color}18` }}>
+              <Icon name={a.icon} size={17} style={{ color: a.color }} />
+            </div>
+            <span className="text-[11px] font-bold text-slate-300">{a.label}</span>
           </button>
-          <button
-            onClick={() => onNavigate?.('projects')}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all hover:scale-[1.02]"
-            style={{ background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.3)', color: '#FCD34D' }}
-          >
-            <span>📄</span> New Proposal
-          </button>
-          <button
-            onClick={() => onNavigate?.('research')}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all hover:scale-[1.02]"
-            style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', color: '#6EE7B7' }}
-          >
-            <span>🔬</span> Run Research
-          </button>
-        </div>
+        ))}
+      </div>
 
-        {/* Morning Brief */}
-        {morningBrief && (
-          <div className="col-span-12 lg:col-span-6 p-5" style={glassStyle({ glow: 'success' })}>
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-lg">🌅</span>
-              <h3 className="font-black text-white">Morning Brief</h3>
-              <Badge tone="success">Today</Badge>
-            </div>
-            <pre className="text-sm leading-6 whitespace-pre-wrap" style={{ color: C.textMuted, fontFamily: 'inherit' }}>
-              {morningBrief}
-            </pre>
+      {/* ── Mickii Chat Response ─────────────────────────────────────────────── */}
+      {messages.length > 0 && (
+        <div className="mb-24 rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+          <div className="px-4 py-3 border-b border-white/5 flex items-center gap-2">
+            <MickiiOrb size="sm" isThinking={isProcessing} />
+            <span className="text-xs font-black text-white">Mickii Response</span>
+            {isProcessing && <span className="text-[10px] text-violet-400 animate-pulse">thinking...</span>}
           </div>
-        )}
-
-        {/* Quick Skills Execution */}
-        <div
-          className="col-span-12 p-5"
-          style={glassStyle({
-            strong: true,
-            glow: 'warning',
-            borderColor: `${C.warning}55`,
-          })}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-xl font-bold text-white">
-                Quick Skill Execution
-              </h2>
-              <p className="text-sm" style={{ color: C.textMuted }}>
-                One-click deterministic workflows — offline, safe execution
-              </p>
-            </div>
-            <Badge tone="gold">Master Skills</Badge>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[...skills]
-              .sort((a, b) => {
-                const order = {
-                  "skill-plan": 1,
-                  "skill-design": 2,
-                  "skill-code": 3,
-                };
-                return (order[a.id] || 99) - (order[b.id] || 99);
-              })
-              .slice(0, 3)
-              .map((skill) => (
-                <button
-                  key={skill.id}
-                  onClick={() => handleSkillClick(skill.id)}
-                  className="rounded-[18px] p-4 text-left transition-all hover:-translate-y-1 hover:bg-white/5 backdrop-blur-xl border border-indigo-500/20 hover:border-indigo-400/40 hover:shadow-[0_0_15px_rgba(129,140,248,0.3)]"
-                  style={{
-                    backgroundColor: "rgba(255,255,255,.045)",
-                  }}
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    <Icon
-                      name={skill.icon || "star"}
-                      size={24}
-                      style={{ color: C.warning }}
-                    />
-                    <p className="font-bold text-white">{skill.name}</p>
-                  </div>
-                  <p className="text-xs" style={{ color: C.textMuted }}>
-                    {skill.description || skill.desc}
-                  </p>
-                  <div className="mt-3 flex items-center gap-2">
-                    <Badge tone="success">Ready</Badge>
-                    <Badge tone="muted">Offline</Badge>
-                  </div>
-                </button>
-              ))}
-          </div>
-        </div>
-
-        {/* Pending Approvals */}
-        <div
-          className="col-span-12 p-5"
-          style={glassStyle({
-            strong: true,
-            glow: "danger",
-            borderColor: `${C.danger}55`,
-          })}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <div className="mb-2 flex gap-2">
-                <Badge tone="danger">
-                  {approvals.length} Pending approvals
-                </Badge>
-                <Badge tone="gold">Human Approval Gate</Badge>
-              </div>
-              <h2 className="text-xl font-bold text-white">
-                Approval Safe Guard
-              </h2>
-              <p className="mt-1 text-sm text-gray-400">
-                Mickii has structured these actions. Click Approve to finalize
-                execution.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="soft" onClick={fetchApprovals}>
-                Refresh Queue
-              </Button>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {approvals.map((app) => (
-              <div
-                key={app.id || app.title}
-                onClick={() => onNavigate("approvals", { selectedId: app.id })}
-                className="flex justify-between items-center bg-white/5 p-4 rounded-xl border border-white/10 transition-all hover:bg-white/10 cursor-pointer group"
-                title="Click to inspect full details in Approval Center"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p
-                      className="font-bold text-white group-hover:text-violet-400 transition-colors"
-                      style={{ whiteSpace: "pre-line" }}
-                    >
-                      {app.preview || app.title}
-                    </p>
-                    <span className="material-icons text-xs text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                      open_in_new
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-400">
-                    Worker Queue: {app.action_type || app.source} · Safety
-                    Severity: Critical
-                  </p>
-                </div>
-                {app.id && (
-                  <div
-                    className="flex gap-3 ml-4"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Button
-                      variant="soft"
-                      className="hover:text-red-400"
-                      onClick={async () => {
-                        await rejectAction(app.id);
-                        fetchApprovals();
-                      }}
-                    >
-                      Reject
-                    </Button>
-                    <Button
-                      onClick={async () => {
-                        await approveAction(app.id);
-                        fetchApprovals();
-                      }}
-                    >
-                      Approve
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ))}
-            {approvals.length === 0 && (
-              <p className="text-sm text-gray-500 py-2">
-                No pending approvals.
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Real-time Analytics Recharts widget */}
-        <div
-          className="col-span-12 lg:col-span-8 p-6"
-          style={glassStyle({ strong: true, glow: 'primary' })}
-        >
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h3 className="font-bold text-lg text-white">
-                Real-time Analytics
-              </h3>
-              <p className="text-xs" style={{ color: C.textMuted }}>
-                Direct real-time pull from SQLite production engine
-              </p>
-            </div>
-            <div className="flex gap-4">
-              <div className="text-right">
-                <span className="text-[10px] uppercase font-bold text-gray-400">Total Clients</span>
-                <p className="text-sm font-bold text-cyan-400">{clientCount}</p>
-              </div>
-              <div className="text-right">
-                <span className="text-[10px] uppercase font-bold text-gray-400">Total Leads</span>
-                <p className="text-sm font-bold text-green-400">{leads.length}</p>
-              </div>
-              <div className="text-right">
-                <span className="text-[10px] uppercase font-bold text-gray-400">Invoices</span>
-                <p className="text-sm font-bold text-yellow-400">{invoiceCount}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Revenue Trend Area Chart */}
-            <div className="p-4 rounded-2xl bg-black/20 border border-white/5">
-              <h4 className="text-xs font-bold text-white mb-3 uppercase tracking-wider">
-                Revenue Trend (₹)
-              </h4>
-              <div style={{ minWidth: 0 }}>
-                <ResponsiveContainer width="100%" height={176} minWidth={0}>
-                  <AreaChart data={revenueChartData}>
-                    <defs>
-                      <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                        <stop
-                          offset="5%"
-                          stopColor="#10B981"
-                          stopOpacity={0.4}
-                        />
-                        <stop
-                          offset="95%"
-                          stopColor="#10B981"
-                          stopOpacity={0}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <XAxis
-                      dataKey="month"
-                      stroke="#94A3B8"
-                      fontSize={10}
-                      tickLine={false}
-                    />
-                    <YAxis stroke="#94A3B8" fontSize={10} tickLine={false} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#0F172A",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="revenue"
-                      stroke="#10B981"
-                      fillOpacity={1}
-                      fill="url(#colorRev)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* Lead Sources Bar Chart */}
-            <div className="p-4 rounded-2xl bg-black/20 border border-white/5">
-              <h4 className="text-xs font-bold text-white mb-3 uppercase tracking-wider">
-                Lead Acquisition Source
-              </h4>
-              <div style={{ minWidth: 0 }}>
-                <ResponsiveContainer width="100%" height={176} minWidth={0}>
-                  <BarChart data={leadChartData}>
-                    <XAxis
-                      dataKey="source"
-                      stroke="#94A3B8"
-                      fontSize={10}
-                      tickLine={false}
-                    />
-                    <YAxis stroke="#94A3B8" fontSize={10} tickLine={false} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#0F172A",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                      }}
-                    />
-                    <Bar dataKey="count" fill="#6366F1" radius={[8, 8, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Mickii Autonomous Console */}
-        <div
-          className="col-span-12 lg:col-span-4 p-6"
-          style={glassStyle({ glow: 'primary' })}
-        >
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-white">Mickii System Status</h3>
-              <p className="text-[10px]" style={{ color: C.textMuted }}>
-                Local Autonomous Loop Active
-              </p>
-            </div>
-            <Badge tone="violet">Cortex v4</Badge>
-          </div>
-
-          <div className="flex gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 mb-4">
-            <MickiiOrb size="lg" isThinking={isProcessing} />
-            <div>
-              <p className="text-xs leading-relaxed text-gray-300">
-                Boss, Cortex online hai. Stored local procedures safe offline
-                run ho rahe hain. Earning engine status checked.
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-2 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 pr-2">
-            {messages.map((msg, i) => (
-              <div
-                key={i}
-                className={`rounded-xl p-3 text-xs border ${
-                  msg.role === "user"
-                    ? "bg-white/5 border-white/10 text-white"
-                    : msg.isSystem
-                      ? "bg-blue-500/10 border-blue-500/30 text-blue-200 italic"
-                      : "bg-black/30 border-yellow-500/20 text-gray-300"
-                }`}
-              >
-                <p className="whitespace-pre-wrap">{msg.content}</p>
-                {msg.searchTelemetry && (
-                  <div className="mt-2 pt-1.5 border-t border-white/5 text-[10px] text-cyan-300 flex items-center gap-1 font-bold font-mono">
-                    <Icon name="search" size={10} />
-                    <span>
-                      Search verified ({msg.searchTelemetry.status}) ·{" "}
-                      {msg.searchTelemetry.responseTime}ms
-                    </span>
-                  </div>
-                )}
+          <div className="px-4 py-4 max-h-48 overflow-y-auto">
+            {messages.slice(-3).map((m, i) => (
+              <div key={i} className={`mb-3 last:mb-0 ${m.role === 'user' ? 'text-right' : ''}`}>
+                <span className={`inline-block px-3 py-2 rounded-xl text-xs leading-relaxed max-w-[90%] text-left ${
+                  m.role === 'user'
+                    ? 'bg-indigo-600/30 text-indigo-200'
+                    : 'bg-white/5 text-slate-300'
+                }`}>
+                  {typeof m.content === 'string' ? m.content : JSON.stringify(m.content)}
+                </span>
               </div>
             ))}
           </div>
         </div>
-      </section>
+      )}
 
-      {/* Plan Tool Configuration Modal */}
+      {/* ── Plan Modal ───────────────────────────────────────────────────────── */}
       {isPlanModalOpen && (
-        <div 
-          className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-md p-4 overflow-y-auto pt-10 pb-32 animate-in fade-in duration-300"
-          onClick={() => setIsPlanModalOpen(false)}
-        >
-          <div
-            className="w-full max-w-lg p-6 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden text-left"
-            style={{
-              backgroundColor: "#0c0f17e0",
-              ...glassStyle({ strong: true, glow: 'warning' }),
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="absolute top-0 right-0 w-44 h-44 bg-yellow-500/5 rounded-full blur-3xl pointer-events-none" />
-
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">📐</span>
-                <h3 className="text-lg font-bold text-white">
-                  Setup Quick Plan Execution
-                </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setIsPlanModalOpen(false)}>
+          <div className="w-full max-w-md rounded-3xl p-6 space-y-4" style={{ background: 'rgba(15,23,42,0.97)', border: '1px solid rgba(99,102,241,0.3)' }} onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-black text-white">New Project Plan</h3>
+              <button onClick={() => setIsPlanModalOpen(false)} className="text-slate-500 hover:text-white"><Icon name="close" size={18} /></button>
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1.5">Project Type</label>
+              <select
+                value={planType}
+                onChange={e => setPlanType(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-indigo-500"
+                style={{ colorScheme: 'dark' }}
+              >
+                {['Website', 'Landing Page', 'Mobile App', 'API', 'SaaS', 'E-Commerce', 'Blog', 'Other'].map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1.5">Business Domain</label>
+              <select
+                value={planDomain}
+                onChange={e => setPlanDomain(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-indigo-500"
+                style={{ colorScheme: 'dark' }}
+              >
+                {['E-Commerce', 'Healthcare', 'Finance', 'Education', 'Real Estate', 'Restaurant', 'Fashion', 'Tech', 'Agency', 'Other'].map(d => <option key={d} value={d}>{d}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1.5">Requirements / Notes</label>
+              <textarea
+                rows={3}
+                placeholder="Client ka kya chahiye, kya features, koi reference..."
+                className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-indigo-500 resize-none"
+                value={planContext}
+                onChange={e => setPlanContext(e.target.value)}
+              />
+            </div>
+            {attachedFile && (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-slate-400">
+                <Icon name="attach" size={13} />
+                {attachedFile.name} ({(attachedFile.size/1024).toFixed(1)} KB)
+                <button onClick={() => setAttachedFile(null)} className="ml-auto text-red-400">✕</button>
               </div>
+            )}
+            <div className="flex gap-3">
+              <label className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-slate-400 hover:text-white cursor-pointer transition-all">
+                <Icon name="attach" size={14} /> Attach File
+                <input type="file" className="hidden" onChange={handleFileChange} />
+              </label>
               <button
-                onClick={() => setIsPlanModalOpen(false)}
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                <Icon name="close" size={20} />
-              </button>
-            </div>
-
-            <p className="text-xs text-gray-400 mb-5 leading-relaxed">
-              Configure target details so Mickii's Planning Worker can analyze
-              competitors, market demands, and generate your real-time
-              blueprints.
-            </p>
-
-            <div className="space-y-4">
-              {/* Type of Build Dropdown */}
-              <div className="flex flex-col gap-1.5 relative">
-                <label className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">
-                  Type of Build
-                </label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsTypeDropdownOpen(!isTypeDropdownOpen);
-                    setIsDomainDropdownOpen(false);
-                  }}
-                  className="px-3.5 py-2.5 text-xs text-white bg-slate-950/80 border border-white/10 rounded-xl focus:outline-none focus:border-amber-500 flex items-center justify-between cursor-pointer w-full text-left transition-all"
-                  style={{ border: "1px solid rgba(255, 255, 255, 0.08)" }}
-                >
-                  <span>
-                    {planType === "Single Landing Page"
-                      ? "Single Landing Page (High Conversion)"
-                      : planType === "Multi-page Website"
-                        ? "Multi-page Website (Corporate/Business)"
-                        : planType === "SaaS Web Application"
-                          ? "SaaS Web Application"
-                          : planType === "Mobile Application"
-                            ? "Mobile Application (iOS / Android)"
-                            : planType === "Custom AI Agent"
-                              ? "Custom AI Agent (Chatbot / Call / Assistant)"
-                              : planType === "Digital Marketing / SEO"
-                                ? "Digital Marketing / SEO Campaign"
-                                : planType === "Ads Campaign"
-                                  ? "Ads Campaign (Meta / Google)"
-                                  : planType === "Internal CRM"
-                                    ? "Internal CRM / Dashboard"
-                                    : planType === "Other"
-                                      ? "Other (Specify manually)"
-                                      : planType}
-                  </span>
-                  <span
-                    className={`text-[10px] text-gray-400 transition-transform duration-300 ${isTypeDropdownOpen ? "rotate-180 text-amber-400" : ""}`}
-                  >
-                    ▼
-                  </span>
-                </button>
-                {isTypeDropdownOpen && (
-                  <div className="absolute top-[100%] left-0 right-0 z-50 mt-1.5 p-1.5 bg-slate-900/95 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-200">
-                    {[
-                      { value: "Single Landing Page", label: "Single Landing Page (High Conversion)" },
-                      { value: "Multi-page Website", label: "Multi-page Website (Corporate/Business)" },
-                      { value: "SaaS Web Application", label: "SaaS Web Application" },
-                      { value: "Mobile Application", label: "Mobile Application (iOS / Android)" },
-                      { value: "Custom AI Agent", label: "Custom AI Agent (Chatbot / Call / Assistant)" },
-                      { value: "Digital Marketing / SEO", label: "Digital Marketing / SEO Campaign" },
-                      { value: "Ads Campaign", label: "Ads Campaign (Meta / Google)" },
-                      { value: "Internal CRM", label: "Internal CRM / Dashboard" },
-                      { value: "Other", label: "Other (Specify manually)" },
-                    ].map((opt) => (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => {
-                          setPlanType(opt.value);
-                          setIsTypeDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-3.5 py-2 text-xs rounded-xl transition-all flex items-center justify-between mb-0.5 last:mb-0 ${
-                          planType === opt.value
-                            ? "bg-amber-500/20 text-amber-300 font-bold border-l-2 border-amber-500 pl-2.5"
-                            : "text-gray-300 hover:bg-white/[0.04] hover:text-white"
-                        }`}
-                      >
-                        <span>{opt.label}</span>
-                        {planType === opt.value && (
-                          <span className="text-[10px] text-amber-400">✓</span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Other Specify Custom Input - Shows ONLY when "Other" is selected */}
-              {planType === "Other" && (
-                <div className="flex flex-col gap-1.5 animate-in slide-in-from-top-2 duration-200">
-                  <label className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">
-                    Specify Project Type
-                  </label>
-                  <input
-                    type="text"
-                    value={otherPlanType}
-                    onChange={(e) => setOtherPlanType(e.target.value)}
-                    placeholder="e.g. Chrome Extension, Shopify Theme, Discord Bot, WordPress Plugin"
-                    className="px-3.5 py-2.5 text-xs text-white bg-slate-950/80 border border-white/10 rounded-xl focus:outline-none focus:border-amber-500 w-full placeholder-gray-600"
-                    style={{ border: "1px solid rgba(255, 255, 255, 0.08)" }}
-                  />
-                </div>
-              )}
-
-              {/* Business Domain Dropdown */}
-              <div className="flex flex-col gap-1.5 relative">
-                <label className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">
-                  Business Domain (Field / Industry)
-                </label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsDomainDropdownOpen(!isDomainDropdownOpen);
-                    setIsTypeDropdownOpen(false);
-                  }}
-                  className="px-3.5 py-2.5 text-xs text-white bg-slate-950/80 border border-white/10 rounded-xl focus:outline-none focus:border-amber-500 flex items-center justify-between cursor-pointer w-full text-left transition-all"
-                  style={{ border: "1px solid rgba(255, 255, 255, 0.08)" }}
-                >
-                  <span>
-                    {planDomain === "E-Commerce"
-                      ? "E-Commerce / Online Store"
-                      : planDomain === "Real Estate"
-                        ? "Real Estate & Property"
-                        : planDomain === "Healthcare"
-                          ? "Healthcare / Medical"
-                          : planDomain === "EdTech"
-                            ? "EdTech / E-Learning"
-                            : planDomain === "Fintech"
-                              ? "Fintech / Finance"
-                              : planDomain === "Local Business"
-                                ? "Local Business / Services"
-                                : planDomain === "Other"
-                                  ? "Other (Custom domain)"
-                                  : planDomain}
-                  </span>
-                  <span
-                    className={`text-[10px] text-gray-400 transition-transform duration-300 ${isDomainDropdownOpen ? "rotate-180 text-amber-400" : ""}`}
-                  >
-                    ▼
-                  </span>
-                </button>
-                {isDomainDropdownOpen && (
-                  <div className="absolute top-[100%] left-0 right-0 z-50 mt-1.5 p-1.5 bg-slate-900/95 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-200">
-                    {[
-                      { value: "E-Commerce", label: "E-Commerce / Online Store" },
-                      { value: "Real Estate", label: "Real Estate & Property" },
-                      { value: "Healthcare", label: "Healthcare / Medical" },
-                      { value: "EdTech", label: "EdTech / E-Learning" },
-                      { value: "Fintech", label: "Fintech / Finance" },
-                      { value: "Local Business", label: "Local Business / Services" },
-                      { value: "Other", label: "Other (Custom domain)" },
-                    ].map((opt) => (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        onClick={() => {
-                          setPlanDomain(opt.value);
-                          setIsDomainDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-3.5 py-2 text-xs rounded-xl transition-all flex items-center justify-between mb-0.5 last:mb-0 ${
-                          planDomain === opt.value
-                            ? "bg-amber-500/20 text-amber-300 font-bold border-l-2 border-amber-500 pl-2.5"
-                            : "text-gray-300 hover:bg-white/[0.04] hover:text-white"
-                        }`}
-                      >
-                        <span>{opt.label}</span>
-                        {planDomain === opt.value && (
-                          <span className="text-[10px] text-amber-400">✓</span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Other Specify Domain Custom Input - Shows ONLY when "Other" is selected */}
-              {planDomain === "Other" && (
-                <div className="flex flex-col gap-1.5 animate-in slide-in-from-top-2 duration-200">
-                  <label className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">
-                    Specify Business Domain
-                  </label>
-                  <input
-                    type="text"
-                    value={otherPlanDomain}
-                    onChange={(e) => setOtherPlanDomain(e.target.value)}
-                    placeholder="e.g. Tours & Travels, Auto Dealership, Legal Services, Food & Restaurant"
-                    className="px-3.5 py-2.5 text-xs text-white bg-slate-950/80 border border-white/10 rounded-xl focus:outline-none focus:border-amber-500 w-full placeholder-gray-600"
-                    style={{ border: "1px solid rgba(255, 255, 255, 0.08)" }}
-                  />
-                </div>
-              )}
-
-              {/* Context Idea Text Area */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">
-                  Context & Core Ideas (Blueprint Notes)
-                </label>
-                <textarea
-                  rows={4}
-                  value={planContext}
-                  onChange={(e) => setPlanContext(e.target.value)}
-                  placeholder="Paste your context idea, rules, or core features here... e.g. I want to build a platform where users upload property details and AI writes ads."
-                  className="px-3.5 py-2.5 text-xs text-white bg-slate-950/80 border border-white/10 rounded-xl focus:outline-none focus:border-amber-500 w-full resize-none placeholder-gray-600"
-                  style={{ border: "1px solid rgba(255, 255, 255, 0.08)" }}
-                />
-              </div>
-
-              {/* Reference URL or Notes */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">
-                  Reference URL / Source Link (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={planUrl}
-                  onChange={(e) => setPlanUrl(e.target.value)}
-                  placeholder="e.g., https://example.com/reference-landing-page"
-                  className="px-3.5 py-2.5 text-xs text-white bg-slate-950/80 border border-white/10 rounded-xl focus:outline-none focus:border-amber-500 w-full placeholder-gray-600"
-                  style={{ border: "1px solid rgba(255, 255, 255, 0.08)" }}
-                />
-              </div>
-
-              {/* Premium File Attachment Dropzone */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">
-                  Attach Files & Assets (Media, PDF, Excel, PPT, DOCS)
-                </label>
-                <div
-                  className={`border border-dashed rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer transition-all ${
-                    attachedFile
-                      ? "border-amber-500/50 bg-amber-500/5"
-                      : "border-white/15 bg-slate-950/40 hover:bg-slate-950/60 hover:border-white/20"
-                  }`}
-                  onClick={() =>
-                    document.getElementById("plan-file-input").click()
-                  }
-                  style={{ borderStyle: "dashed", borderWidth: "1px" }}
-                >
-                  <input
-                    type="file"
-                    id="plan-file-input"
-                    className="hidden"
-                    onChange={handleFileChange}
-                    accept="image/*,video/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/*"
-                  />
-                  {attachedFile ? (
-                    <div className="flex items-center justify-between w-full text-xs">
-                      <div className="flex items-center gap-2 text-white font-medium truncate max-w-[80%]">
-                        <span className="text-base">📎</span>
-                        <div className="truncate text-left">
-                          <p className="truncate font-bold text-amber-300">
-                            {attachedFile.name}
-                          </p>
-                          <p className="text-[10px] text-gray-500">
-                            {(attachedFile.size / 1024).toFixed(1)} KB ·{" "}
-                            {attachedFile.type || "Unknown"}
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setAttachedFile(null);
-                        }}
-                        className="text-gray-400 hover:text-red-400 font-bold p-1 transition-colors text-[10px] bg-white/5 px-2 py-0.5 rounded-lg border border-white/10"
-                        title="Remove Attachment"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="text-center py-1">
-                      <span className="text-lg block mb-0.5">📤</span>
-                      <p className="text-xs text-gray-300 font-semibold">
-                        Click to upload or drag files here
-                      </p>
-                      <p className="text-[10px] text-gray-500 mt-0.5">
-                        Supports PDF, Image, Video, Word, Excel, PPT, TXT
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-end gap-3">
-              <Button variant="soft" onClick={() => setIsPlanModalOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                variant="glow"
                 onClick={handleGeneratePlan}
-                className="bg-amber-600/30 hover:bg-amber-600 border border-amber-500/40"
+                disabled={skillRunning === 'skill-plan'}
+                className="flex-[2] py-2.5 rounded-xl text-sm font-black bg-indigo-600 hover:bg-indigo-500 text-white transition-all disabled:opacity-50"
               >
-                Generate Real-Time Plan
-              </Button>
+                {skillRunning === 'skill-plan' ? 'Generating...' : 'Generate Plan →'}
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Quick Design Config Modal Overlay */}
+      {/* ── Design Modal ─────────────────────────────────────────────────────── */}
       {isDesignModalOpen && (
-        <div 
-          className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-md p-4 overflow-y-auto pt-10 pb-32 animate-in fade-in duration-300"
-          onClick={() => setIsDesignModalOpen(false)}
-        >
-          <div
-            className="w-full max-w-xl p-6 rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden text-left"
-            style={{
-              backgroundColor: "#0c0f17e0",
-              ...glassStyle({ strong: true, glow: "emerald" }),
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="absolute top-0 right-0 w-44 h-44 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
-
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">🎨</span>
-                <h3 className="text-lg font-bold text-white">
-                  Setup Quick Design Execution
-                </h3>
-              </div>
-              <button
-                onClick={() => setIsDesignModalOpen(false)}
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                <Icon name="close" size={20} />
-              </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setIsDesignModalOpen(false)}>
+          <div className="w-full max-w-md rounded-3xl p-6 space-y-4" style={{ background: 'rgba(15,23,42,0.97)', border: '1px solid rgba(16,185,129,0.3)' }} onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-black text-white">Design Website</h3>
+              <button onClick={() => setIsDesignModalOpen(false)} className="text-slate-500 hover:text-white"><Icon name="close" size={18} /></button>
             </div>
-
-            <p className="text-xs text-gray-400 mb-5 leading-relaxed">
-              Select a curated visual design preset, customize required
-              pages/sub-pages, and let Mickii's Website Builder write premium
-              frontend code instantly.
-            </p>
-
-            <div className="space-y-4">
-              {/* Visual Theme Presets Grid */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest block mb-1">
-                  Visual Theme Preset (Choose a look)
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  {[
-                    {
-                      id: "corporate",
-                      icon: "business",
-                      name: "Sleek Corporate",
-                      desc: "Clean white, blue accents",
-                    },
-                    {
-                      id: "glassmorphism",
-                      icon: "auto_awesome",
-                      name: "Premium Glass",
-                      desc: "Dark mode, indigo glow",
-                    },
-                    {
-                      id: "wellness",
-                      icon: "eco",
-                      name: "Clean Wellness",
-                      desc: "Soft teal, teal accents",
-                    },
-                    {
-                      id: "cyberpunk",
-                      icon: "terminal",
-                      name: "Cyberpunk Tech",
-                      desc: "Charcoal, neon green",
-                    },
-                    {
-                      id: "dark_mode",
-                      icon: "dark_mode",
-                      name: "Classic Dark",
-                      desc: "Slate-900, gold accents",
-                    },
-                  ].map((theme) => (
-                    <button
-                      key={theme.id}
-                      type="button"
-                      onClick={() => setDesignPreset(theme.id)}
-                      className={`p-3 rounded-xl text-left border transition-all ${
-                        designPreset === theme.id
-                          ? "border-emerald-500/70 bg-emerald-500/10 shadow-lg shadow-emerald-950/20"
-                          : "border-white/5 bg-white/[0.02] hover:bg-white/5"
-                      }`}
-                    >
-                      <div className="flex items-center gap-1.5 mb-1 text-white">
-                        <span className="material-icons text-sm text-emerald-400">
-                          {theme.icon}
-                        </span>
-                        <span className="text-[10px] font-bold">
-                          {theme.name}
-                        </span>
-                      </div>
-                      <span className="text-[9px] text-gray-500 block leading-tight">
-                        {theme.desc}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Pages to Generate */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">
-                  Required Website Pages (Comma-separated)
-                </label>
-                <input
-                  type="text"
-                  value={designPages}
-                  onChange={(e) => setDesignPages(e.target.value)}
-                  placeholder="e.g., Home, Services, About, Contact"
-                  className="px-3.5 py-2.5 text-xs text-white bg-slate-950/80 border border-white/10 rounded-xl focus:outline-none focus:border-emerald-500 w-full placeholder-gray-600"
-                />
-              </div>
-
-              {/* Custom Design Notes textarea */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">
-                  Custom Brand Notes / HEX Colors (Optional)
-                </label>
-                <textarea
-                  rows={3}
-                  value={designNotes}
-                  onChange={(e) => setDesignNotes(e.target.value)}
-                  placeholder="e.g. Please use my client's brand color #ea580c, add an testimonials slider carousel section, and link course buttons to checkout."
-                  className="px-3.5 py-2.5 text-xs text-white bg-slate-950/80 border border-white/10 rounded-xl focus:outline-none focus:border-emerald-500 w-full resize-none placeholder-gray-600"
-                />
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-end gap-3">
-              <Button
-                variant="soft"
-                onClick={() => setIsDesignModalOpen(false)}
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1.5">Theme Preset</label>
+              <select
+                value={designPreset}
+                onChange={e => setDesignPreset(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-emerald-500"
+                style={{ colorScheme: 'dark' }}
               >
-                Cancel
-              </Button>
-              <Button
-                variant="glow"
-                onClick={handleGenerateDesign}
-                className="bg-emerald-600/30 hover:bg-emerald-600 border border-emerald-500/40"
-              >
-                Generate Design Layout
-              </Button>
+                {[['glassmorphism','Glassmorphism (Dark)'],['corporate','Corporate (Clean)'],['wellness','Wellness (Teal)'],['cyberpunk','Cyberpunk (Neon)'],['dark_mode','Dark Premium (Gold)']].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
             </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1.5">Pages</label>
+              <input
+                type="text"
+                value={designPages}
+                onChange={e => setDesignPages(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-emerald-500"
+                placeholder="Home, About, Services, Contact"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1.5">Custom Notes</label>
+              <textarea
+                rows={2}
+                placeholder="Koi specific design requirements..."
+                className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-emerald-500 resize-none"
+                value={designNotes}
+                onChange={e => setDesignNotes(e.target.value)}
+              />
+            </div>
+            <button
+              onClick={handleGenerateDesign}
+              disabled={skillRunning === 'skill-design'}
+              className="w-full py-3 rounded-xl text-sm font-black bg-emerald-600 hover:bg-emerald-500 text-white transition-all disabled:opacity-50"
+            >
+              {skillRunning === 'skill-design' ? 'Generating...' : 'Generate Website →'}
+            </button>
           </div>
         </div>
       )}
