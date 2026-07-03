@@ -37,6 +37,10 @@ Implementation details, session logs, and verification transcripts do not belong
 
 **2026-07-01** — Autonomous Development Loop session: Document-by-document implementation from PRD→SRD→TRD→Architecture→Database Spec→Security Architecture. 12 files modified. RTM coverage: 67% → 71%.
 
+**2026-07-04 — Owner Decision: SQLite-only is FINAL (SQLCipher closed, supersedes 2026-07-01 deferral).** Plain SQLite is the accepted permanent database. All SQLCipher references/warnings removed from code: securityAuditorWorker.js (warning → passed check), cronService.js, main.rs. RTM rows DB-029, DB-031, ARCH-012, DR-008, DEP-006 closed. Blueprint docs NOT edited (frozen artifacts) — this ledger entry is the recorded deviation. Note: Linux repo (`Nexious Mickii/`) is the canonical codebase; the Windows copy audited by Codex was experimental.
+
+**2026-07-04 — Owner Decision: LLM fallback chain reordered.** New order: Gemini → Groq → ChatGPT (OpenAI) → NVIDIA NIM → Cerebras → Ollama (local last resort). Supersedes both the old Gemini→Groq→NVIDIA chain and the blueprint's Ollama-first rule — recorded deviation from BR-02 zero-cost-default. Implemented in cortex.js (full 6-provider chain; Ollama via ollama_proxy IPC, no key needed; strict_offline_mode now routes to Ollama-only instead of erroring), llmManager.js (callOpenAI + callOllama added, chain reordered), SettingsScreen.jsx (OpenAI API key field + test button), db.js (openai_api_key secret ref). ChatGPT slot is dormant until owner adds key. Build ✅ exit 0, tests 54/54 ✅.
+
 ---
 
 ## Releases
