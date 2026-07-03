@@ -8,4 +8,4 @@ Read these three files in order before any non-trivial task:
 
 The 23 Enterprise Documents in `/home/admin-ubuntu/Documents/MABISHION AI ALL DOCUMENTS/` are the sole specification for this project.
 
-The Master Traceability Matrix is at `Nexious Mickii/nexious-ai-starter/docs/REQUIREMENTS_TRACEABILITY_MATRIX.md`.
+The Master Traceability Matrix is at `Mabishion Mickii/mabishion-ai-starter/docs/REQUIREMENTS_TRACEABILITY_MATRIX.md`.

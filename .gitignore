@@ -1,3 +1,7 @@
+# App code has its own branch — not tracked here
+Mickii/
+Mickii
+
 # Dependencies
 node_modules/
 
@@ -17,7 +21,6 @@ src-tauri/target/
 *.db
 *.db-shm
 *.db-wal
-nexious.db
 
 # Logs
 *.log
