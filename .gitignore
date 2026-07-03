@@ -1,16 +1,41 @@
-# App code has its own branch — not tracked here
-Nexious Mickii/
-Mickii
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-ssr/
+
+# Tauri build outputs
+src-tauri/target/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+
+# SQLite database (runtime data, not source)
+*.db
+*.db-shm
+*.db-wal
+nexious.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.idea/
+*.swp
+*.swo
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Editor artifacts
-*.swp
-*.swo
+# Temp / scratch
+scratch/
+protoc_temp/
 
-# Secrets — never commit
-.env
-.env.local
-*.secret
+# Python cache
+__pycache__/
+*.pyc
