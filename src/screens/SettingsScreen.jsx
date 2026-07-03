@@ -190,6 +190,7 @@ const SettingsScreen = ({ onNavigate }) => {
   const [nvidiaNimKey, setNvidiaNimKey] = useState('');
   const [geminiKey, setGeminiKey] = useState('');
   const [groqKey, setGroqKey] = useState('');
+  const [openaiKey, setOpenaiKey] = useState('');
   const [cerebrasKey, setCerebrasKey] = useState('');
   const [janEndpoint, setJanEndpoint] = useState('http://localhost:1337');
   const [exaKey, setExaKey] = useState('');
@@ -211,6 +212,7 @@ const SettingsScreen = ({ onNavigate }) => {
   const [testStatuses, setTestStatuses] = useState({
     gemini: null,
     groq: null,
+    openai: null,
     cerebras: null,
     nvidia_nim: null,
   });
@@ -232,6 +234,7 @@ const SettingsScreen = ({ onNavigate }) => {
       const nimKey = await getSetting('nvidia_nim_api_key');
       const gemKey = await getSetting('gemini_api_key');
       const gqKey = await getSetting('groq_api_key');
+      const oaiKey = await getSetting('openai_api_key');
       const cerKey = await getSetting('cerebras_api_key');
       const janEp = await getSetting('jan_endpoint');
       const exa = await getSetting('exa_api_key');
@@ -251,6 +254,7 @@ const SettingsScreen = ({ onNavigate }) => {
       if (nimKey) setNvidiaNimKey(nimKey);
       if (gemKey) setGeminiKey(gemKey);
       if (gqKey) setGroqKey(gqKey);
+      if (oaiKey) setOpenaiKey(oaiKey);
       if (cerKey) setCerebrasKey(cerKey);
       if (janEp) setJanEndpoint(janEp);
       if (exa) setExaKey(exa);
@@ -273,6 +277,7 @@ const SettingsScreen = ({ onNavigate }) => {
     await setSetting('nvidia_nim_api_key', nvidiaNimKey.trim());
     await setSetting('gemini_api_key', geminiKey.trim());
     await setSetting('groq_api_key', groqKey.trim());
+    await setSetting('openai_api_key', openaiKey.trim());
     await setSetting('cerebras_api_key', cerebrasKey.trim());
     await setSetting('jan_endpoint', janEndpoint.trim());
     await setSetting('exa_api_key', exaKey.trim());
@@ -537,6 +542,38 @@ const SettingsScreen = ({ onNavigate }) => {
                     {testStatuses.groq === 'success' && <p className="text-green-400 text-xs mt-1">✅ Functional!</p>}
                     {testStatuses.groq && testStatuses.groq.startsWith('error') && (
                       <p className="text-red-400 text-xs mt-1">❌ {testStatuses.groq}</p>
+                    )}
+                  </div>
+
+                  {/* OpenAI (ChatGPT) */}
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-xs text-gray-400 font-bold">OpenAI (ChatGPT) API Key</label>
+                      <button
+                        onClick={() =>
+                          handleTestConnection(
+                            'openai',
+                            openaiKey,
+                            'https://api.openai.com/v1/chat/completions',
+                            'gpt-4o-mini'
+                          )
+                        }
+                        className="text-xs text-orange-400 hover:text-orange-300 transition-colors flex items-center gap-1"
+                      >
+                        Test ChatGPT
+                      </button>
+                    </div>
+                    <input
+                      type="password"
+                      value={openaiKey}
+                      onChange={(e) => setOpenaiKey(e.target.value)}
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none transition-all font-mono text-sm"
+                      placeholder="sk-..."
+                    />
+                    {testStatuses.openai === 'testing' && <p className="text-blue-400 text-xs mt-1">Connecting...</p>}
+                    {testStatuses.openai === 'success' && <p className="text-green-400 text-xs mt-1">✅ Functional!</p>}
+                    {testStatuses.openai && testStatuses.openai.startsWith('error') && (
+                      <p className="text-red-400 text-xs mt-1">❌ {testStatuses.openai}</p>
                     )}
                   </div>
 

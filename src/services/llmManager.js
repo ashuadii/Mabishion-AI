@@ -1,5 +1,6 @@
 import { getSetting, logLlmUsage, logAudit } from '../data/db';
 import { logLLMProvider } from '../engine/utils/runtimeHealth.js';
+import { invoke } from '@tauri-apps/api/core';
 
 /**
  * Validates and checks standard API key setups
@@ -44,7 +45,16 @@ export async function validateApiKey(provider, apiKey) {
       });
       return res.status === 200;
     }
-    
+
+    if (provider === 'openai') {
+      const res = await fetch('https://api.openai.com/v1/models', {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`
+        }
+      });
+      return res.status === 200;
+    }
+
     return true;
   } catch (e) {
     console.error(`[LLM Key Validation] Failed for ${provider}:`, e);
@@ -218,25 +228,88 @@ async function callNvidiaNim(apiKey, prompt, systemInstruction) {
 }
 
 /**
- * Master fallback runner that sequences: Groq -> Gemini -> Cerebras -> NVIDIA NIM
+ * Execute Chat Completion through OpenAI (ChatGPT)
+ */
+async function callOpenAI(apiKey, prompt, systemInstruction) {
+  const model = 'gpt-4o-mini';
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: model,
+      messages: [
+        { role: 'system', content: systemInstruction || 'You are Mickii, Mabishion AI director.' },
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.7
+    })
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`OpenAI API returned ${response.status}: ${errText}`);
+  }
+
+  const data = await response.json();
+  const text = data.choices?.[0]?.message?.content || '';
+  const promptTokens = data.usage?.prompt_tokens || 0;
+  const completionTokens = data.usage?.completion_tokens || 0;
+  const totalTokens = data.usage?.total_tokens || 0;
+
+  return { text, promptTokens, completionTokens, totalTokens, model };
+}
+
+/**
+ * Execute Chat Completion through local Ollama (via Rust ollama_proxy — cost ₹0)
+ */
+async function callOllama(_apiKey, prompt, systemInstruction) {
+  const model = 'gemma3:4b';
+  const data = await invoke('ollama_proxy', {
+    payload: {
+      model: model,
+      messages: [
+        { role: 'system', content: systemInstruction || 'You are Mickii, Mabishion AI director.' },
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.7
+    }
+  });
+
+  const text = data.choices?.[0]?.message?.content || '';
+  if (!text) throw new Error('Empty Ollama response');
+  const promptTokens = data.usage?.prompt_tokens || 0;
+  const completionTokens = data.usage?.completion_tokens || 0;
+  const totalTokens = data.usage?.total_tokens || 0;
+
+  return { text, promptTokens, completionTokens, totalTokens, model };
+}
+
+/**
+ * Master fallback runner (Owner Decision 2026-07-04):
+ * Gemini -> Groq -> ChatGPT -> NVIDIA NIM -> Cerebras -> Ollama (local last resort)
  * @param {string} prompt Prompt content
  * @param {string} systemInstruction Optional system directives
  * @returns {Promise<string>} LLM text completion
  */
 export async function executeLlmWithFallback(prompt, systemInstruction = '') {
   const fallbackChain = [
-    { provider: 'groq', keyName: 'groq_api_key', runner: callGroq },
     { provider: 'gemini', keyName: 'gemini_api_key', runner: callGemini },
+    { provider: 'groq', keyName: 'groq_api_key', runner: callGroq },
+    { provider: 'openai', keyName: 'openai_api_key', runner: callOpenAI },
+    { provider: 'nvidia_nim', keyName: 'nvidia_nim_api_key', runner: callNvidiaNim },
     { provider: 'cerebras', keyName: 'cerebras_api_key', runner: callCerebras },
-    { provider: 'nvidia_nim', keyName: 'nvidia_nim_api_key', runner: callNvidiaNim }
+    { provider: 'ollama', keyName: null, runner: callOllama }
   ];
 
   let errors = [];
 
   for (const step of fallbackChain) {
     try {
-      const apiKey = await getSetting(step.keyName);
-      if (!apiKey || apiKey.includes('PASTE_YOUR') || apiKey.trim() === '') {
+      const apiKey = step.keyName ? await getSetting(step.keyName) : null;
+      if (step.keyName && (!apiKey || apiKey.includes('PASTE_YOUR') || apiKey.trim() === '')) {
         console.log(`[LLM Fallback] Skipping ${step.provider} due to missing or placeholder key.`);
         continue;
       }

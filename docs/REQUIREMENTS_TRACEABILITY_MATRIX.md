@@ -206,9 +206,9 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | DB-026 | `schema_version` table | Critical | ✅ | `db_schema_upgrade.js` line 77 | `schema_version` ✅ | ✅ |
 | DB-027 | `llm_usage` table | High | ✅ | `db.js` line 724 (legacy; `execution_spans` is canonical) | `llm_usage` ✅ | Partial match |
 | DB-028 | `cron_logs` table | Medium | ✅ | `db.js` line 738 | `cron_logs` ✅ | ✅ |
-| DB-029 | SQLCipher AES-256 encryption | Critical | 🔄 | Deferred — single-user local desktop app. OS-level disk encryption (LUKS/BitLocker) provides equivalent file-level protection. App already has: Argon2id PIN, 10-min auto-lock, Tauri secure store for API keys, parameterized queries, PII masking. SQLCipher adds system build complexity with no real-world security gain for this threat model. Owner approved 2026-07-01. | — | Deferred |
+| DB-029 | SQLCipher AES-256 encryption | Critical | ✅ | Closed — plain SQLite is the accepted final state (Owner Decision 2026-07-04; supersedes 2026-07-01 deferral). OS-level disk encryption (LUKS/BitLocker) provides file-level protection. App already has: Argon2id PIN, 10-min auto-lock, Tauri secure store for API keys, parameterized queries, PII masking. | — | Plain SQLite (final) |
 | DB-030 | HMAC-chained audit logs | High | ⚠️ | `logAudit()` adds `hmac_sign` suffix to context; not full chain | `audit_logs` | Partial |
-| DB-031 | Per-client encryption keys | Medium | 🔄 | Deferred — depends on SQLCipher (DB-029). Same rationale: single-user local app, OS-level protection sufficient. Owner approved 2026-07-01. | `clients` | Deferred |
+| DB-031 | Per-client encryption keys | Medium | ✅ | Closed — depended on SQLCipher (DB-029), which is now closed as plain-SQLite-final (Owner Decision 2026-07-04). Single-user local app, OS-level protection sufficient. | `clients` | Closed with DB-029 |
 | DB-032 | `workers.system_prompt` column | High | ✅ | Schema v14: `ALTER TABLE workers ADD COLUMN system_prompt TEXT`; seeded with 6 executive agent prompts (AG-CEO/CTO/CMO/CFO/CLO/COO) via `seedWorkersTable()` | `workers` | ✅ |
 | DB-033 | `tasks` table | High | ✅ | `db_schema_upgrade.js` schema v12; `tasks` table present | `tasks` | ✅ |
 | DB-034 | `worker_executions` table | High | ✅ | `db_schema_upgrade.js` schema v12 | `worker_executions` | ✅ |
@@ -269,7 +269,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | ARCH-009 | Redux Toolkit state management | 🔄 Deferred | 🔄 | Deliberately deferred per CLAUDE.md rules |
 | ARCH-010 | shadcn/ui component library | 🔄 Deferred | 🔄 | Deliberately deferred per CLAUDE.md rules |
 | ARCH-011 | TypeScript | 🔄 Deferred | 🔄 | Deliberately deferred per CLAUDE.md rules |
-| ARCH-012 | SQLCipher AES-256 at rest | Critical | 🔄 | Deferred — local single-user Tauri desktop app. Existing security stack (Argon2id PIN + auto-lock + Tauri secure store + PII masking + parameterized queries) covers the actual threat model. OS disk encryption is the correct layer for file-at-rest protection. Owner approved 2026-07-01. |
+| ARCH-012 | SQLCipher AES-256 at rest | Critical | ✅ | Closed — plain SQLite is final (Owner Decision 2026-07-04; supersedes 2026-07-01 deferral). Existing security stack (Argon2id PIN + auto-lock + Tauri secure store + PII masking + parameterized queries) covers the actual threat model. OS disk encryption is the correct layer for file-at-rest protection. |
 | ARCH-013 | PII masking in logs | High | ✅ | `maskPii()` in `db.js` logAudit() |
 | ARCH-014 | HMAC audit log signatures | High | ⚠️ | `hmac_sign` Rust command + logAudit wired; not a true HMAC chain |
 | ARCH-015 | strict_offline_mode | High | ✅ | `cortex.js` checks setting; Settings toggle |
@@ -406,12 +406,12 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 |---|---|---|---|---|
 | DR-001 | Daily backup automated | Critical | ✅ | `cronService.js` DailyBackup every 24h |
 | DR-002 | Backup to disk (not just memory) | Critical | ✅ | `runDailyBackupJob()` uses plugin-fs writeTextFile |
-| DR-003 | Backup format JSON | High | ✅ | JSON format with HMAC integrity validation is the permanent format (SQLCipher .sql format deferred per DB-029 owner decision). `backupDatabase()` exports full JSON; `validateBackupIntegrity()` verifies HMAC. |
+| DR-003 | Backup format JSON | High | ✅ | JSON format with HMAC integrity validation is the permanent format (SQLCipher .sql format dropped per DB-029 — plain SQLite final, Owner Decision 2026-07-04). `backupDatabase()` exports full JSON; `validateBackupIntegrity()` verifies HMAC. |
 | DR-004 | Manual backup via Settings | Critical | ✅ | `SettingsScreen.jsx` Export Database button |
 | DR-005 | Restore with integrity validation | Critical | ✅ | `validateBackupIntegrity()` + confirm dialog |
 | DR-006 | RTO ≤ 15 minutes | High | ⚠️ | No measured RTO; restore flow exists |
 | DR-007 | RPO ≤ 1 hour | High | ✅ | `cronService.js` HourlyBackup cron added (60 * 60 * 1000 ms); runs same `runDailyBackupJob()` function hourly. RPO now ≤1 hour. |
-| DR-008 | Encrypted backup (SQLCipher) | Critical | 🔄 | Deferred — SQLCipher dependency deferred (DB-029). Backup integrity is protected via HMAC validation (`validateBackupIntegrity()`). JSON backup files should be stored in OS-encrypted location. Owner approved 2026-07-01. |
+| DR-008 | Encrypted backup (SQLCipher) | Critical | ✅ | Closed — SQLCipher dropped (DB-029, plain SQLite final, Owner Decision 2026-07-04). Backup integrity is protected via HMAC validation (`validateBackupIntegrity()`). JSON backup files should be stored in OS-encrypted location. |
 
 ---
 
@@ -439,7 +439,7 @@ Regenerate this matrix whenever gaps are closed or new Enterprise Document secti
 | DEP-003 | Node.js 20+ | Critical | ✅ | Node 20.20.2 installed |
 | DEP-004 | Tauri CLI v2 | Critical | ✅ | `@tauri-apps/cli ^2.0.0` in devDependencies |
 | DEP-005 | SQLite system library | Critical | ✅ | `libsqlite3-dev` present |
-| DEP-006 | SQLCipher | Critical | 🔄 | Deferred — see DB-029 rationale. `libsqlite3-dev` (standard SQLite) is the correct dependency for this threat model. Owner approved 2026-07-01. |
+| DEP-006 | SQLCipher | Critical | ✅ | Closed — plain SQLite final (Owner Decision 2026-07-04; see DB-029). `libsqlite3-dev` (standard SQLite) is the correct dependency for this threat model. |
 | DEP-007 | Ollama (local LLM) | High | ⚠️ | Not verified present; fallback to cloud works |
 | DEP-008 | webkit2gtk-4.1 (Linux WebView) | Critical | ✅ | `libwebkit2gtk-4.1-0` installed |
 | DEP-009 | snap pthread conflict fix | Critical | ⚠️ | Fixed via LD_PRELOAD in dev; not in production build |

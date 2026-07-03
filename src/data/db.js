@@ -10,6 +10,7 @@ const SECRET_SETTING_KEYS = new Set([
   'gemini_api_key',
   'groq_api_key',
   'cerebras_api_key',
+  'openai_api_key',
   'openrouter_api_key',
   'serper_api_key',
   'exa_api_key',
@@ -675,7 +676,7 @@ export async function initDb() {
   `);
 
   // Seed secret references only. Real values live in desktop secret storage/env.
-  for (const key of ['nvidia_nim_api_key', 'gemini_api_key', 'serper_api_key', 'exa_api_key', 'groq_api_key', 'cerebras_api_key']) {
+  for (const key of ['nvidia_nim_api_key', 'gemini_api_key', 'serper_api_key', 'exa_api_key', 'groq_api_key', 'cerebras_api_key', 'openai_api_key']) {
     await db.execute('INSERT OR IGNORE INTO settings (key, value) VALUES ($1, $2)', [key, `${SECRET_REF_PREFIX}${key}`]);
   }
 

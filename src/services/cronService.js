@@ -142,7 +142,7 @@ cronEngine.schedule('AutoApproveEngine', 30000, runAutoApproveJob);
 
 /**
  * Daily Backup Job — writes a timestamped JSON backup to app data directory.
- * Format: JSON (interim — SQLCipher .sql backup deferred to Phase 3).
+ * Format: JSON (plain SQLite is the accepted final state — Owner Decision 2026-07-04).
  * Interval: 24 hours (86,400,000 ms).
  */
 export async function runDailyBackupJob() {

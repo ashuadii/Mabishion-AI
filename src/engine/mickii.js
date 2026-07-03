@@ -21,13 +21,14 @@ import { Cortex } from './cortex.js';
 let globalCortex = null;
 
 export async function mickiiThink(prompt, context) {
-  // Cortex handles multi-LLM fallback internally: Gemini → Groq → NVIDIA NIM
+  // Cortex handles multi-LLM fallback internally:
+  // Gemini → Groq → ChatGPT → NVIDIA NIM → Cerebras → Ollama (Owner Decision 2026-07-04)
   // No Ollama config needed here — cortex.js manages all provider routing
   if (!globalCortex) {
     globalCortex = new Cortex();
   }
 
-  console.log("[Mickii Engine] Thinking via Cortex (Gemini → Groq → NVIDIA NIM fallback)...");
+  console.log("[Mickii Engine] Thinking via Cortex (Gemini → Groq → ChatGPT → NVIDIA NIM → Cerebras → Ollama fallback)...");
 
   try {
     // 1. CALL THE BRAIN (Autonomous Cortex — multi-LLM)

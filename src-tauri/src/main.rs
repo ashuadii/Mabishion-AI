@@ -833,7 +833,7 @@ fn hmac_sign(payload: String) -> String {
     use std::collections::hash_map::DefaultHasher;
     use std::hash::{Hash, Hasher};
     // Lightweight HMAC-like signature using a fixed internal salt + payload hash.
-    // Production-grade SQLCipher HMAC chain is deferred to Phase 3 (SQLCipher migration).
+    // Plain SQLite is the accepted database (Owner Decision 2026-07-04); no SQLCipher migration planned.
     // This provides basic tamper-evidence for MVP audit logs.
     let salt = "mabishion_audit_v1_hmac_salt";
     let combined = format!("{}{}", salt, payload);

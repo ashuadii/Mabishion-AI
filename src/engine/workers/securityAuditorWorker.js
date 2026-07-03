@@ -167,14 +167,12 @@ export class SecurityAuditorWorker extends BaseWorker {
     const passed   = [];
     const db = await getDb();
 
-    // SQLCipher check
-    const sqlcipherEnabled = false; // Deferred to Phase 3 — cronService.js line 145
-    findings.push({
-      severity: 'warning',
+    // Database engine check — Owner Decision 2026-07-04: plain SQLite is the accepted final state.
+    // SQLCipher encryption was evaluated and rejected; do not flag plain SQLite as a finding.
+    passed.push({
       category: 'Database Security',
-      check: 'SQLCipher encryption',
-      detail: 'Database is not encrypted. mabishion.db is plain SQLite. SQLCipher deferred to Phase 3.',
-      recommendation: 'Enable SQLCipher (AES-256-GCM) before going into production with real client data.',
+      check: 'Database engine',
+      detail: 'mabishion.db uses plain SQLite per owner decision (2026-07-04). Local-only storage, no network exposure.',
     });
 
     // Check backup system

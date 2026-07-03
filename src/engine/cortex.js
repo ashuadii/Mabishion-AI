@@ -1,6 +1,7 @@
 /**
  * Mickii Agent Cortex — Direct Multi-LLM Edition
- * ReAct reasoning loop using direct APIs (Gemini / Groq / NVIDIA NIM).
+ * ReAct reasoning loop using direct APIs.
+ * Fallback chain (Owner Decision 2026-07-04): Gemini → Groq → ChatGPT → NVIDIA NIM → Cerebras → Ollama.
  */
 
 import { AgentRuntime, SystemTools } from "./runtime.js";
@@ -51,7 +52,7 @@ You assess technical feasibility and recommend the right tech stack.
 
 Guidelines:
 - Use the locked stack: Tauri v2 (Rust) + React 18 + SQLite. No Docker, no PostgreSQL.
-- Prefer local-first: Ollama → Groq → Gemini fallback chain.
+- Fallback chain: Gemini → Groq → ChatGPT → NVIDIA NIM → Cerebras → Ollama (local last resort).
 - Flag complexity: Simple (1-2 days), Medium (3-5 days), Complex (1-2 weeks).
 - Always mention: RAM budget (12GB), max 2 concurrent workers.
 - Speak in Hinglish: "Boss, technically yeh possible hai kyunki..."
@@ -131,7 +132,7 @@ You are also acting as the Chief Financial Officer of Mabishion AI.
 You monitor and control all costs, ensuring profitability on every project.
 
 Guidelines:
-- Track AI API costs (Ollama, Groq, Gemini) against project budgets.
+- Track AI API costs (Gemini, Groq, ChatGPT, NVIDIA NIM, Cerebras, Ollama) against project budgets.
 - Alert when costs exceed 30% of project value.
 - HARD STOP: If daily cost > ₹150, return:
   {"Action":"HARD_STOP","Reason":"Daily limit exceeded (₹150)","Suggested Action":"Switch to Ollama or defer tasks."}
@@ -262,24 +263,57 @@ export class LLMProvider {
 
     const geminiKey = await getSetting("gemini_api_key");
     const groqKey = await getSetting("groq_api_key");
+    const openaiKey = await getSetting("openai_api_key");
     const nimKey = await getSetting("nvidia_nim_api_key");
+    const cerebrasKey = await getSetting("cerebras_api_key");
 
     // ── strict_offline_mode (T3.5) — block all cloud providers when enabled ──
     const strictOffline = await getSetting('strict_offline_mode');
     const isStrictOffline = strictOffline === 'true' || strictOffline === '1';
     if (isStrictOffline) {
-      throw new Error('Strict Offline Mode active. Cloud LLM calls are blocked. Settings mein strict_offline_mode=false karo cloud use karne ke liye.');
+      console.warn('[Cortex] Strict Offline Mode active — cloud providers blocked, Ollama (local) only.');
     }
 
     const hasAnyKey = (geminiKey && !geminiKey.startsWith("PASTE_YOUR")) ||
                       (groqKey && !groqKey.startsWith("PASTE_YOUR")) ||
-                      (nimKey && !nimKey.startsWith("PASTE_YOUR"));
+                      (openaiKey && !openaiKey.startsWith("PASTE_YOUR")) ||
+                      (nimKey && !nimKey.startsWith("PASTE_YOUR")) ||
+                      (cerebrasKey && !cerebrasKey.startsWith("PASTE_YOUR"));
 
-    if (!hasAnyKey) {
-      throw new Error("API Key not set. Please go to Settings and configure at least one API Key (Gemini, Groq, or NVIDIA NIM).");
+    if (!hasAnyKey && !isStrictOffline) {
+      console.warn("[Cortex] No cloud API key configured — falling back to Ollama (local) only.");
     }
 
-    // Try providers in order: Gemini -> Groq -> NVIDIA NIM
+    // OpenAI-compatible payload/parse shared by Groq / ChatGPT / NVIDIA NIM / Cerebras / Ollama
+    const buildOpenAIPayload = (model) => (msgs, toolDefs) => {
+      const payload = {
+        model,
+        messages: msgs,
+        temperature: this.temperature,
+        max_tokens: 4096,
+      };
+      if (toolDefs && toolDefs.length > 0) {
+        payload.tools = toolDefs;
+        payload.tool_choice = "auto";
+      }
+      return payload;
+    };
+    const parseOpenAIResponse = (label) => (data) => {
+      if (!data.choices || !data.choices[0])
+        throw new Error(`Empty ${label} response`);
+      const message = data.choices[0].message;
+      if (message?.tool_calls && message.tool_calls.length > 0) {
+        return {
+          role: "assistant",
+          content: message.content || null,
+          tool_calls: message.tool_calls,
+        };
+      }
+      return { role: "assistant", content: message?.content || "No content" };
+    };
+
+    // Owner Decision 2026-07-04 — provider order:
+    // Gemini -> Groq -> ChatGPT -> NVIDIA NIM -> Cerebras -> Ollama (local last resort)
     const providers = [
       {
         name: "Gemini",
@@ -452,6 +486,17 @@ export class LLMProvider {
         },
       },
       {
+        name: "ChatGPT",
+        url: async () => {
+          return {
+            url: "https://api.openai.com/v1/chat/completions",
+            key: openaiKey,
+          };
+        },
+        buildPayload: buildOpenAIPayload("gpt-4o-mini"),
+        parseResponse: parseOpenAIResponse("ChatGPT"),
+      },
+      {
         name: "NVIDIA NIM",
         url: async () => {
           return {
@@ -487,6 +532,26 @@ export class LLMProvider {
           return { role: "assistant", content: message?.content || "No content" };
         },
       },
+      {
+        name: "Cerebras",
+        url: async () => {
+          return {
+            url: "https://api.cerebras.ai/v1/chat/completions",
+            key: cerebrasKey,
+          };
+        },
+        buildPayload: buildOpenAIPayload("llama3.1-70b"),
+        parseResponse: parseOpenAIResponse("Cerebras"),
+      },
+      {
+        name: "Ollama",
+        requiresKey: false,
+        url: async () => {
+          return { url: "http://127.0.0.1:11434/v1/chat/completions", key: null };
+        },
+        buildPayload: buildOpenAIPayload("gemma3:4b"),
+        parseResponse: parseOpenAIResponse("Ollama"),
+      },
     ];
 
     // ── AG-CFO injection at ≥80% daily spend (Tier 1) ───────────────────────
@@ -501,8 +566,15 @@ export class LLMProvider {
 
     for (const provider of providers) {
       try {
+        const isLocalProvider = provider.requiresKey === false;
+        if (isStrictOffline && !isLocalProvider) {
+          console.warn(
+            `[Cortex] Skipping ${provider.name} — strict offline mode (Ollama only).`,
+          );
+          continue;
+        }
         const { url, key } = await provider.url();
-        if (!key || key.startsWith("PASTE_YOUR") || key.length < 10) {
+        if (!isLocalProvider && (!key || key.startsWith("PASTE_YOUR") || key.length < 10)) {
           console.warn(
             `[Cortex] Skipping ${provider.name} — no valid key configured.`,
           );
@@ -525,6 +597,8 @@ export class LLMProvider {
                 apiKey: key,
                 baseUrl: url,
               });
+            } else if (provider.name === "Ollama") {
+              data = await invoke("ollama_proxy", { payload });
             } else {
               data = await invoke("llm_proxy", {
                 payload,
