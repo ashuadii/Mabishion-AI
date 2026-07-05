@@ -175,10 +175,10 @@ export default function ScreenHeader({ title, pageTitle, subtitle, index, badgeL
           <button onClick={() => setCostAlert(null)} className="opacity-60 hover:opacity-100 transition-opacity">✕</button>
         </div>
       )}
-      <header className="mb-5 flex items-center justify-between gap-4 px-5 py-3 relative z-50" style={glassStyle()}>
+      <header className="mb-5 flex items-center justify-between gap-4 px-5 py-3 relative z-50" style={{ ...glassStyle(), background: 'rgba(255,255,255,.76)', border: `1px solid ${C.glassBorder}` }}>
         <div className="flex min-w-0 items-center gap-3">
           <div className="min-w-0">
-            <h2 className="truncate text-sm font-bold tracking-wider uppercase text-white/80">{title}</h2>
+            <h2 className="truncate text-sm font-bold uppercase" style={{ color: C.primary }}>{title}</h2>
           </div>
           {/* UX-016: Offline indicator pill */}
           {isOffline && (
@@ -252,7 +252,7 @@ export default function ScreenHeader({ title, pageTitle, subtitle, index, badgeL
       <section className="mb-5 flex min-w-0 items-start justify-between gap-5">
         <div className="min-w-0">
           <div className="mb-2 flex flex-wrap items-center gap-2">
-            <span className="rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider bg-white/10 backdrop-blur-sm text-white border border-white/10">
+            <span className="tagline rounded-full px-3 py-1 text-[10px] font-bold" style={{ background: `${C.gold}18`, color: C.goldDeep, border: `1px solid ${C.gold}44` }}>
               {index === '01' ? 'Home Screen' : `${index} Main Screen`}
             </span>
             {badgeLabel && <Badge tone="muted">{badgeLabel}</Badge>}

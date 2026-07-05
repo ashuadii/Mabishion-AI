@@ -30,11 +30,11 @@ export default function QuickCommandBar({ contextLabel, placeholder }) {
   };
 
   return (
-    <div className="fixed bottom-5 right-6 z-40" style={{ left: `${C.sidebarW + 24}px` }}>
+    <div className="fixed bottom-5 right-6 z-40" style={{ left: `${C.sidebarExpand + 24}px` }}>
       {/* Reply Bubble / System Logs */}
       {lastMessage && (
         <div className="absolute bottom-full mb-3 ml-4 max-w-xl rounded-[22px] p-4 text-sm leading-6 transition-all animate-in slide-in-from-bottom-2 overflow-y-auto max-h-[480px] scrollbar-hide" 
-          style={{ ...glassStyle({ glow: 'primary' }), backgroundColor: 'rgba(2,4,10,0.93)', color: C.text, border: `1px solid ${C.primary}40` }}>
+          style={{ ...glassStyle({ glow: 'primary' }), backgroundColor: 'rgba(255,255,255,0.96)', color: C.text, border: `1px solid ${C.glassBorder}` }}>
           <p className="font-black text-[10px] uppercase tracking-wider mb-2 flex items-center gap-2" style={{ color: C.primary }}>
             {lastMessage.isSystem ? <span className="material-icons text-[12px]">settings</span> : <span className="material-icons text-[12px]">smart_toy</span>}
             {lastMessage.role === 'user' ? 'Mickii Input' : 'Mickii Output'}
@@ -66,12 +66,12 @@ export default function QuickCommandBar({ contextLabel, placeholder }) {
       )}
 
       {/* Bar */}
-      <div className="flex h-[64px] items-center gap-4 px-4 rounded-[22px]"
-        style={glassStyle({ strong: true, glow: 'primary' })}>
+      <div className="flex min-h-[64px] items-center gap-4 rounded-[22px] px-4"
+        style={{ ...glassStyle({ strong: true, glow: 'primary' }), backgroundColor: 'rgba(255,255,255,0.92)' }}>
         <MickiiOrb isThinking={isProcessing} />
-        <Badge tone="violet">{status.toUpperCase()}</Badge>
+        <Badge tone="gold">{status.toUpperCase()}</Badge>
         <input 
-          className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+          className="min-w-0 flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-slate-400"
           style={{ color: C.text }}
           placeholder={isProcessing ? "Mickii is thinking..." : placeholder || "Ask Mickii anything..."}
           value={input}
@@ -86,7 +86,7 @@ export default function QuickCommandBar({ contextLabel, placeholder }) {
         >
           <Icon name={isListening ? 'stop' : 'mic'} size={17} className={isListening ? 'animate-pulse' : ''} />
         </Button>
-        <Button onClick={handleSend} disabled={isProcessing} className="bg-indigo-600 hover:bg-indigo-500 text-white border-0"><Icon name="send" size={17} /> Send</Button>
+        <Button onClick={handleSend} disabled={isProcessing}><Icon name="send" size={17} /> Send</Button>
       </div>
     </div>
   );

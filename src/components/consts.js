@@ -26,16 +26,16 @@ export const C = {
 
 export function glassStyle({ strong = false, glow = 'none', borderColor } = {}) {
   const glowMap = {
-    warning: `0 22px 70px rgba(201,162,75,.18), inset 0 1px 0 rgba(255,255,255,.68)`,
-    info: `0 22px 70px rgba(59,130,246,.12), inset 0 1px 0 rgba(255,255,255,.68)`,
-    primary: `0 22px 70px rgba(36,59,74,.14), inset 0 1px 0 rgba(255,255,255,.68)`,
-    none: '0 20px 60px rgba(27,46,58,.10), inset 0 1px 0 rgba(255,255,255,.68)'
+    warning: `0 24px 80px rgba(0,0,0,.40), 0 0 44px ${C.warning}24, inset 0 1px 0 rgba(255,255,255,.08)`,
+    info: `0 24px 80px rgba(0,0,0,.40), 0 0 36px ${C.info}18, inset 0 1px 0 rgba(255,255,255,.08)`,
+    primary: `0 24px 80px rgba(0,0,0,.40), 0 0 36px ${C.primary}18, inset 0 1px 0 rgba(255,255,255,.08)`,
+    none: '0 24px 76px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.08)'
   };
   return {
-    background: `linear-gradient(145deg, rgba(255,255,255,.72), rgba(244,241,234,.72)), ${strong ? C.glassStrong : C.glass}`,
-    border: `1px solid ${borderColor || C.glassBorder}`,
+    background: `linear-gradient(145deg, rgba(255,255,255,.07), rgba(255,255,255,.025)), ${strong ? 'rgba(27,46,58,.92)' : 'rgba(27,46,58,.78)'}`,
+    border: `1px solid ${borderColor || 'rgba(255,255,255,.12)'}`,
     borderRadius: C.radius,
-    backdropFilter: 'blur(18px)',
+    backdropFilter: 'blur(22px)',
     boxShadow: glowMap[glow] || glowMap.none
   };
 }
