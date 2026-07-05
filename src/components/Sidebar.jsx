@@ -1,40 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { C, glassStyle } from './consts';
-import MickiiOrb from './MickiiOrb';
+import { C } from './consts';
 import Icon from './Icon';
-import mabishionLogo from '../assets/Mabishion-logo.png';
-import mabishionIcon from '../assets/Mabishion-icon.png';
-import Badge from './Badge';
+import mabishionMark from '../assets/mabishion-mark.svg';
 import { getPendingApprovals } from '../data/db.js';
 
 const NAV_ITEMS = [
-  { id: 'dashboard', label: 'Home', icon: 'dashboard' },
-  { id: 'build-new', label: 'Build New', icon: 'rocket' },
-  { id: 'clients', label: 'Clients', icon: 'person' },
+  { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
   { id: 'projects', label: 'Projects', icon: 'project' },
-  { id: 'leads', label: 'Lead CRM', icon: 'users' },
-  { id: 'sales-marketing', label: 'Sales & Marketing Hub', icon: 'megaphone' },
-  { id: 'approvals', label: 'Approval Center', icon: 'approval', badge: true },
-  { id: 'finance', label: 'Finance Hub', icon: 'wallet' },
-  { id: 'worker-monitor', label: 'Worker Monitor', icon: 'brain' },
-  { id: 'products', label: 'Products', icon: 'inventory' },
-  { id: 'documents', label: 'Documents', icon: 'file' },
-  { id: 'knowledge', label: 'Knowledge Base', icon: 'chart' },
+  { id: 'tasks', label: 'Tasks', icon: 'kanban' },
+  { id: 'analytics', label: 'Analytics', icon: 'analytics' },
   { id: 'settings', label: 'Settings', icon: 'settings' },
+  { id: 'approvals', label: 'Approvals', icon: 'approval', badge: true },
 ];
 
 export default function Sidebar({ activeNavId, onNavigate }) {
   const [expanded] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);
 
-  // Monitor pending approvals dynamically
   useEffect(() => {
     const fetchPending = async () => {
       try {
         const list = await getPendingApprovals();
         setPendingCount(list.length);
       } catch (err) {
-        console.warn("[Sidebar] Approvals count fetch error:", err);
+        console.warn('[Sidebar] Approvals count fetch error:', err);
       }
     };
     fetchPending();
@@ -49,53 +38,58 @@ export default function Sidebar({ activeNavId, onNavigate }) {
         width: expanded ? C.sidebarExpand : C.sidebarW,
         paddingLeft: expanded ? 16 : 12,
         paddingRight: expanded ? 16 : 12,
-        background: 'linear-gradient(180deg, rgba(7,11,22,.72), rgba(2,4,10,.90))',
-        borderRight: `1px solid ${C.glassBorder}`,
-        backdropFilter: 'blur(28px)',
-        boxShadow: expanded ? '28px 0 70px rgba(0,0,0,.38)' : '10px 0 36px rgba(0,0,0,.18)'
+        background: `linear-gradient(180deg, ${C.navyDeep}, ${C.primary})`,
+        borderRight: '1px solid rgba(255,255,255,0.16)',
+        boxShadow: expanded ? '24px 0 58px rgba(27,46,58,.18)' : '10px 0 30px rgba(27,46,58,.16)'
       }}>
       
-      <div className="mb-6 flex flex-col justify-center rounded-2xl cursor-pointer hover:border-white/20 hover:bg-white/[0.04] transition-all duration-300"
+      <button className="mb-8 flex min-h-[72px] flex-col justify-center rounded-2xl text-left transition-all duration-300 hover:bg-white/[0.06]"
         onClick={() => onNavigate('dashboard')}
-        title="Go to Home Screen"
+        title="Go to Dashboard"
         style={{ 
-          padding: expanded ? '12px 18px' : '10px 0', 
-          border: '1px solid rgba(255, 255, 255, 0.08)', 
-          backgroundColor: 'rgba(255, 255, 255, 0.02)', 
-          color: C.warning,
+          padding: expanded ? '14px 16px' : '10px 0', 
+          border: '1px solid rgba(255, 255, 255, 0.10)', 
+          backgroundColor: 'rgba(255, 255, 255, 0.05)', 
+          color: C.gold,
           alignItems: expanded ? 'flex-start' : 'center'
         }}>
         {expanded ? (
-          <div className="min-w-0">
-            <img src={mabishionLogo} alt="Mabishion AI" className="h-12 w-auto object-contain" />
+          <div className="flex min-w-0 items-center gap-3">
+            <img src={mabishionMark} alt="" className="h-10 w-10 object-contain" />
+            <div className="min-w-0">
+              <p className="font-wordmark text-[18px] uppercase text-white">Mabishion</p>
+              <p className="tagline mt-1 text-[8px] font-bold" style={{ color: C.gold }}>Architects of Ambition</p>
+            </div>
           </div>
         ) : (
-          <img src={mabishionIcon} alt="Mabishion AI" className="h-8 w-auto object-contain rounded-lg" />
+          <img src={mabishionMark} alt="Mabishion" className="h-8 w-8 object-contain" />
         )}
-      </div>
+      </button>
 
-      <nav className="flex flex-1 flex-col gap-1.5 overflow-y-auto pr-1">
+      <nav className="flex flex-1 flex-col gap-1.5 overflow-y-auto pr-1" aria-label="Primary navigation">
         {NAV_ITEMS.map((item) => {
           const active = item.id === activeNavId;
           return (
             <button key={item.id}
               title={item.label}
               onClick={() => onNavigate(item.id)}
-              className={`relative flex h-10 items-center rounded-2xl text-xs transition-all duration-300 ${active ? 'bg-indigo-600/25 border-l-2 border-indigo-500 shadow-[inset_2px_0_10px_rgba(99,102,241,0.2)]' : 'hover:bg-white/5 hover:translate-x-1'}`}
+              className={`relative flex min-h-[44px] items-center rounded-2xl text-xs transition-all duration-300 ${active ? 'shadow-[inset_2px_0_10px_rgba(201,162,75,0.16)]' : 'hover:bg-white/5 hover:translate-x-1'}`}
               style={{
                 justifyContent: expanded ? 'flex-start' : 'center',
                 gap: expanded ? 12 : 0,
                 padding: expanded ? '0 14px' : 0,
-                color: active ? '#FFF' : C.textMuted,
+                color: active ? '#FFFFFF' : 'rgba(237,231,221,0.68)',
+                background: active ? 'rgba(201,162,75,0.18)' : 'transparent',
+                border: active ? '1px solid rgba(201,162,75,0.42)' : '1px solid transparent',
               }}>
 
               <Icon name={item.icon} size={18} />
               
               {expanded && (
-                <div className="flex-1 flex items-center justify-between min-w-0">
+                <div className="flex min-w-0 flex-1 items-center justify-between">
                   <span className="truncate font-semibold">{item.label}</span>
                   {item.badge && pendingCount > 0 && (
-                    <span className="ml-2 px-2 py-0.5 text-[9px] font-black rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 animate-pulse shadow-md shadow-amber-500/20">
+                    <span className="ml-2 rounded-full px-2 py-0.5 text-[9px] font-black text-slate-950 shadow-md shadow-amber-500/20" style={{ background: C.gold }}>
                       {pendingCount}
                     </span>
                   )}
@@ -106,15 +100,15 @@ export default function Sidebar({ activeNavId, onNavigate }) {
         })}
       </nav>
 
-      <div className="mt-4 rounded-2xl" style={{ ...glassStyle(), padding: expanded ? 14 : 8 }}>
+      <div className="mt-4 rounded-2xl" style={{ padding: expanded ? 14 : 8, border: '1px solid rgba(255,255,255,.10)', background: 'rgba(255,255,255,.055)' }}>
         {expanded ? (
           <div>
-            <div className="mb-2 flex items-center gap-2" style={{ color: C.success }}>
+            <div className="mb-2 flex items-center gap-2" style={{ color: C.gold }}>
               <Icon name="shield" size={16} /><span className="text-xs font-black">Approval Safe</span>
             </div>
-            <p className="text-[11px] leading-5" style={{ color: C.textMuted }}>No external action without manual YES. Mickii executes only stored skills.</p>
+            <p className="text-[11px] leading-5" style={{ color: 'rgba(237,231,221,0.66)' }}>External actions stay gated by manual approval.</p>
           </div>
-        ) : <Icon name="shield" size={19} className="mx-auto" style={{ color: C.success }} />}
+        ) : <Icon name="shield" size={19} className="mx-auto" style={{ color: C.gold }} />}
       </div>
     </aside>
   );

@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700;800&family=Marcellus&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,36 +6,59 @@
 @layer base {
   html, body, #root { 
     @apply h-screen w-screen overflow-hidden; 
-    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; 
-    background-color: #0F172A;
-    color: #F8FAFC;
+    font-family: 'Jost', 'Segoe UI', system-ui, sans-serif; 
+    background-color: #F4F1EA;
+    color: #1B2E3A;
+  }
+
+  * {
+    letter-spacing: 0;
+  }
+
+  button, a, input, select, textarea {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-paper;
   }
   
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { 
-    background: rgba(255,255,255,0.1); 
+    background: rgba(36,59,74,0.22); 
     border-radius: 3px; 
   }
   ::-webkit-scrollbar-thumb:hover { 
-    background: rgba(99,102,241,0.5); 
+    background: rgba(201,162,75,0.65); 
   }
 }
 
 @layer utilities {
   .glass-panel {
-    @apply backdrop-blur-xl border border-white/10 bg-surface/50 shadow-[0_4px_30px_rgba(0,0,0,0.1)];
+    @apply border border-border bg-white/80 shadow-[0_18px_60px_rgba(27,46,58,0.08)];
+  }
+
+  .font-wordmark {
+    font-family: 'Marcellus', Georgia, serif;
+    letter-spacing: 0.16em;
+  }
+
+  .tagline {
+    text-transform: uppercase;
+    letter-spacing: 0.30em;
+  }
+
+  .premium-panel {
+    border: 1px solid rgba(36, 59, 74, 0.12);
+    background: rgba(255, 255, 255, 0.62);
+    box-shadow: 0 24px 70px rgba(27, 46, 58, 0.09);
   }
 }
 
 /* Global Select Option Dropdown Contrast Fix */
 select option {
-  color: #0f172a !important;
+  color: #1B2E3A !important;
   background-color: #ffffff !important;
 }
 
-/* Global Select Container Dark-Mode Force */
 select {
-  background-color: #090d16 !important;
-  color: #f8fafc !important;
+  background-color: #ffffff !important;
+  color: #1B2E3A !important;
 }

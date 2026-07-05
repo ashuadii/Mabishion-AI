@@ -2,12 +2,12 @@ import React from 'react';
 import { C } from './consts';
 
 const TONES = {
-  gold: { color: C.warning, bg: `${C.warning}1F`, border: `${C.warning}55` },
+  gold: { color: C.goldDeep, bg: `${C.warning}24`, border: `${C.warning}66` },
   success: { color: C.success, bg: `${C.success}18`, border: `${C.success}4D` },
-  danger: { color: '#FFA0A0', bg: `${C.danger}1F`, border: `${C.danger}55` },
+  danger: { color: C.danger, bg: `${C.danger}12`, border: `${C.danger}44` },
   cyan: { color: C.info, bg: `${C.info}18`, border: `${C.info}44` },
-  violet: { color: C.primary, bg: `${C.primary}18`, border: `${C.primary}44` },
-  muted: { color: C.textMuted, bg: 'rgba(255,255,255,.045)', border: 'rgba(255,255,255,.10)' }
+  violet: { color: C.primary, bg: `${C.primary}12`, border: `${C.primary}33` },
+  muted: { color: C.textMuted, bg: 'rgba(36,59,74,.055)', border: 'rgba(36,59,74,.12)' }
 };
 
 export default function Badge({ children, tone = 'gold' }) {

@@ -5,17 +5,28 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#6366F1',
-        'primary-dark': '#4F46E5',
+        primary: '#243B4A',
+        'primary-dark': '#1B2E3A',
+        navy: '#243B4A',
+        'navy-deep': '#1B2E3A',
+        gold: '#C9A24B',
+        'gold-deep': '#A9823A',
+        cream: '#EDE7DD',
+        paper: '#F4F1EA',
+        muted: '#9BB0BC',
         success: '#10B981',
         danger: '#EF4444',
-        warning: '#F59E0B',
+        warning: '#C9A24B',
         info: '#3B82F6',
-        background: '#0F172A',
-        surface: '#1E293B',
-        border: '#334155',
-        text: '#F8FAFC',
-        'text-muted': '#94A3B8'
+        background: '#F4F1EA',
+        surface: '#FFFFFF',
+        border: '#D8D0C3',
+        text: '#1B2E3A',
+        'text-muted': '#5F7380'
+      },
+      fontFamily: {
+        heading: ['Marcellus', 'Georgia', 'serif'],
+        sans: ['Jost', 'Segoe UI', 'system-ui', 'sans-serif']
       }
     }
   },
