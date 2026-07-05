@@ -1,216 +1,174 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { C, glassStyle } from '../components/consts';
+import React from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import AppShell from '../components/AppShell';
-import ScreenHeader from '../components/ScreenHeader';
-import Icon from '../components/Icon';
 import Badge from '../components/Badge';
-import { getProjects, getInvoices, getWorkerLogs } from '../data/db.js';
+import Button from '../components/Button';
+import Icon from '../components/Icon';
+import { C } from '../components/consts';
 
-const TABS = ['Overview', 'Tasks', 'Files', 'Invoices', 'Activity'];
-
-const STATUS_COLOR = {
-  Research: C.info, Planning: C.accent, Build: C.success,
-  Delivered: C.muted, Paused: C.warning
+const PROJECTS = {
+  'orion-labs': {
+    name: 'Orion Labs SaaS Console',
+    client: 'Orion Labs',
+    stage: 'Build sprint',
+    type: 'B2B SaaS',
+    budget: '₹6.4L',
+    due: '18 Jul 2026',
+    progress: 68,
+    owner: 'Architecture Desk',
+    thesis: 'Turn a fragmented internal workflow into a command console for sales ops, onboarding, and subscription health.',
+    scope: ['Design system and authenticated app shell', 'Subscription metrics dashboard', 'Client onboarding workflow', 'Admin roles and approval gates'],
+    decisions: ['Confirm analytics event taxonomy', 'Approve compact sidebar behavior', 'Freeze V1 onboarding fields'],
+  },
+  'evara-clinic': {
+    name: 'Evara Clinic Growth OS', client: 'Evara Clinic', stage: 'Client review', type: 'Healthcare funnel', budget: '₹2.8L', due: '11 Jul 2026', progress: 82, owner: 'Launch Desk',
+    thesis: 'Package appointment demand, doctor credibility, and follow-up automation into a conversion-ready clinic funnel.',
+    scope: ['Landing page and treatment pages', 'Lead routing and WhatsApp handoff', 'Appointment booking copy', 'Analytics launch checklist'],
+    decisions: ['Approve hero claim', 'Confirm payment link', 'Choose final doctor photography'],
+  },
+  'northstar-commerce': {
+    name: 'Northstar Commerce Rebuild', client: 'Northstar Retail', stage: 'Offer architecture', type: 'E-commerce', budget: '₹4.2L', due: '24 Jul 2026', progress: 44, owner: 'Strategy Room',
+    thesis: 'Rebuild a retail storefront around repeat purchase behavior, bundles, and faster catalogue operations.',
+    scope: ['Storefront information architecture', 'Bundle-first catalogue model', 'Checkout friction audit', 'Retention email flows'],
+    decisions: ['Finalize product taxonomy', 'Approve launch bundle pricing', 'Confirm Shopify migration window'],
+  },
 };
+
+const MILESTONES = [
+  { label: 'Discovery and revenue model', date: 'Completed 03 Jul', status: 'Done' },
+  { label: 'Architecture and UX blueprint', date: 'Due 08 Jul', status: 'In review' },
+  { label: 'Build sprint and QA pass', date: 'Due 14 Jul', status: 'Active' },
+  { label: 'Launch handover', date: 'Due 18 Jul', status: 'Scheduled' },
+];
+
+const ACTIVITY = [
+  { actor: 'Business analyst', detail: 'Updated risk notes for subscription reporting.', time: '26 min ago' },
+  { actor: 'Developer desk', detail: 'Completed responsive shell and navigation pass.', time: '2 hr ago' },
+  { actor: 'Approval gate', detail: 'Waiting on analytics taxonomy decision.', time: 'Today 09:15' },
+];
+
+const TASKS = [
+  { title: 'Wire KPI definitions to client language', state: 'In progress', owner: 'Strategy' },
+  { title: 'Prepare launch QA checklist', state: 'Queued', owner: 'Delivery' },
+  { title: 'Review pricing-page edge cases', state: 'Review', owner: 'Architecture' },
+];
 
 export default function ProjectDetailScreen({ onNavigate }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [project, setProject] = useState(null);
-  const [invoices, setInvoices] = useState([]);
-  const [activityLogs, setActivityLogs] = useState([]);
-  const [activeTab, setActiveTab] = useState('Overview');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        const [projects, allInvoices, logs] = await Promise.all([
-          getProjects(),
-          getInvoices().catch(() => []),
-          getWorkerLogs().catch(() => [])
-        ]);
-        const found = (projects || []).find(p => p.id === id);
-        setProject(found || null);
-        setInvoices((allInvoices || []).filter(inv => inv.project_id === id));
-        setActivityLogs((logs || []).filter(l => l.project_id === id || !l.project_id).slice(0, 20));
-      } catch (e) {
-        console.error('[ProjectDetailScreen]', e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [id]);
+  const project = PROJECTS[id] || PROJECTS['orion-labs'];
 
   const handleNavigate = (screen) => {
     if (onNavigate) onNavigate(screen);
     else navigate(`/${screen}`);
   };
 
-  if (loading) {
-    return (
-      <AppShell onNavigate={handleNavigate}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: C.muted }}>
-          Loading project...
-        </div>
-      </AppShell>
-    );
-  }
-
-  if (!project) {
-    return (
-      <AppShell onNavigate={handleNavigate}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', gap: 16 }}>
-          <span style={{ fontSize: 32 }}>⚠️</span>
-          <p style={{ color: C.muted }}>Project not found.</p>
-          <button onClick={() => navigate('/projects')} style={{ color: C.accent, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
-            Back to Projects
-          </button>
-        </div>
-      </AppShell>
-    );
-  }
-
-  const progress = project.progress ?? 0;
-  const statusColor = STATUS_COLOR[project.stage] || C.muted;
-
   return (
-    <AppShell onNavigate={handleNavigate}>
-      <ScreenHeader
-        pageTitle={project.name || 'Project Detail'}
-        breadcrumbs={[{ label: 'Projects', onClick: () => navigate('/projects') }, { label: project.name }]}
-        onNavigate={handleNavigate}
-      />
+    <AppShell activeNavId="projects" onNavigate={handleNavigate}>
+      <div className="space-y-8">
+        <button onClick={() => navigate('/projects')} className="inline-flex min-h-[44px] items-center gap-2 rounded-2xl px-4 text-sm font-semibold" style={{ color: C.textMuted, border: `1px solid ${C.glassBorder}`, background: 'rgba(255,255,255,.58)' }}>
+          <Icon name="chevron_right" className="rotate-180" size={16} /> Back to projects
+        </button>
 
-      <div style={{ padding: '24px 32px', maxWidth: 1100 }}>
-
-        {/* Header Card */}
-        <div style={{ ...glassStyle({ strong: true }), borderRadius: 14, padding: '20px 28px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 24 }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: C.text }}>{project.name}</h1>
-              <Badge tone="info" label={project.stage || 'Research'} />
+        <section className="grid gap-8 xl:grid-cols-[1fr_360px]">
+          <div className="rounded-[30px] border bg-white/72 p-8" style={{ borderColor: C.glassBorder }}>
+            <div className="mb-5 flex flex-wrap gap-2">
+              <Badge tone="gold">{project.stage}</Badge>
+              <Badge tone="cyan">{project.type}</Badge>
             </div>
-            <p style={{ margin: 0, color: C.muted, fontSize: 13 }}>
-              Client: {project.client_name || '—'} · Type: {project.type || '—'} · Created: {project.created_at ? new Date(project.created_at).toLocaleDateString('en-IN') : '—'}
-            </p>
-          </div>
+            <h1 className="font-heading text-5xl leading-tight" style={{ color: C.navyDeep }}>{project.name}</h1>
+            <p className="mt-4 max-w-3xl text-lg leading-8" style={{ color: C.textMuted }}>{project.thesis}</p>
 
-          {/* Circular Progress */}
-          <div style={{ position: 'relative', width: 72, height: 72, flexShrink: 0 }}>
-            <svg width={72} height={72} style={{ transform: 'rotate(-90deg)' }}>
-              <circle cx={36} cy={36} r={30} fill="none" stroke={C.glassBorder} strokeWidth={6} />
-              <circle cx={36} cy={36} r={30} fill="none" stroke={statusColor} strokeWidth={6}
-                strokeDasharray={`${2 * Math.PI * 30}`}
-                strokeDashoffset={`${2 * Math.PI * 30 * (1 - progress / 100)}`}
-                strokeLinecap="round" style={{ transition: 'stroke-dashoffset 0.5s ease' }} />
-            </svg>
-            <span style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: 13, fontWeight: 700, color: C.text }}>{progress}%</span>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: `1px solid ${C.glassBorder}`, paddingBottom: 0 }}>
-          {TABS.map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)} style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              padding: '8px 18px', fontSize: 13, fontWeight: activeTab === tab ? 700 : 400,
-              color: activeTab === tab ? C.accent : C.muted,
-              borderBottom: activeTab === tab ? `2px solid ${C.accent}` : '2px solid transparent',
-              transition: 'all 0.2s'
-            }}>{tab}</button>
-          ))}
-        </div>
-
-        {/* Tab: Overview */}
-        {activeTab === 'Overview' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <div style={{ ...glassStyle(), borderRadius: 12, padding: 20 }}>
-              <h3 style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Project Info</h3>
+            <div className="mt-8 grid gap-4 md:grid-cols-4">
               {[
-                ['Name', project.name],
-                ['Client', project.client_name || '—'],
-                ['Type', project.type || '—'],
-                ['Stage', project.stage || '—'],
-                ['Health', project.health || '—'],
-                ['Progress', `${progress}%`],
-                ['Due Date', project.due_date || '—'],
-              ].map(([k, v]) => (
-                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `1px solid ${C.glassBorder}`, fontSize: 13 }}>
-                  <span style={{ color: C.muted }}>{k}</span>
-                  <span style={{ color: C.text, fontWeight: 500 }}>{v}</span>
+                ['Client', project.client],
+                ['Budget', project.budget],
+                ['Owner', project.owner],
+                ['Handoff', project.due],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-2xl border p-4" style={{ borderColor: C.glassBorder, background: `${C.cream}66` }}>
+                  <p className="text-xs font-bold uppercase" style={{ color: C.textMuted }}>{label}</p>
+                  <p className="mt-2 text-sm font-bold" style={{ color: C.primary }}>{value}</p>
                 </div>
               ))}
             </div>
-            <div style={{ ...glassStyle(), borderRadius: 12, padding: 20 }}>
-              <h3 style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Assigned Workers</h3>
-              <p style={{ color: C.muted, fontSize: 13 }}>Worker assignment visible after tasks are created.</p>
-            </div>
           </div>
-        )}
 
-        {/* Tab: Tasks */}
-        {activeTab === 'Tasks' && (
-          <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-              {['To Do', 'In Progress', 'Review', 'Done'].map(col => (
-                <div key={col} style={{ ...glassStyle(), borderRadius: 12, padding: 16, minHeight: 200 }}>
-                  <p style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{col}</p>
-                  <p style={{ color: C.muted, fontSize: 12, opacity: 0.6 }}>No tasks yet.</p>
+          <aside className="rounded-[30px] border p-6" style={{ borderColor: C.glassBorder, background: C.navyDeep, color: '#FFFFFF' }}>
+            <p className="tagline text-[10px] font-bold" style={{ color: C.gold }}>Readiness</p>
+            <p className="mt-5 font-heading text-6xl">{project.progress}%</p>
+            <div className="mt-5 h-2 rounded-full bg-white/12">
+              <div className="h-2 rounded-full" style={{ width: `${project.progress}%`, background: C.gold }} />
+            </div>
+            <p className="mt-5 text-sm leading-6 text-white/68">The project is commercially sound. The next unlock is decision speed across client review and analytics definition.</p>
+            <Button className="mt-6 w-full" icon="kanban" onClick={() => handleNavigate('tasks')}>Open related tasks</Button>
+          </aside>
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+          <div className="rounded-[26px] border bg-white/68 p-6" style={{ borderColor: C.glassBorder }}>
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="font-heading text-3xl" style={{ color: C.primary }}>Scope</h2>
+              <Icon name="architecture" style={{ color: C.goldDeep }} />
+            </div>
+            <div className="space-y-3">
+              {project.scope.map((item) => (
+                <div key={item} className="flex items-start gap-3 rounded-2xl border p-4" style={{ borderColor: C.glassBorder, background: 'rgba(255,255,255,.54)' }}>
+                  <Icon name="check" size={18} style={{ color: C.success }} />
+                  <p className="text-sm font-semibold" style={{ color: C.primary }}>{item}</p>
                 </div>
               ))}
             </div>
-            <p style={{ color: C.muted, fontSize: 12, marginTop: 12 }}>Task management available after B12 tasks table is populated at runtime.</p>
           </div>
-        )}
 
-        {/* Tab: Files */}
-        {activeTab === 'Files' && (
-          <div style={{ ...glassStyle(), borderRadius: 12, padding: 24, textAlign: 'center' }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>📁</div>
-            <p style={{ color: C.muted, fontSize: 13 }}>No files uploaded for this project yet.</p>
-            <p style={{ color: C.muted, fontSize: 12, opacity: 0.6 }}>File management requires file_storage runtime population.</p>
-          </div>
-        )}
-
-        {/* Tab: Invoices */}
-        {activeTab === 'Invoices' && (
-          <div style={{ ...glassStyle(), borderRadius: 12, padding: 20 }}>
-            {invoices.length === 0
-              ? <p style={{ color: C.muted, fontSize: 13 }}>No invoices for this project.</p>
-              : invoices.map(inv => (
-                <div key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${C.glassBorder}`, fontSize: 13 }}>
-                  <span style={{ color: C.text }}>{inv.invoice_number || inv.id}</span>
-                  <span style={{ color: C.muted }}>{inv.created_at ? new Date(inv.created_at).toLocaleDateString('en-IN') : '—'}</span>
-                  <span style={{ color: C.text, fontWeight: 600 }}>₹{((inv.total_amount || 0) / 100).toLocaleString('en-IN')}</span>
-                  <Badge tone={inv.status === 'paid' ? 'success' : inv.status === 'overdue' ? 'danger' : 'info'} label={inv.status || 'draft'} />
-                </div>
-              ))
-            }
-          </div>
-        )}
-
-        {/* Tab: Activity */}
-        {activeTab === 'Activity' && (
-          <div style={{ ...glassStyle(), borderRadius: 12, padding: 20 }}>
-            {activityLogs.length === 0
-              ? <p style={{ color: C.muted, fontSize: 13 }}>No activity recorded yet.</p>
-              : activityLogs.map((log, i) => (
-                <div key={i} style={{ display: 'flex', gap: 12, padding: '8px 0', borderBottom: `1px solid ${C.glassBorder}` }}>
-                  <span style={{ color: C.accent, fontSize: 18, flexShrink: 0 }}>·</span>
+          <div className="rounded-[26px] border bg-white/68 p-6" style={{ borderColor: C.glassBorder }}>
+            <h2 className="mb-5 font-heading text-3xl" style={{ color: C.primary }}>Milestones</h2>
+            <div className="space-y-4">
+              {MILESTONES.map((milestone, index) => (
+                <div key={milestone.label} className="grid grid-cols-[40px_1fr_auto] items-center gap-4">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold" style={{ background: index < 2 ? C.primary : `${C.primary}12`, color: index < 2 ? '#FFFFFF' : C.primary }}>{index + 1}</span>
                   <div>
-                    <p style={{ margin: 0, fontSize: 13, color: C.text }}>{log.worker_name} — {log.status}</p>
-                    <p style={{ margin: 0, fontSize: 11, color: C.muted }}>{log.timestamp ? new Date(log.timestamp).toLocaleString('en-IN') : '—'}</p>
+                    <p className="font-semibold" style={{ color: C.primary }}>{milestone.label}</p>
+                    <p className="text-sm" style={{ color: C.textMuted }}>{milestone.date}</p>
                   </div>
+                  <Badge tone={milestone.status === 'Done' ? 'success' : 'gold'}>{milestone.status}</Badge>
                 </div>
-              ))
-            }
+              ))}
+            </div>
           </div>
-        )}
+        </section>
 
+        <section className="grid gap-6 xl:grid-cols-3">
+          <div className="rounded-[24px] border bg-white/68 p-6" style={{ borderColor: C.glassBorder }}>
+            <h2 className="font-heading text-2xl" style={{ color: C.primary }}>Open decisions</h2>
+            <div className="mt-5 space-y-3">
+              {project.decisions.map((decision) => <Badge key={decision} tone="danger">{decision}</Badge>)}
+            </div>
+          </div>
+          <div className="rounded-[24px] border bg-white/68 p-6" style={{ borderColor: C.glassBorder }}>
+            <h2 className="font-heading text-2xl" style={{ color: C.primary }}>Task focus</h2>
+            <div className="mt-5 space-y-3">
+              {TASKS.map((task) => (
+                <div key={task.title} className="rounded-2xl border p-4" style={{ borderColor: C.glassBorder }}>
+                  <p className="font-semibold" style={{ color: C.primary }}>{task.title}</p>
+                  <p className="mt-1 text-sm" style={{ color: C.textMuted }}>{task.state} · {task.owner}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-[24px] border bg-white/68 p-6" style={{ borderColor: C.glassBorder }}>
+            <h2 className="font-heading text-2xl" style={{ color: C.primary }}>Activity</h2>
+            <div className="mt-5 space-y-4">
+              {ACTIVITY.map((item) => (
+                <div key={item.detail} className="border-l-2 pl-4" style={{ borderColor: C.gold }}>
+                  <p className="font-semibold" style={{ color: C.primary }}>{item.actor}</p>
+                  <p className="mt-1 text-sm leading-6" style={{ color: C.textMuted }}>{item.detail}</p>
+                  <p className="mt-1 text-xs font-bold uppercase" style={{ color: C.goldDeep }}>{item.time}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       </div>
     </AppShell>
   );
