@@ -1,19 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { C } from '../components/consts';
-import mabishionLogo from '../assets/Mabishion-logo.png';
+import Button from '../components/Button';
+import Icon from '../components/Icon';
+import mabishionMark from '../assets/mabishion-mark.svg';
 import { setupPin, verifyPin, isPinSetup } from '../data/db.js';
 
 const MAX_ATTEMPTS = 5;
-const LOCKOUT_MS = 5 * 60 * 1000; // 5 minutes lockout
+const LOCKOUT_MS = 5 * 60 * 1000;
+
+const ONBOARDING_STEPS = [
+  { label: 'Strategy room', detail: 'Revenue model, offer ladder, and client segments mapped.' },
+  { label: 'Build pipeline', detail: 'Research, proposal, development, review, and delivery gates aligned.' },
+  { label: 'Operator safety', detail: 'External actions require approval before the system acts.' },
+];
 
 export default function LoginScreen({ onUnlock }) {
-  const [mode, setMode] = useState('checking'); // checking | setup | login | confirm
+  const [mode, setMode] = useState('checking');
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const inputRef = useRef(null);
-  // NFR-019: Brute force protection — track failed attempts in session
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [lockedUntil, setLockedUntil] = useState(null);
 
@@ -39,7 +46,7 @@ export default function LoginScreen({ onUnlock }) {
 
     try {
       if (mode === 'setup') {
-        if (pin.length < 4) { setError('PIN kam se kam 4 digits ka hona chahiye'); setLoading(false); return; }
+        if (pin.length < 4) { setError('Use a 4 to 6 digit PIN.'); setLoading(false); return; }
         setMode('confirm');
         setConfirmPin('');
         setTimeout(() => inputRef.current?.focus(), 100);
@@ -48,19 +55,18 @@ export default function LoginScreen({ onUnlock }) {
       }
 
       if (mode === 'confirm') {
-        if (pin !== confirmPin) { setError('PINs match nahi kar rahe. Dobara try karo.'); setConfirmPin(''); setLoading(false); return; }
+        if (pin !== confirmPin) { setError('PINs do not match. Try again.'); setConfirmPin(''); setLoading(false); return; }
         await setupPin(pin);
         onUnlock();
         return;
       }
 
       if (mode === 'login') {
-        if (pin.length < 4) { setError('PIN daalo'); setLoading(false); return; }
+        if (pin.length < 4) { setError('Enter your PIN.'); setLoading(false); return; }
 
-        // NFR-019: Check lockout before attempting verification
         if (lockedUntil && Date.now() < lockedUntil) {
           const remaining = Math.ceil((lockedUntil - Date.now()) / 1000 / 60);
-          setError(`Account locked. ${remaining} minute${remaining !== 1 ? 's' : ''} baad try karo.`);
+          setError(`Locked for ${remaining} minute${remaining !== 1 ? 's' : ''}.`);
           setPin('');
           setLoading(false);
           return;
@@ -75,18 +81,17 @@ export default function LoginScreen({ onUnlock }) {
           const newCount = failedAttempts + 1;
           setFailedAttempts(newCount);
           if (newCount >= MAX_ATTEMPTS) {
-            const unlockAt = Date.now() + LOCKOUT_MS;
-            setLockedUntil(unlockAt);
-            setError(`${MAX_ATTEMPTS} galat attempts. Account 5 minutes ke liye lock ho gaya.`);
+            setLockedUntil(Date.now() + LOCKOUT_MS);
+            setError('Too many attempts. Locked for 5 minutes.');
           } else {
-            setError(`Galat PIN. ${MAX_ATTEMPTS - newCount} attempts baaki hain.`);
+            setError(`Incorrect PIN. ${MAX_ATTEMPTS - newCount} attempts remaining.`);
           }
           setPin('');
           setTimeout(() => inputRef.current?.focus(), 100);
         }
       }
     } catch (err) {
-      setError('Error: ' + err.message);
+      setError('Security check failed: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -98,126 +103,110 @@ export default function LoginScreen({ onUnlock }) {
 
   if (mode === 'checking') {
     return (
-      <div className="h-screen flex items-center justify-center" style={{ background: '#0F172A' }}>
-        <p style={{ color: C.textMuted }}>Loading...</p>
+      <div className="flex h-screen items-center justify-center" style={{ background: C.paper }}>
+        <p className="text-sm font-semibold" style={{ color: C.textMuted }}>Opening secure workspace...</p>
       </div>
     );
   }
 
   const isSetupFlow = mode === 'setup' || mode === 'confirm';
   const currentPin = mode === 'confirm' ? confirmPin : pin;
+  const title = mode === 'setup' ? 'Create your operator PIN' : mode === 'confirm' ? 'Confirm your operator PIN' : 'Welcome back';
+  const subtitle = mode === 'login'
+    ? 'Unlock the private business engineering OS.'
+    : 'Protect approvals, client data, and delivery workflows on this device.';
 
   return (
-    <div
-      className="h-screen flex flex-col items-center justify-center gap-8 px-4"
-      style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%)' }}
-    >
-      {/* Logo */}
-      <div className="flex flex-col items-center gap-3">
-        <img src={mabishionLogo} alt="Mabishion" className="h-10 object-contain" style={{ filter: 'brightness(1.2)' }} />
-        <div className="text-center">
-          <h1 className="text-2xl font-black text-white tracking-tight">Mabishion AI</h1>
-          <p className="text-xs mt-1" style={{ color: C.textMuted }}>Private Business Engine</p>
-        </div>
-      </div>
-
-      {/* Card */}
-      <div
-        className="w-full max-w-sm p-8 rounded-3xl"
-        style={{
-          background: 'rgba(30,41,59,0.8)',
-          border: '1px solid rgba(99,102,241,0.3)',
-          boxShadow: '0 0 40px rgba(99,102,241,0.15)',
-          backdropFilter: 'blur(12px)'
-        }}
-      >
-        <div className="text-center mb-6">
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
-            style={{ background: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.4)' }}
-          >
-            <span className="text-2xl">{isSetupFlow ? '🔐' : '🔒'}</span>
+    <main className="grid h-screen grid-cols-1 overflow-hidden lg:grid-cols-[1.1fr_0.9fr]" style={{ background: `linear-gradient(135deg, ${C.paper}, #fffaf0 48%, ${C.cream})` }}>
+      <section className="flex min-h-0 flex-col justify-between px-8 py-8 lg:px-14 lg:py-12">
+        <div className="flex items-center gap-4">
+          <img src={mabishionMark} alt="" className="h-12 w-12" />
+          <div>
+            <h1 className="font-wordmark text-2xl uppercase" style={{ color: C.primary }}>Mabishion</h1>
+            <p className="tagline text-[10px] font-bold" style={{ color: C.goldDeep }}>Architects of Ambition</p>
           </div>
-          <h2 className="text-lg font-black text-white">
-            {mode === 'setup' && 'Set Your PIN'}
-            {mode === 'confirm' && 'Confirm PIN'}
-            {mode === 'login' && 'Welcome Back, Ashu'}
+        </div>
+
+        <div className="max-w-3xl py-10">
+          <p className="tagline mb-5 text-[11px] font-bold" style={{ color: C.goldDeep }}>Business Engineering OS</p>
+          <h2 className="font-heading text-5xl leading-tight md:text-7xl" style={{ color: C.navyDeep }}>
+            Build the business like a system.
           </h2>
-          <p className="text-xs mt-1" style={{ color: C.textMuted }}>
-            {mode === 'setup' && '4-6 digit PIN set karo apne system ke liye'}
-            {mode === 'confirm' && 'Same PIN dobara daalo confirm karne ke liye'}
-            {mode === 'login' && 'Apna PIN daalo access ke liye'}
+          <p className="mt-6 max-w-2xl text-lg leading-8" style={{ color: C.textMuted }}>
+            A calm operating room for offers, projects, approvals, analytics, and the disciplined work that turns ambition into shipped assets.
           </p>
         </div>
 
-        {/* PIN dots display */}
-        <div className="flex justify-center gap-3 mb-6">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="w-3 h-3 rounded-full transition-all duration-150"
-              style={{
-                background: i < currentPin.length
-                  ? '#6366F1'
-                  : 'rgba(255,255,255,0.15)',
-                transform: i < currentPin.length ? 'scale(1.2)' : 'scale(1)',
-                boxShadow: i < currentPin.length ? '0 0 8px rgba(99,102,241,0.8)' : 'none'
-              }}
-            />
+        <div className="grid gap-4 md:grid-cols-3">
+          {ONBOARDING_STEPS.map((step, index) => (
+            <div key={step.label} className="rounded-2xl border bg-white/60 p-5" style={{ borderColor: C.glassBorder }}>
+              <span className="mb-4 flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold" style={{ background: `${C.gold}22`, color: C.goldDeep }}>
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              <h3 className="font-semibold" style={{ color: C.primary }}>{step.label}</h3>
+              <p className="mt-2 text-sm leading-6" style={{ color: C.textMuted }}>{step.detail}</p>
+            </div>
           ))}
         </div>
+      </section>
 
-        {/* Hidden number input */}
-        <input
-          ref={inputRef}
-          type="password"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          maxLength={6}
-          value={currentPin}
-          onChange={e => handlePinInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className="w-full px-4 py-3 rounded-xl text-center text-white text-xl font-black tracking-[0.5em] outline-none border transition-all"
-          style={{
-            background: 'rgba(15,23,42,0.8)',
-            border: error ? '1px solid #EF4444' : '1px solid rgba(99,102,241,0.4)',
-            letterSpacing: '0.5em'
-          }}
-          placeholder="••••••"
-          autoComplete="off"
-        />
+      <section className="flex items-center justify-center border-l px-6 py-8" style={{ borderColor: C.glassBorder, background: 'rgba(255,255,255,.52)' }}>
+        <div className="w-full max-w-md rounded-[28px] border bg-white/80 p-8 shadow-[0_28px_80px_rgba(27,46,58,.14)]" style={{ borderColor: C.glassBorder }}>
+          <div className="mb-8">
+            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: `${C.primary}10`, color: C.primary }}>
+              <Icon name="lock" size={24} />
+            </div>
+            <h2 className="font-heading text-3xl" style={{ color: C.navyDeep }}>{title}</h2>
+            <p className="mt-2 text-sm leading-6" style={{ color: C.textMuted }}>{subtitle}</p>
+          </div>
 
-        {error && (
-          <p className="mt-2 text-xs text-center text-red-400 font-bold">{error}</p>
-        )}
+          <label className="mb-2 block text-xs font-bold uppercase" htmlFor="operator-pin" style={{ color: C.textMuted }}>
+            {mode === 'confirm' ? 'Confirm PIN' : 'Operator PIN'}
+          </label>
+          <input
+            id="operator-pin"
+            ref={inputRef}
+            type="password"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={6}
+            value={currentPin}
+            onChange={e => handlePinInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="min-h-[54px] w-full rounded-2xl border bg-white px-4 text-center text-2xl font-bold outline-none transition-all"
+            style={{ borderColor: error ? C.danger : C.glassBorder, color: C.primary, letterSpacing: '0.28em' }}
+            placeholder="000000"
+            autoComplete="off"
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? 'pin-error' : undefined}
+          />
 
-        <button
-          onClick={handleSubmit}
-          disabled={loading || currentPin.length < 4}
-          className="mt-4 w-full py-3 rounded-xl font-black text-white text-sm transition-all"
-          style={{
-            background: currentPin.length >= 4 ? 'linear-gradient(135deg, #4F46E5, #7C3AED)' : 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(99,102,241,0.3)',
-            cursor: currentPin.length >= 4 ? 'pointer' : 'not-allowed',
-            opacity: loading ? 0.7 : 1
-          }}
-        >
-          {loading ? 'Verifying...' :
-           mode === 'setup' ? 'Set PIN →' :
-           mode === 'confirm' ? 'Confirm & Enter →' :
-           'Unlock →'}
-        </button>
+          <div className="mt-4 flex justify-center gap-2" aria-hidden="true">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <span
+                key={i}
+                className="h-2.5 w-2.5 rounded-full transition-all"
+                style={{ background: i < currentPin.length ? C.gold : 'rgba(36,59,74,.14)', transform: i < currentPin.length ? 'scale(1.18)' : 'scale(1)' }}
+              />
+            ))}
+          </div>
 
-        {mode === 'login' && (
-          <p className="mt-4 text-center text-[10px]" style={{ color: C.textMuted }}>
-            PIN bhool gaye? Settings mein jaake reset kar sakte ho.
-          </p>
-        )}
-      </div>
+          {error && <p id="pin-error" className="mt-4 text-sm font-semibold" style={{ color: C.danger }}>{error}</p>}
 
-      <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.2)' }}>
-        Mabishion AI · Local-First · Encrypted
-      </p>
-    </div>
+          <Button
+            onClick={handleSubmit}
+            disabled={loading || currentPin.length < 4}
+            className="mt-6 w-full"
+            icon={isSetupFlow ? 'shield' : 'lock'}
+          >
+            {loading ? 'Verifying' : mode === 'setup' ? 'Continue' : mode === 'confirm' ? 'Create secure workspace' : 'Unlock Mabishion'}
+          </Button>
+
+          <div className="mt-6 rounded-2xl border p-4 text-sm leading-6" style={{ borderColor: C.glassBorder, background: `${C.cream}66`, color: C.textMuted }}>
+            Local-first access. Approval gates, credentials, and delivery records stay protected behind this device PIN.
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }
