@@ -5,7 +5,7 @@ import { C } from './consts';
 import { getSetting, setSetting } from '../data/db.js';
 
 const AUTO_LOCK_MS = 10 * 60 * 1000;
-const LIGHT_SURFACE_NAV_IDS = new Set(['dashboard', 'projects', 'tasks', 'analytics', 'settings']);
+const LIGHT_SURFACE_NAV_IDS = new Set([]);
 
 const MODES = [
   { id: 'agency', label: 'Agency', color: C.gold },
@@ -40,13 +40,13 @@ function OperatingModeBar({ lightSurface = true }) {
   return (
     <div
       className="sticky top-0 z-30 flex min-h-[64px] items-center gap-2 px-8 py-3"
-      style={{ borderBottom: lightSurface ? `1px solid ${C.glassBorder}` : '1px solid rgba(255,255,255,.08)', background: lightSurface ? 'rgba(244,241,234,0.88)' : 'rgba(15,23,42,0.78)', backdropFilter: 'blur(18px)' }}
+      style={{ borderBottom: '1px solid rgba(255,255,255,.08)', background: 'rgba(15,23,42,0.86)', backdropFilter: 'blur(18px)' }}
     >
       <div className="min-w-0">
         <p className="tagline text-[10px] font-bold" style={{ color: C.gold }}>Architects of Ambition</p>
-        <p className="text-sm font-semibold" style={{ color: lightSurface ? C.primary : 'rgba(237,231,221,.78)' }}>Business engineering command OS</p>
+        <p className="text-sm font-semibold" style={{ color: 'rgba(237,231,221,.78)' }}>Business engineering command OS</p>
       </div>
-      <span className="ml-6 hidden text-[10px] uppercase font-bold sm:inline" style={{ color: lightSurface ? C.textMuted : 'rgba(237,231,221,.52)' }}>Mode</span>
+      <span className="ml-6 hidden text-[10px] uppercase font-bold sm:inline" style={{ color: 'rgba(237,231,221,.52)' }}>Mode</span>
       <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
         {MODES.map(m => (
           <button
@@ -55,7 +55,7 @@ function OperatingModeBar({ lightSurface = true }) {
             className="flex min-h-[44px] items-center rounded-xl px-3 text-[12px] font-bold transition-all"
             style={{
               background: active === m.id ? `${m.color}24` : 'transparent',
-              color: active === m.id ? (lightSurface ? C.primary : '#FFFFFF') : (lightSurface ? C.textMuted : 'rgba(237,231,221,.62)'),
+              color: active === m.id ? '#FFFFFF' : 'rgba(237,231,221,.62)',
               border: active === m.id ? `1px solid ${m.color}66` : '1px solid transparent',
             }}
           >
@@ -95,7 +95,7 @@ export default function AppShell({ activeNavId, onNavigate, commandBar, children
   }, [resetIdleTimer]);
 
   return (
-    <div className="h-screen overflow-hidden antialiased" style={{ background: lightSurface ? `linear-gradient(135deg, ${C.paper} 0%, #fffaf0 46%, ${C.cream} 100%)` : 'linear-gradient(135deg, #0F172A 0%, #111827 48%, #1B2E3A 100%)' }}>
+    <div className="h-screen overflow-hidden antialiased" style={{ background: 'linear-gradient(135deg, #0F172A 0%, #111827 48%, #1B2E3A 100%)' }}>
       <Sidebar activeNavId={activeNavId} onNavigate={onNavigate} />
 
       <main

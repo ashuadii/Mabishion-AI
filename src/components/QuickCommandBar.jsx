@@ -34,7 +34,7 @@ export default function QuickCommandBar({ contextLabel, placeholder }) {
       {/* Reply Bubble / System Logs */}
       {lastMessage && (
         <div className="absolute bottom-full mb-3 ml-4 max-w-xl rounded-[22px] p-4 text-sm leading-6 transition-all animate-in slide-in-from-bottom-2 overflow-y-auto max-h-[480px] scrollbar-hide" 
-          style={{ ...glassStyle({ glow: 'primary' }), backgroundColor: 'rgba(255,255,255,0.96)', color: C.text, border: `1px solid ${C.glassBorder}` }}>
+          style={{ ...glassStyle({ glow: 'primary' }), backgroundColor: 'rgba(15,23,42,0.96)', color: '#FFFFFF', border: `1px solid ${C.glassBorder}` }}>
           <p className="font-black text-[10px] uppercase tracking-wider mb-2 flex items-center gap-2" style={{ color: C.primary }}>
             {lastMessage.isSystem ? <span className="material-icons text-[12px]">settings</span> : <span className="material-icons text-[12px]">smart_toy</span>}
             {lastMessage.role === 'user' ? 'Mickii Input' : 'Mickii Output'}
@@ -67,12 +67,12 @@ export default function QuickCommandBar({ contextLabel, placeholder }) {
 
       {/* Bar */}
       <div className="flex min-h-[64px] items-center gap-4 rounded-[22px] px-4"
-        style={{ ...glassStyle({ strong: true, glow: 'primary' }), backgroundColor: 'rgba(255,255,255,0.92)' }}>
+        style={{ ...glassStyle({ strong: true, glow: 'primary' }), backgroundColor: 'rgba(15,23,42,0.94)' }}>
         <MickiiOrb isThinking={isProcessing} />
         <Badge tone="gold">{status.toUpperCase()}</Badge>
         <input 
           className="min-w-0 flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-slate-400"
-          style={{ color: C.text }}
+          style={{ color: '#FFFFFF' }}
           placeholder={isProcessing ? "Mickii is thinking..." : placeholder || "Ask Mickii anything..."}
           value={input}
           onChange={(e) => setInput(e.target.value)}

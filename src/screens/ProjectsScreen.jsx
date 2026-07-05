@@ -39,16 +39,16 @@ export default function ProjectsScreen({ onNavigate }) {
       <div className="space-y-8">
         <section className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
-            <p className="tagline text-[10px] font-bold" style={{ color: C.goldDeep }}>Projects</p>
-            <h1 className="mt-3 font-heading text-5xl" style={{ color: C.navyDeep }}>Build portfolio</h1>
-            <p className="mt-4 text-lg leading-8" style={{ color: C.textMuted }}>
+            <p className="tagline text-[10px] font-bold" style={{ color: C.gold }}>Projects</p>
+            <h1 className="mt-3 font-heading text-5xl" style={{ color: '#FFFFFF' }}>Build portfolio</h1>
+            <p className="mt-4 text-lg leading-8" style={{ color: 'rgba(237,231,221,.70)' }}>
               A premium delivery view for client assets, internal products, and business systems moving from strategy to launch.
             </p>
           </div>
           <Button icon="plus">New build brief</Button>
         </section>
 
-        <section className="rounded-[28px] border bg-white/70 p-5" style={{ borderColor: C.glassBorder }}>
+        <section className="rounded-[28px] border p-5" style={{ borderColor: 'rgba(255,255,255,.12)', background: 'rgba(27,46,58,.72)' }}>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <label className="relative block min-w-0 flex-1">
               <span className="sr-only">Search projects</span>
@@ -56,8 +56,8 @@ export default function ProjectsScreen({ onNavigate }) {
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                className="min-h-[48px] w-full rounded-2xl border bg-white pl-12 pr-4 text-sm font-medium outline-none"
-                style={{ borderColor: C.glassBorder, color: C.primary }}
+                className="min-h-[48px] w-full rounded-2xl border pl-12 pr-4 text-sm font-medium outline-none placeholder:text-slate-500"
+                style={{ borderColor: 'rgba(255,255,255,.14)', background: 'rgba(15,23,42,.72)', color: '#FFFFFF' }}
                 placeholder="Search by project, client, service, or owner"
               />
             </label>
@@ -68,9 +68,9 @@ export default function ProjectsScreen({ onNavigate }) {
                   onClick={() => setFilter(item)}
                   className="min-h-[44px] rounded-2xl px-4 text-sm font-semibold transition-all"
                   style={{
-                    background: filter === item ? C.primary : 'rgba(255,255,255,.58)',
-                    color: filter === item ? '#FFFFFF' : C.textMuted,
-                    border: `1px solid ${filter === item ? C.primary : C.glassBorder}`,
+                    background: filter === item ? C.gold : 'rgba(255,255,255,.06)',
+                    color: filter === item ? C.navyDeep : 'rgba(237,231,221,.72)',
+                    border: `1px solid ${filter === item ? C.gold : 'rgba(255,255,255,.12)'}`,
                   }}
                 >
                   {item}
@@ -82,32 +82,32 @@ export default function ProjectsScreen({ onNavigate }) {
 
         <section className="grid gap-5 xl:grid-cols-2">
           {filteredProjects.map((project) => (
-            <article key={project.id} className="rounded-[26px] border bg-white/72 p-6 transition-all hover:-translate-y-1 hover:bg-white" style={{ borderColor: C.glassBorder }}>
+            <article key={project.id} className="rounded-[26px] border p-6 transition-all hover:-translate-y-1" style={{ borderColor: 'rgba(255,255,255,.12)', background: 'rgba(27,46,58,.78)' }}>
               <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
                 <div className="min-w-0">
                   <div className="mb-4 flex flex-wrap gap-2">
                     <Badge tone="gold">{project.stage}</Badge>
                     <Badge tone={healthTone(project.health)}>{project.health}</Badge>
                   </div>
-                  <h2 className="font-heading text-3xl" style={{ color: C.primary }}>{project.name}</h2>
-                  <p className="mt-3 text-sm leading-6" style={{ color: C.textMuted }}>{project.client} · {project.type} · {project.owner}</p>
+                  <h2 className="font-heading text-3xl" style={{ color: '#FFFFFF' }}>{project.name}</h2>
+                  <p className="mt-3 text-sm leading-6" style={{ color: 'rgba(237,231,221,.68)' }}>{project.client} · {project.type} · {project.owner}</p>
                 </div>
                 <div className="text-left md:text-right">
-                  <p className="text-sm font-semibold" style={{ color: C.textMuted }}>Budget</p>
-                  <p className="font-heading text-3xl" style={{ color: C.goldDeep }}>{project.budget}</p>
+                  <p className="text-sm font-semibold" style={{ color: 'rgba(237,231,221,.62)' }}>Budget</p>
+                  <p className="font-heading text-3xl" style={{ color: C.gold }}>{project.budget}</p>
                 </div>
               </div>
 
               <div className="mt-6 grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
                 <div>
                   <div className="mb-2 flex items-center justify-between text-sm font-semibold">
-                    <span style={{ color: C.textMuted }}>Delivery progress</span>
-                    <span style={{ color: C.primary }}>{project.progress}%</span>
+                    <span style={{ color: 'rgba(237,231,221,.62)' }}>Delivery progress</span>
+                    <span style={{ color: C.gold }}>{project.progress}%</span>
                   </div>
-                  <div className="h-2 rounded-full" style={{ background: `${C.primary}10` }}>
+                  <div className="h-2 rounded-full" style={{ background: 'rgba(255,255,255,.10)' }}>
                     <div className="h-2 rounded-full" style={{ width: `${project.progress}%`, background: `linear-gradient(90deg, ${C.gold}, ${C.goldDeep})` }} />
                   </div>
-                  <p className="mt-3 text-sm" style={{ color: C.textMuted }}>Target handoff: {project.due}</p>
+                  <p className="mt-3 text-sm" style={{ color: 'rgba(237,231,221,.62)' }}>Target handoff: {project.due}</p>
                 </div>
                 <Button variant="soft" icon="external-link" onClick={() => onNavigate(`projects/${project.id}`)}>Open detail</Button>
               </div>

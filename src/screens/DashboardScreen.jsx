@@ -35,8 +35,8 @@ function SectionTitle({ eyebrow, title, action }) {
   return (
     <div className="mb-5 flex items-end justify-between gap-4">
       <div>
-        <p className="tagline text-[10px] font-bold" style={{ color: C.goldDeep }}>{eyebrow}</p>
-        <h2 className="mt-2 font-heading text-3xl" style={{ color: C.navyDeep }}>{title}</h2>
+        <p className="tagline text-[10px] font-bold" style={{ color: C.gold }}>{eyebrow}</p>
+        <h2 className="mt-2 font-heading text-3xl" style={{ color: '#FFFFFF' }}>{title}</h2>
       </div>
       {action}
     </div>
@@ -48,12 +48,12 @@ export default function DashboardScreen({ onNavigate }) {
     <AppShell activeNavId="dashboard" onNavigate={onNavigate}>
       <div className="space-y-8">
         <section className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[28px] border bg-white/70 p-8 shadow-[0_28px_80px_rgba(27,46,58,.10)]" style={{ borderColor: C.glassBorder }}>
+          <div className="rounded-[28px] border p-8 shadow-[0_28px_80px_rgba(0,0,0,.20)]" style={{ borderColor: 'rgba(255,255,255,.12)', background: 'rgba(27,46,58,.76)' }}>
             <Badge tone="gold">Executive cockpit</Badge>
-            <h1 className="mt-6 max-w-3xl font-heading text-5xl leading-tight" style={{ color: C.navyDeep }}>
+            <h1 className="mt-6 max-w-3xl font-heading text-5xl leading-tight" style={{ color: '#FFFFFF' }}>
               Mabishion is running 14 active business-engineering builds.
             </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8" style={{ color: C.textMuted }}>
+            <p className="mt-5 max-w-2xl text-lg leading-8" style={{ color: 'rgba(237,231,221,.70)' }}>
               The week is weighted toward proposal conversion, delivery quality, and approval speed. Focus the next operating block on decisions that unlock revenue.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
@@ -81,10 +81,10 @@ export default function DashboardScreen({ onNavigate }) {
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {KPIS.map((kpi) => (
-            <div key={kpi.label} className="rounded-2xl border bg-white/68 p-6" style={{ borderColor: C.glassBorder }}>
-              <p className="text-sm font-semibold" style={{ color: C.textMuted }}>{kpi.label}</p>
+            <div key={kpi.label} className="rounded-2xl border p-6" style={{ borderColor: 'rgba(255,255,255,.12)', background: 'rgba(27,46,58,.72)' }}>
+              <p className="text-sm font-semibold" style={{ color: 'rgba(237,231,221,.62)' }}>{kpi.label}</p>
               <div className="mt-4 flex items-end justify-between gap-3">
-                <p className="font-heading text-4xl" style={{ color: C.primary }}>{kpi.value}</p>
+                <p className="font-heading text-4xl" style={{ color: '#FFFFFF' }}>{kpi.value}</p>
                 <Badge tone={kpi.tone}>{kpi.note}</Badge>
               </div>
             </div>
@@ -96,38 +96,38 @@ export default function DashboardScreen({ onNavigate }) {
             <SectionTitle eyebrow="Pipeline" title="Ambition architecture flow" action={<Button variant="soft" icon="project" onClick={() => onNavigate('projects')}>View projects</Button>} />
             <div className="grid gap-4 md:grid-cols-2">
               {PIPELINE.map((stage) => (
-                <article key={stage.stage} className="rounded-2xl border bg-white/64 p-6 transition-all hover:-translate-y-1 hover:bg-white/82" style={{ borderColor: C.glassBorder }}>
+                <article key={stage.stage} className="rounded-2xl border p-6 transition-all hover:-translate-y-1" style={{ borderColor: 'rgba(255,255,255,.12)', background: 'rgba(27,46,58,.70)' }}>
                   <div className="flex items-start justify-between gap-4">
-                    <h3 className="font-heading text-2xl" style={{ color: C.primary }}>{stage.stage}</h3>
+                    <h3 className="font-heading text-2xl" style={{ color: '#FFFFFF' }}>{stage.stage}</h3>
                     <span className="flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold" style={{ background: `${C.gold}24`, color: C.goldDeep }}>{stage.count}</span>
                   </div>
-                  <p className="mt-5 text-sm leading-6" style={{ color: C.textMuted }}>{stage.detail}</p>
+                  <p className="mt-5 text-sm leading-6" style={{ color: 'rgba(237,231,221,.66)' }}>{stage.detail}</p>
                 </article>
               ))}
             </div>
           </div>
 
-          <aside className="rounded-[24px] border bg-white/68 p-6" style={{ borderColor: C.glassBorder }}>
+          <aside className="rounded-[24px] border p-6" style={{ borderColor: 'rgba(255,255,255,.12)', background: 'rgba(27,46,58,.72)' }}>
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="font-heading text-2xl" style={{ color: C.navyDeep }}>System health</h2>
+              <h2 className="font-heading text-2xl" style={{ color: '#FFFFFF' }}>System health</h2>
               <Icon name="health" style={{ color: C.goldDeep }} />
             </div>
             <div className="space-y-6">
               {HEALTH.map((item) => (
                 <div key={item.label}>
                   <div className="mb-2 flex items-center justify-between text-sm font-semibold">
-                    <span style={{ color: C.textMuted }}>{item.label}</span>
-                    <span style={{ color: C.primary }}>{item.value}%</span>
+                    <span style={{ color: 'rgba(237,231,221,.62)' }}>{item.label}</span>
+                    <span style={{ color: C.gold }}>{item.value}%</span>
                   </div>
-                  <div className="h-2 rounded-full" style={{ background: `${C.primary}12` }}>
+                  <div className="h-2 rounded-full" style={{ background: 'rgba(255,255,255,.10)' }}>
                     <div className="h-2 rounded-full" style={{ width: `${item.value}%`, background: `linear-gradient(90deg, ${C.gold}, ${C.goldDeep})` }} />
                   </div>
                 </div>
               ))}
             </div>
-            <div className="mt-8 rounded-2xl border p-4" style={{ borderColor: C.glassBorder, background: `${C.cream}70` }}>
-              <p className="text-sm font-semibold" style={{ color: C.primary }}>Priority move</p>
-              <p className="mt-2 text-sm leading-6" style={{ color: C.textMuted }}>Clear the two approval gates tied to revenue release before accepting new build requests.</p>
+            <div className="mt-8 rounded-2xl border p-4" style={{ borderColor: 'rgba(255,255,255,.12)', background: 'rgba(15,23,42,.48)' }}>
+              <p className="text-sm font-semibold" style={{ color: C.gold }}>Priority move</p>
+              <p className="mt-2 text-sm leading-6" style={{ color: 'rgba(237,231,221,.66)' }}>Clear the two approval gates tied to revenue release before accepting new build requests.</p>
             </div>
           </aside>
         </section>
