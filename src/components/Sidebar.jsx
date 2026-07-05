@@ -5,12 +5,21 @@ import mabishionMark from '../assets/mabishion-mark.svg';
 import { getPendingApprovals } from '../data/db.js';
 
 const NAV_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+  { id: 'dashboard', label: 'Home', icon: 'dashboard' },
+  { id: 'build-new', label: 'Build New', icon: 'rocket' },
+  { id: 'clients', label: 'Clients', icon: 'person' },
   { id: 'projects', label: 'Projects', icon: 'project' },
   { id: 'tasks', label: 'Tasks', icon: 'kanban' },
+  { id: 'leads', label: 'Lead CRM', icon: 'users' },
+  { id: 'sales-marketing', label: 'Sales & Marketing Hub', icon: 'megaphone' },
+  { id: 'approvals', label: 'Approval Center', icon: 'approval', badge: true },
+  { id: 'finance', label: 'Finance Hub', icon: 'wallet' },
   { id: 'analytics', label: 'Analytics', icon: 'analytics' },
+  { id: 'worker-monitor', label: 'Worker Monitor', icon: 'brain' },
+  { id: 'products', label: 'Products', icon: 'inventory' },
+  { id: 'documents', label: 'Documents', icon: 'file' },
+  { id: 'knowledge', label: 'Knowledge Base', icon: 'chart' },
   { id: 'settings', label: 'Settings', icon: 'settings' },
-  { id: 'approvals', label: 'Approvals', icon: 'approval', badge: true },
 ];
 
 export default function Sidebar({ activeNavId, onNavigate }) {
