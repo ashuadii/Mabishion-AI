@@ -175,10 +175,10 @@ export default function ScreenHeader({ title, pageTitle, subtitle, index, badgeL
           <button onClick={() => setCostAlert(null)} className="opacity-60 hover:opacity-100 transition-opacity">✕</button>
         </div>
       )}
-      <header className="mb-5 flex items-center justify-between gap-4 px-5 py-3 relative z-50" style={{ ...glassStyle(), background: 'rgba(255,255,255,.76)', border: `1px solid ${C.glassBorder}` }}>
+      <header className="mb-5 flex items-center justify-between gap-4 px-5 py-3 relative z-50" style={{ ...glassStyle(), border: '1px solid rgba(255,255,255,.12)' }}>
         <div className="flex min-w-0 items-center gap-3">
           <div className="min-w-0">
-            <h2 className="truncate text-sm font-bold uppercase" style={{ color: C.primary }}>{title}</h2>
+            <h2 className="truncate text-sm font-bold uppercase" style={{ color: C.gold }}>{title}</h2>
           </div>
           {/* UX-016: Offline indicator pill */}
           {isOffline && (
@@ -257,8 +257,8 @@ export default function ScreenHeader({ title, pageTitle, subtitle, index, badgeL
             </span>
             {badgeLabel && <Badge tone="muted">{badgeLabel}</Badge>}
           </div>
-          <h1 className="text-4xl font-extrabold tracking-tight" style={{ color: C.text }}>{pageTitle || title}</h1>
-          <p className="mt-2 max-w-4xl text-sm leading-6" style={{ color: C.textMuted }}>{subtitle}</p>
+          <h1 className="text-4xl font-extrabold tracking-tight" style={{ color: '#FFFFFF' }}>{pageTitle || title}</h1>
+          <p className="mt-2 max-w-4xl text-sm leading-6" style={{ color: 'rgba(237,231,221,.70)' }}>{subtitle}</p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-3">
           {secondaryAction && <Button variant="soft" icon={secondaryIcon || 'filter'} onClick={onSecondaryClick}>{secondaryAction}</Button>}

@@ -1,120 +1,800 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { C, glassStyle } from '../components/consts';
 import AppShell from '../components/AppShell';
-import Badge from '../components/Badge';
+import ScreenHeader from '../components/ScreenHeader';
 import Button from '../components/Button';
+import Badge from '../components/Badge';
 import Icon from '../components/Icon';
-import { C } from '../components/consts';
-
-const PROJECTS = [
-  { id: 'orion-labs', name: 'Orion Labs SaaS Console', client: 'Orion Labs', type: 'B2B SaaS', stage: 'Build sprint', health: 'On track', budget: '₹6.4L', due: '18 Jul 2026', progress: 68, owner: 'Architecture Desk' },
-  { id: 'evara-clinic', name: 'Evara Clinic Growth OS', client: 'Evara Clinic', type: 'Healthcare funnel', stage: 'Client review', health: 'Awaiting approval', budget: '₹2.8L', due: '11 Jul 2026', progress: 82, owner: 'Launch Desk' },
-  { id: 'northstar-commerce', name: 'Northstar Commerce Rebuild', client: 'Northstar Retail', type: 'E-commerce', stage: 'Offer architecture', health: 'Scope watch', budget: '₹4.2L', due: '24 Jul 2026', progress: 44, owner: 'Strategy Room' },
-  { id: 'founder-studio', name: 'Founder Studio Product Kit', client: 'Studio Anthra', type: 'Digital product', stage: 'Launch desk', health: 'Strong', budget: '₹1.6L', due: '09 Jul 2026', progress: 91, owner: 'Product Desk' },
-  { id: 'kairos-legal', name: 'Kairos Legal Intake Engine', client: 'Kairos Legal', type: 'Automation', stage: 'Research', health: 'Discovery active', budget: '₹3.1L', due: '28 Jul 2026', progress: 26, owner: 'Research Desk' },
-];
-
-const FILTERS = ['All', 'Build sprint', 'Client review', 'Offer architecture', 'Launch desk'];
-
-function healthTone(health) {
-  if (health.includes('approval') || health.includes('watch')) return 'danger';
-  if (health.includes('Strong') || health.includes('track')) return 'success';
-  return 'cyan';
-}
+import MickiiOrb from '../components/MickiiOrb';
+import ProgressBar from '../components/ProgressBar';
+import QuickCommandBar from '../components/QuickCommandBar';
+import { KANBAN_COLS } from '../data/mockData.jsx';
+import { getProjects, addProject, updateProjectStage, updateProjectProgress, getClients } from '../data/db.js';
+import { generatePdfInvoice, generateProposalPdf, generateZipDeliverable, saveFileToUserDirectory } from '../services/fileOperationService';
+import { runWorker } from '../engine/workers/index.js';
 
 export default function ProjectsScreen({ onNavigate }) {
-  const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState('All');
+  const [projects, setProjects] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState(null);
 
+  // VIS-012: Service type → tiers + pipeline + pricing
+  const SERVICE_CATALOG = {
+    'Landing Page': {
+      tiers: '1, 2, 3, 4, 8, 9, 11, 16',
+      pipeline: 'client_intake → business_analyst → blueprint_maker → website_builder ⚠️ → compliance → packager',
+      price: '₹5,000 – ₹10,000',
+      delivery: '24 – 48 hours',
+      tier: 1,
+    },
+    'Basic Website': {
+      tiers: '1–4, 5, 8, 9, 10, 11, 12, 13, 16',
+      pipeline: 'client_intake → business_analyst → blueprint_maker → proposal_maker ⚠️ → developer → website_builder ⚠️ → compliance → packager ⚠️',
+      price: '₹10,000 – ₹15,000',
+      delivery: '3 – 5 days',
+      tier: 1,
+    },
+    'E-Commerce Site': {
+      tiers: '1–5, 8, 9, 10, 11, 12, 14, 16',
+      pipeline: 'client_intake → business_analyst → blueprint_maker → proposal_maker ⚠️ → payment_handler ⚠️ → developer → website_builder ⚠️ → compliance → packager ⚠️',
+      price: '₹25,000 – ₹50,000',
+      delivery: '7 – 14 days',
+      tier: 2,
+    },
+    'SaaS Product': {
+      tiers: 'ALL 16 (mandatory)',
+      pipeline: 'client_intake → business_analyst → blueprint_maker → proposal_maker ⚠️ → payment_handler ⚠️ → developer (×multiple) → website_builder → compliance → packager ⚠️ → documentor → showcaser',
+      price: '₹50,000 – ₹1,00,000',
+      delivery: '10 – 20 days',
+      tier: 2,
+    },
+    'Custom Software': {
+      tiers: '1–5, 8, 9, 10, 11, 12, 14, 16',
+      pipeline: 'client_intake → business_analyst → blueprint_maker → proposal_maker ⚠️ → developer → compliance → packager ⚠️ → documentor',
+      price: '₹25,000 – ₹50,000',
+      delivery: '5 – 10 days',
+      tier: 2,
+    },
+    'Custom AI Agent': {
+      tiers: 'ALL 16 + Agent Governance',
+      pipeline: 'client_intake → business_analyst → blueprint_maker → proposal_maker ⚠️ → payment_handler ⚠️ → developer → compliance → packager ⚠️ → documentor → ai_call_product',
+      price: '₹50,000 – ₹1,00,000',
+      delivery: '10 – 20 days',
+      tier: 2,
+    },
+    'Meta Ads Campaign': {
+      tiers: '1, 2, 3, 4, 11, 13, 16',
+      pipeline: 'client_intake → business_analyst → service_promo → social_scheduler → proposal_maker ⚠️ → payment_handler ⚠️ → writer',
+      price: '₹5,000 – ₹15,000',
+      delivery: '24 – 48 hours',
+      tier: 1,
+    },
+    'Social Media Strategy': {
+      tiers: '1, 2, 3, 4, 16',
+      pipeline: 'client_intake → business_analyst → self_promo / service_promo → writer → social_scheduler ⚠️ → showcaser',
+      price: '₹5,000 – ₹10,000',
+      delivery: '24 – 48 hours',
+      tier: 1,
+    },
+    'Digital Product': {
+      tiers: 'Tier 3 (Fixed Price)',
+      pipeline: 'ai_call_product → compliance → packager ⚠️ → documentor',
+      price: '₹1,000 – ₹10,000',
+      delivery: 'Instant – 24 hours',
+      tier: 3,
+    },
+    'Maintenance': {
+      tiers: 'Add-On',
+      pipeline: 'notification → developer → compliance → packager → notification',
+      price: '₹2,000 – ₹10,000',
+      delivery: '24 – 48 hours',
+      tier: 1,
+    },
+  };
+
+  // New Project Form state
+  const [newProjName, setNewProjName] = useState('');
+  const [newProjType, setNewProjType] = useState('Landing Page');
+  const [newProjClient, setNewProjClient] = useState('');
+  const [newProjClientId, setNewProjClientId] = useState('');
+  const [newProjDueDate, setNewProjDueDate] = useState(''); // FR-073
+  const [newProjMilestone, setNewProjMilestone] = useState(''); // FR-072
+  const [clientsList, setClientsList] = useState([]);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Selected Project Details Edit state
+  const [editProgress, setEditProgress] = useState(0);
+  const [editHealth, setEditHealth] = useState('Stable');
+  const [isSimulatingWorker, setIsSimulatingWorker] = useState(false);
+  const [simulationLog, setSimulationLog] = useState('');
+
+  const loadProjects = async () => {
+    try {
+      const rows = await getProjects();
+      setProjects(rows);
+    } catch (err) {
+      console.error('Failed to load projects:', err);
+    }
+  };
+
+  useEffect(() => {
+    loadProjects();
+    getClients().then(rows => setClientsList(rows || [])).catch(() => {});
+  }, []);
+
+  // Filter projects by search query
   const filteredProjects = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return PROJECTS.filter(project => {
-      const matchesFilter = filter === 'All' || project.stage === filter;
-      const matchesQuery = !q || [project.name, project.client, project.type, project.owner].some(value => value.toLowerCase().includes(q));
-      return matchesFilter && matchesQuery;
-    });
-  }, [query, filter]);
+    if (!searchQuery.trim()) return projects;
+    const q = searchQuery.toLowerCase();
+    return projects.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        (p.client_name && p.client_name.toLowerCase().includes(q)) ||
+        (p.type && p.type.toLowerCase().includes(q))
+    );
+  }, [projects, searchQuery]);
+
+  // Stats calculation
+  const stats = useMemo(() => {
+    const total = projects.length;
+    const active = projects.filter((p) => p.stage !== 'Delivered / Archived').length;
+    const blocked = projects.filter((p) => p.health === 'Blocked').length;
+    const pendingReview = projects.filter((p) => p.health === 'Needs Review' || p.health === 'At Risk').length;
+    const ready = projects.filter((p) => p.stage === 'Ready').length;
+
+    return { total, active, blocked, pendingReview, ready };
+  }, [projects]);
+
+  // Handle New Project submission
+  const handleCreateProject = async (e) => {
+    e.preventDefault();
+    if (!newProjName.trim() || isSaving) return;
+
+    try {
+      setIsSaving(true);
+      await addProject(newProjName, newProjType, newProjClient, newProjClientId || null, newProjDueDate || null, newProjMilestone || null);
+      setNewProjName('');
+      setNewProjType('Website');
+      setNewProjClient('');
+      setNewProjClientId('');
+      setNewProjDueDate('');
+      setNewProjMilestone('');
+      setIsNewModalOpen(false);
+      await loadProjects();
+    } catch (err) {
+      console.error('Failed to create new project:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Drag & Drop Handlers
+  const handleDragStart = (e, id) => {
+    e.dataTransfer.setData('text/plain', id);
+  };
+
+  const handleDrop = async (e, col) => {
+    e.preventDefault();
+    const id = e.dataTransfer.getData('text/plain');
+    if (!id) return;
+
+    try {
+      await updateProjectStage(id, col);
+      await loadProjects();
+
+      // If the currently highlighted project is the one dropped, update its stage too
+      if (selectedProject && selectedProject.id === id) {
+        setSelectedProject((prev) => ({ ...prev, stage: col }));
+      }
+    } catch (err) {
+      console.error('Failed to update stage on drop:', err);
+    }
+  };
+
+  // Save progress & health updates to SQLite
+  const handleSaveProgress = async () => {
+    if (!selectedProject) return;
+    try {
+      await updateProjectProgress(selectedProject.id, editProgress, editHealth);
+      await loadProjects();
+      setSelectedProject((prev) => ({ ...prev, progress: editProgress, health: editHealth }));
+    } catch (err) {
+      console.error('Failed to update project status:', err);
+    }
+  };
+
+  // Generate and save beautiful PDF proposals natively
+  const handleExportPdf = async () => {
+    if (!selectedProject) return;
+    try {
+      setSimulationLog((prev) => prev + `\n[File Operation] Generating professional Proposal PDF...`);
+      const dateString = new Date().toISOString().split('T')[0];
+      const blob = await generateProposalPdf({
+        name: selectedProject.name,
+        clientName: selectedProject.client_name || 'Valued Client',
+        budget: selectedProject.budget || `$${(selectedProject.progress * 150 + 5000).toLocaleString()}`,
+        description: selectedProject.description || selectedProject.notes || 'Premium custom digital application build, layout design, responsive frontend architecture, SQLite local database sync, and multi-LLM worker intelligence loops.',
+        stage: selectedProject.stage || 'Research'
+      });
+      
+      const fileName = `${selectedProject.name.replace(/\s+/g, '_')}_proposal_${dateString}.pdf`;
+      const savedPath = await saveFileToUserDirectory(fileName, blob);
+      if (savedPath) {
+        setSimulationLog((prev) => prev + `\n[File Operation] PDF Proposal exported successfully to local file system!`);
+      }
+    } catch (e) {
+      console.error(e);
+      setSimulationLog((prev) => prev + `\n[File Operation Error] PDF Proposal generation failed: ${e.message}`);
+    }
+  };
+
+  // Generate and save packed ZIP deliverables natively
+  const handleExportZip = async () => {
+    if (!selectedProject) return;
+    try {
+      setSimulationLog((prev) => prev + `\n[File Operation] Generating compressed JSZip client deliverable archive...`);
+      
+      // Let's create dummy content files representing a beautiful built package!
+      const files = [
+        { name: 'MABISHION_BLUEPRINT.md', content: `# MABISHION PIPELINE BLUEPRINT\\n\\nProject: ${selectedProject.name}\\nGenerated: ${new Date().toUTCString()}\\n\\nClient Name: ${selectedProject.client_name}\\nTarget Stage: ${selectedProject.stage}\\nBuild Health: ${selectedProject.health}\\n\\nGenerated with Mickii private digital packaging worker.` },
+        { name: 'config.json', content: JSON.stringify(selectedProject, null, 2) },
+        { name: 'client_instructions.txt', content: 'Extract the package files. Proceed to run npm install followed by npm run dev inside client workspaces.' }
+      ];
+
+      const blob = await generateZipDeliverable(files);
+      const savedPath = await saveFileToUserDirectory(
+        `Mabishion_Package_${selectedProject.name.replace(/\s+/g, '_')}.zip`,
+        blob
+      );
+      if (savedPath) {
+        setSimulationLog((prev) => prev + `\n[File Operation] ZIP deliverable packed & saved successfully!`);
+      }
+    } catch (e) {
+      console.error(e);
+      setSimulationLog((prev) => prev + `\n[File Operation Error] ZIP compression failed: ${e.message}`);
+    }
+  };
+
+  // Trigger Autonomous Worker Pipeline (Real Cortex execution)
+  const handleTriggerWorker = async () => {
+    if (!selectedProject) return;
+    setIsSimulatingWorker(true);
+    setSimulationLog(`[Cortex Dispatcher] Initiating real autonomous worker pipeline for stage: ${selectedProject.stage}...`);
+
+    try {
+      const isResearchOrDesign = selectedProject.stage === 'Research' || selectedProject.stage === 'Design';
+      const workerName = isResearchOrDesign ? 'business_analyst' : 'proposal_maker';
+
+      setSimulationLog((prev) => prev + `\n[Cortex] Running "${workerName}" worker pipeline on SQLite database...`);
+
+      const result = await runWorker(
+        workerName,
+        selectedProject.id,
+        {},
+        {
+          onStatus: (msg) => {
+            setSimulationLog((prev) => prev + `\n[Status] ${msg}`);
+          }
+        }
+      );
+
+      if (result.success) {
+        setSimulationLog((prev) => 
+          prev + 
+          `\n[Success] Autonomous execution completed!` +
+          `\n[Database] Output indexed securely in SQLite table.` +
+          `\n[Approval Engine] Standard/Critical approval generated. Please check the Approval Center!`
+        );
+
+        // Auto upgrade progress slightly!
+        const nextProgress = Math.min(100, (selectedProject.progress || 0) + 15);
+        setEditProgress(nextProgress);
+        await updateProjectProgress(selectedProject.id, nextProgress, 'Strong');
+        await loadProjects();
+        setSelectedProject((prev) => ({ ...prev, progress: nextProgress, health: 'Strong' }));
+      } else {
+        setSimulationLog((prev) => prev + `\n[Failed] Worker run failed: ${result.error}`);
+      }
+    } catch (err) {
+      console.error(err);
+      setSimulationLog((prev) => prev + `\n[Error] System error: ${err.message}`);
+    } finally {
+      setIsSimulatingWorker(false);
+    }
+  };
+
+  // Pre-fill fields for a clicked project card
+  const selectProjectForDetails = (p) => {
+    setSelectedProject(p);
+    setEditProgress(p.progress || 0);
+    setEditHealth(p.health || 'Stable');
+    setSimulationLog('');
+  };
 
   return (
-    <AppShell activeNavId="projects" onNavigate={onNavigate}>
-      <div className="space-y-8">
-        <section className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <p className="tagline text-[10px] font-bold" style={{ color: C.gold }}>Projects</p>
-            <h1 className="mt-3 font-heading text-5xl" style={{ color: '#FFFFFF' }}>Build portfolio</h1>
-            <p className="mt-4 text-lg leading-8" style={{ color: 'rgba(237,231,221,.70)' }}>
-              A premium delivery view for client assets, internal products, and business systems moving from strategy to launch.
-            </p>
-          </div>
-          <Button icon="plus">New build brief</Button>
-        </section>
+    <AppShell activeNavId="projects" onNavigate={onNavigate}
+      commandBar={<QuickCommandBar contextLabel="Projects Context" placeholder="Ask Mickii: create project, drag to Ready, check blockers, run research worker..." />}>
+      
+      <ScreenHeader 
+        title="Projects / Production Floor" 
+        index="03"
+        subtitle="Main manufacturing hall where websites, apps, AI agents, automations, products, and client delivery packs are built."
+        badgeLabel="Manufacturing Hall · Builder Launcher"
+        primaryAction="New Project" 
+        primaryIcon="plus"
+        secondaryAction="Refresh Live" 
+        secondaryIcon="filter"
+        onPrimaryClick={() => setIsNewModalOpen(true)}
+        onSecondaryClick={loadProjects}
+        extraBadges={<><Badge tone="gold">Factory Mode</Badge><Badge tone="success">Local SQLite Live</Badge><Badge tone="violet">Approval Gates On</Badge></>}
+      />
 
-        <section className="rounded-[28px] border p-5" style={{ borderColor: 'rgba(255,255,255,.12)', background: 'rgba(27,46,58,.72)' }}>
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <label className="relative block min-w-0 flex-1">
-              <span className="sr-only">Search projects</span>
-              <Icon name="search" size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: C.textMuted }} />
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                className="min-h-[48px] w-full rounded-2xl border pl-12 pr-4 text-sm font-medium outline-none placeholder:text-slate-500"
-                style={{ borderColor: 'rgba(255,255,255,.14)', background: 'rgba(15,23,42,.72)', color: '#FFFFFF' }}
-                placeholder="Search by project, client, service, or owner"
+      <section className="grid grid-cols-12 gap-5">
+
+        {/* Revenue Pipeline Status Tracker (T7.5) */}
+        {(() => {
+          const PIPELINE = ['Research', 'Design', 'Build', 'Test', 'Ready', 'Delivered / Archived'];
+          const stageCounts = PIPELINE.map(stage => ({
+            stage,
+            count: projects.filter(p => p.stage === stage).length,
+          }));
+          const totalActive = projects.filter(p => p.stage !== 'Delivered / Archived').length;
+          return (
+            <div className="col-span-12 p-4" style={glassStyle({ glow: 'primary' })}>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-black text-white text-sm">Revenue Pipeline</h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg" style={{ background: 'rgba(99,102,241,0.2)', color: '#818cf8' }}>
+                  {totalActive} active projects
+                </span>
+              </div>
+              <div className="flex items-stretch gap-0">
+                {stageCounts.map(({ stage, count }, i) => {
+                  const pct = projects.length > 0 ? Math.round((count / Math.max(projects.length, 1)) * 100) : 0;
+                  const colors = ['#6366F1','#8B5CF6','#EC4899','#F59E0B','#10B981','#64748B'];
+                  return (
+                    <div key={stage} className="flex-1 text-center px-2 py-2 relative"
+                      style={{ borderRight: i < stageCounts.length - 1 ? `1px solid rgba(255,255,255,0.06)` : 'none' }}>
+                      <p className="text-[10px] font-bold mb-1 truncate" style={{ color: colors[i] }}>{stage}</p>
+                      <p className="text-xl font-black text-white">{count}</p>
+                      <div className="mt-1 h-1 rounded-full w-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: colors[i] }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Kanban Board */}
+        <div className="col-span-12 p-5 transition-all duration-300" style={glassStyle()}>
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="font-bold text-white flex items-center gap-2">
+                <Icon name="kanban" className="text-indigo-400" size={18} />
+                Interactive Kanban Board (Live SQLite)
+              </h3>
+              <p className="mt-1 text-xs" style={{ color: C.textMuted }}>
+                Drag any project card to shift stages. Click a card to open detailed control dashboard.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <input 
+                type="text" 
+                placeholder="Search projects..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="px-3 py-1 bg-white/5 border border-white/10 rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500/50"
               />
-            </label>
-            <div className="flex flex-wrap gap-2" role="tablist" aria-label="Project stage filters">
-              {FILTERS.map(item => (
-                <button
-                  key={item}
-                  onClick={() => setFilter(item)}
-                  className="min-h-[44px] rounded-2xl px-4 text-sm font-semibold transition-all"
-                  style={{
-                    background: filter === item ? C.gold : 'rgba(255,255,255,.06)',
-                    color: filter === item ? C.navyDeep : 'rgba(237,231,221,.72)',
-                    border: `1px solid ${filter === item ? C.gold : 'rgba(255,255,255,.12)'}`,
-                  }}
-                >
-                  {item}
-                </button>
-              ))}
+              <Badge tone="gold">7 Stages</Badge>
             </div>
           </div>
-        </section>
 
-        <section className="grid gap-5 xl:grid-cols-2">
-          {filteredProjects.map((project) => (
-            <article key={project.id} className="rounded-[26px] border p-6 transition-all hover:-translate-y-1" style={{ borderColor: 'rgba(255,255,255,.12)', background: 'rgba(27,46,58,.78)' }}>
-              <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-                <div className="min-w-0">
-                  <div className="mb-4 flex flex-wrap gap-2">
-                    <Badge tone="gold">{project.stage}</Badge>
-                    <Badge tone={healthTone(project.health)}>{project.health}</Badge>
+          <div className="overflow-x-auto pb-2">
+            <div className="flex min-w-max gap-4">
+              {KANBAN_COLS.map((col) => {
+                const cards = filteredProjects.filter((p) => p.stage === col);
+                let tone = 'muted';
+                if (col === 'Build') tone = 'gold';
+                if (col === 'Test') tone = 'cyan';
+                if (col === 'Ready') tone = 'success';
+                if (col === 'Delivered / Archived') tone = 'muted';
+
+                return (
+                  <div 
+                    key={col} 
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => handleDrop(e, col)}
+                    className="w-[250px] rounded-[22px] p-4 transition-all duration-200" 
+                    style={{ 
+                      border: `1px solid ${C.glassBorder}`, 
+                      backgroundColor: 'rgba(255,255,255,.025)',
+                    }}
+                  >
+                    <div className="mb-4 flex items-center justify-between border-b border-white/5 pb-2">
+                      <p className="font-bold text-sm text-white/90">{col}</p>
+                      <Badge tone={tone}>{cards.length}</Badge>
+                    </div>
+
+                    <div className="space-y-3 min-h-[300px]">
+                      {cards.map((p) => {
+                        let ht = 'gold';
+                        if (p.health === 'Blocked') ht = 'danger';
+                        if (p.health === 'Strong') ht = 'success';
+                        if (p.health === 'Needs Review' || p.health === 'At Risk') ht = 'violet';
+
+                        const isCurrentlySelected = selectedProject && selectedProject.id === p.id;
+
+                        return (
+                          <div 
+                            key={p.id} 
+                            draggable={true}
+                            onDragStart={(e) => handleDragStart(e, p.id)}
+                            onClick={() => selectProjectForDetails(p)}
+                            className={`rounded-[18px] p-3 cursor-grab active:cursor-grabbing transition-all duration-300 hover:scale-[1.02] border ${
+                              isCurrentlySelected 
+                                ? 'border-indigo-500/50 bg-indigo-500/10 shadow-[0_0_12px_rgba(99,102,241,0.2)]' 
+                                : 'border-white/5 bg-white/[0.04] hover:bg-white/[0.07] hover:border-white/10'
+                            }`}
+                          >
+                            <div className="mb-2 flex items-start justify-between gap-2">
+                              <p className="truncate text-sm font-bold text-white">{p.name}</p>
+                              <Badge tone={ht}>{p.health}</Badge>
+                            </div>
+                            <p className="text-[10px] text-gray-500 mb-2 truncate">{p.type || 'Digital Product'}</p>
+                            
+                            <div className="mb-1 flex justify-between text-[11px]" style={{ color: C.textMuted }}>
+                              <span>{p.progress || 0}% Complete</span>
+                              {p.client_name && <span className="max-w-[80px] truncate">{p.client_name}</span>}
+                            </div>
+                            <ProgressBar value={p.progress || 0} tone={ht} />
+                            {/* FR-073: Due date display */}
+                            {p.due_date && (
+                              <div className={`mt-1.5 flex items-center gap-1 text-[9px] font-bold ${new Date(p.due_date) < new Date() ? 'text-red-400' : 'text-slate-500'}`}>
+                                <Icon name="calendar" size={10} />
+                                Due: {new Date(p.due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                {new Date(p.due_date) < new Date() && ' ⚠️ Overdue'}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {cards.length === 0 && (
+                        <div className="h-[120px] rounded-[18px] border border-dashed border-white/5 flex items-center justify-center text-[10px] text-gray-600">
+                          Empty Stage
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <h2 className="font-heading text-3xl" style={{ color: '#FFFFFF' }}>{project.name}</h2>
-                  <p className="mt-3 text-sm leading-6" style={{ color: 'rgba(237,231,221,.68)' }}>{project.client} · {project.type} · {project.owner}</p>
-                </div>
-                <div className="text-left md:text-right">
-                  <p className="text-sm font-semibold" style={{ color: 'rgba(237,231,221,.62)' }}>Budget</p>
-                  <p className="font-heading text-3xl" style={{ color: C.gold }}>{project.budget}</p>
-                </div>
-              </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
 
-              <div className="mt-6 grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
+        {/* Selected Project Control Center (Side Panel / Drawer layout) */}
+        {selectedProject && (
+          <div className="col-span-12 p-5 animate-in slide-in-from-bottom duration-300" style={glassStyle({ glow: 'indigo' })}>
+            <div className="flex flex-wrap justify-between items-start gap-4 mb-4 pb-4 border-b border-white/10">
+              <div>
+                <Badge tone="indigo">Active Selection Control</Badge>
+                <h3 className="text-2xl font-bold text-white mt-1">{selectedProject.name}</h3>
+                <p className="text-xs text-gray-400 mt-1">
+                  Type: <span className="text-indigo-300 font-bold">{selectedProject.type || 'Digital Product'}</span> · Client: <span className="text-indigo-300 font-bold">{selectedProject.client_name || 'Mabishion'}</span>
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="soft" onClick={() => setSelectedProject(null)} icon="conflict">Deselect</Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              
+              {/* Left Column: Progress & Health Status Edit */}
+              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-4">
+                <h4 className="font-bold text-sm text-white flex items-center gap-2">
+                  <Icon name="wrench" size={16} className="text-yellow-400" />
+                  Manual Status Adjuster
+                </h4>
+
                 <div>
-                  <div className="mb-2 flex items-center justify-between text-sm font-semibold">
-                    <span style={{ color: 'rgba(237,231,221,.62)' }}>Delivery progress</span>
-                    <span style={{ color: C.gold }}>{project.progress}%</span>
-                  </div>
-                  <div className="h-2 rounded-full" style={{ background: 'rgba(255,255,255,.10)' }}>
-                    <div className="h-2 rounded-full" style={{ width: `${project.progress}%`, background: `linear-gradient(90deg, ${C.gold}, ${C.goldDeep})` }} />
-                  </div>
-                  <p className="mt-3 text-sm" style={{ color: 'rgba(237,231,221,.62)' }}>Target handoff: {project.due}</p>
+                  <label className="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">
+                    Build Progress: {editProgress}%
+                  </label>
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="100" 
+                    value={editProgress}
+                    onChange={(e) => setEditProgress(Number(e.target.value))}
+                    className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                  />
                 </div>
-                <Button variant="soft" icon="external-link" onClick={() => onNavigate(`projects/${project.id}`)}>Open detail</Button>
+
+                <div>
+                  <label className="block text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">
+                    Project Health Tone
+                  </label>
+                  <select 
+                    value={editHealth}
+                    onChange={(e) => setEditHealth(e.target.value)}
+                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500"
+                  >
+                    <option value="Stable">Stable (Success Green)</option>
+                    <option value="Strong">Strong (Gold Glow)</option>
+                    <option value="Needs Review">Needs Review (Violet Alert)</option>
+                    <option value="At Risk">At Risk (Orange Tone)</option>
+                    <option value="Blocked">Blocked (Danger Red)</option>
+                  </select>
+                </div>
+
+                <Button className="w-full" variant="glow" onClick={handleSaveProgress}>
+                  Save Settings to SQLite
+                </Button>
               </div>
-            </article>
-          ))}
-        </section>
-      </div>
+
+              {/* Middle Column: Cortex Worker Automation Panel */}
+              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-4">
+                <h4 className="font-bold text-sm text-white flex items-center gap-2">
+                  <Icon name="sparkles" size={16} className="text-indigo-400" />
+                  Local Cortex Trigger
+                </h4>
+                <p className="text-xs text-gray-400">
+                  Execute the local automated JavaScript worker for this stage.
+                </p>
+
+                <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+                  <p className="text-xs font-bold text-white flex items-center justify-between">
+                    <span>Target Worker:</span>
+                    <Badge tone="gold">
+                      {selectedProject.stage === 'Research' ? 'Business Analyst' : 
+                       selectedProject.stage === 'Design' ? 'Blueprint Maker' : 
+                       selectedProject.stage === 'Build' ? 'Developer' : 
+                       selectedProject.stage === 'Ready' ? 'Packager' : 'QA compliance'}
+                    </Badge>
+                  </p>
+                </div>
+
+                <Button 
+                  className="w-full" 
+                  onClick={handleTriggerWorker}
+                  disabled={isSimulatingWorker}
+                >
+                  {isSimulatingWorker ? 'Cortex Processing...' : 'Simulate Worker Sequence'}
+                </Button>
+
+                <div className="pt-2 border-t border-white/5 space-y-2">
+                  <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold block">Document Generation</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={handleExportPdf}
+                      className="flex items-center justify-center gap-1 bg-white/5 hover:bg-white/10 text-white font-bold text-[11px] py-2 rounded-xl transition-all border border-white/10 hover:scale-[1.02] active:scale-95"
+                    >
+                      📄 Generate Proposal
+                    </button>
+                    <button
+                      onClick={handleExportZip}
+                      className="flex items-center justify-center gap-1 bg-white/5 hover:bg-white/10 text-white font-bold text-[11px] py-2 rounded-xl transition-all border border-white/10 hover:scale-[1.02] active:scale-95"
+                    >
+                      <span className="material-icons text-[14px] text-yellow-400">folder_zip</span>
+                      Download ZIP
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Simulated Output Log Console */}
+              <div className="p-4 rounded-2xl bg-black/30 border border-white/5 flex flex-col min-h-[180px]">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Simulated Cortex Console</p>
+                <div className="flex-1 overflow-y-auto p-2 bg-black/40 rounded-xl font-mono text-[10px] text-green-400/90 whitespace-pre-wrap leading-relaxed">
+                  {simulationLog || '> Awaiting worker activation signal...'}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* Build types launcher cards */}
+        <div className="col-span-8 p-5" style={glassStyle({ glow: 'warning' })}>
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="font-bold text-white">Production Build Types</h3>
+            <p className="text-xs" style={{ color: C.textMuted }}>Website Builder & all builders open here as child workspaces</p>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { t: 'Website', icon: 'screen' },
+              { t: 'Landing page', icon: 'screen' },
+              { t: 'App', icon: 'sparkles' },
+              { t: 'Software', icon: 'wrench' },
+              { t: 'AI agent', icon: 'sparkles' },
+              { t: 'Browser extension', icon: 'wrench' },
+              { t: 'Automation tool', icon: 'workflow' },
+              { t: 'Digital product', icon: 'archive' },
+              { t: 'Client delivery pack', icon: 'archive' }
+            ].map((item) => (
+              <button 
+                key={item.t} 
+                onClick={() => {
+                  setNewProjType(item.t);
+                  setIsNewModalOpen(true);
+                }}
+                className="rounded-[18px] p-3 text-left text-xs font-bold transition-all duration-300 hover:scale-105 active:scale-95 border border-white/5 bg-white/[0.03] hover:bg-white/[0.08]"
+                style={{ color: C.textMuted }}
+              >
+                <Icon name={item.icon} size={17} style={{ color: C.warning }} />
+                <p className="mt-2 text-white/80">{item.t}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Production health summary */}
+        <div className="col-span-4 p-5" style={glassStyle({ glow: 'info' })}>
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="font-bold text-white">Live Operations Health</h3>
+            <Badge tone="success">Live</Badge>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: 'Active Builds', value: stats.active, tone: 'warning' },
+              { label: 'Blocked Items', value: stats.blocked, tone: 'danger' },
+              { label: 'Pending Review', value: stats.pendingReview, tone: 'primary' },
+              { label: 'Ready to Pack', value: stats.ready, tone: 'success' }
+            ].map((m) => (
+              <div key={m.label} className="rounded-2xl p-4 border border-white/5 bg-white/[0.03]">
+                <p className="text-3xl font-bold" style={{ color: m.tone === 'danger' ? C.danger : m.tone === 'success' ? C.success : m.tone === 'primary' ? C.primary : C.warning }}>
+                  {m.value}
+                </p>
+                <p className="mt-1 text-[11px]" style={{ color: C.textMuted }}>{m.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </section>
+
+      {/* New Project Creator Overlay Modal */}
+      {isNewModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+          <form
+            onSubmit={handleCreateProject}
+            className="w-full max-w-lg p-6 rounded-[28px] border border-white/10 shadow-2xl relative overflow-hidden space-y-4"
+            style={glassStyle({ glow: 'warning' })}
+          >
+            <div className="flex justify-between items-center pb-2 border-b border-white/5">
+              <h3 className="text-xl font-bold text-white">Launch New Build</h3>
+              <button 
+                type="button"
+                onClick={() => setIsNewModalOpen(false)} 
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <Icon name="conflict" size={20} />
+              </button>
+            </div>
+
+            <div>
+              <label className="block text-xs text-gray-400 font-bold mb-1 uppercase tracking-wider">Project Name</label>
+              <input 
+                type="text" 
+                placeholder="e.g. StyloCo Landing Page"
+                value={newProjName}
+                onChange={(e) => setNewProjName(e.target.value)}
+                required
+                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs text-gray-400 font-bold mb-1 uppercase tracking-wider">Service Type</label>
+              <select
+                value={newProjType}
+                onChange={(e) => setNewProjType(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                style={{ colorScheme: 'dark' }}
+              >
+                {Object.keys(SERVICE_CATALOG).map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+
+              {/* VIS-012: Show tiers, pipeline, price based on selected service */}
+              {SERVICE_CATALOG[newProjType] && (() => {
+                const svc = SERVICE_CATALOG[newProjType];
+                const tierColor = svc.tier === 1 ? '#10B981' : svc.tier === 2 ? '#F59E0B' : '#8B5CF6';
+                return (
+                  <div className="mt-2 p-3 rounded-xl space-y-2" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${tierColor}20`, color: tierColor }}>
+                        Tier {svc.tier} · {svc.delivery}
+                      </span>
+                      <span className="text-[10px] font-bold text-white">{svc.price}</span>
+                    </div>
+                    <div>
+                      <p className="text-[9px] uppercase tracking-wider mb-1" style={{ color: 'rgba(148,163,184,0.5)' }}>Required Tiers</p>
+                      <p className="text-[10px]" style={{ color: 'rgba(148,163,184,0.8)' }}>{svc.tiers}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] uppercase tracking-wider mb-1" style={{ color: 'rgba(148,163,184,0.5)' }}>Worker Pipeline <span style={{ color: '#F59E0B' }}>⚠️ = approval gate</span></p>
+                      <p className="text-[10px] break-words leading-5" style={{ color: 'rgba(148,163,184,0.8)' }}>{svc.pipeline}</p>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* FR-048: Client-project linking — dropdown from clients table */}
+            <div>
+              <label className="block text-xs text-gray-400 font-bold mb-1 uppercase tracking-wider">Link Client (Optional)</label>
+              {clientsList.length > 0 ? (
+                <select
+                  value={newProjClientId}
+                  onChange={e => {
+                    const id = e.target.value;
+                    setNewProjClientId(id);
+                    const client = clientsList.find(c => c.id === id);
+                    setNewProjClient(client ? client.name : '');
+                  }}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                >
+                  <option value="">— No client (Internal) —</option>
+                  {clientsList.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}{c.business ? ` · ${c.business}` : ''}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  placeholder="e.g. Priya Sharma (add clients in Clients screen)"
+                  value={newProjClient}
+                  onChange={e => setNewProjClient(e.target.value)}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                />
+              )}
+            </div>
+
+            {/* FR-073: Due Date */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-gray-400 font-bold mb-1 uppercase tracking-wider">Due Date (FR-073)</label>
+                <input
+                  type="date"
+                  value={newProjDueDate}
+                  onChange={e => setNewProjDueDate(e.target.value)}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                  style={{ colorScheme: 'dark' }}
+                  aria-label="Project due date"
+                />
+              </div>
+              {/* FR-072: First Milestone */}
+              <div>
+                <label className="block text-xs text-gray-400 font-bold mb-1 uppercase tracking-wider">First Milestone (FR-072)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Design approved"
+                  value={newProjMilestone}
+                  onChange={e => setNewProjMilestone(e.target.value)}
+                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-indigo-500"
+                  aria-label="First project milestone"
+                />
+              </div>
+            </div>
+
+            <div className="pt-4 flex gap-3">
+              <Button type="button" variant="soft" className="flex-1" onClick={() => setIsNewModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="glow" className="flex-1" disabled={isSaving}>
+                {isSaving ? 'Launching...' : 'Launch Build'}
+              </Button>
+            </div>
+          </form>
+        </div>
+      )}
+
     </AppShell>
   );
 }
+
