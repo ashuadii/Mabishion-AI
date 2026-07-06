@@ -7,7 +7,7 @@ Execution instructions only. No architecture. No specification.
 ## Active Source
 
 ```
-/home/admin-ubuntu/Desktop/Mabishion-AI/Mabishion Mickii/mabishion-ai-starter
+/home/admin-ubuntu/Desktop/Mabishion-AI/Mickii/Mabishion Software
 ```
 
 Enterprise Documents:
@@ -44,10 +44,10 @@ Stop
 ### Build Commands
 
 ```bash
-# Frontend build (run from mabishion-ai-starter/)
+# Frontend build (run from Mabishion Software/)
 npm run build
 
-# Rust check (run from mabishion-ai-starter/src-tauri/)
+# Rust check (run from Mabishion Software/src-tauri/)
 cargo check
 
 # Dev mode (requires native terminal — not VS Code snap)
