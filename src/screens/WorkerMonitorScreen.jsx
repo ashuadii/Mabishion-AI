@@ -79,7 +79,7 @@ export default function WorkerMonitorScreen({ onNavigate }) {
     <AppShell activeNavId="worker-monitor" onNavigate={onNavigate}>
       <ScreenHeader
         title="Worker Monitor"
-        index="13"
+        index="12"
         subtitle="Real-time visibility into all 24 AI worker executions, LLM calls, and system health."
         badgeLabel="Workers · LLM Usage · Health"
         primaryAction="Refresh"

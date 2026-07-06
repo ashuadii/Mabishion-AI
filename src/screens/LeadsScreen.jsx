@@ -125,6 +125,7 @@ export default function LeadsScreen({ onNavigate }) {
         {/* Header Section */}
         <ScreenHeader
           title="Lead CRM Console"
+          index="06"
           subtitle="Mabishion AI Studio Private Client Intake Scorer & Pipeline"
           primaryAction={showAddForm ? "Close Form" : "Add New Lead"}
           primaryIcon={showAddForm ? "close" : "person_add"}
