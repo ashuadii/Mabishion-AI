@@ -1,8 +1,10 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 export function useMickiiEar(onTranscript) {
   const [isListening, setIsListening] = useState(false);
   const [recognition, setRecognition] = useState(null);
+  const onTranscriptRef = useRef(onTranscript);
+  onTranscriptRef.current = onTranscript;
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -10,16 +12,16 @@ export function useMickiiEar(onTranscript) {
       const rec = new SpeechRecognition();
       rec.continuous = false;
       rec.interimResults = true;
-      rec.lang = 'en-US'; // Works surprisingly well with Hinglish too
+      rec.lang = 'en-US';
 
       rec.onresult = (event) => {
         const transcript = Array.from(event.results)
           .map(result => result[0])
           .map(result => result.transcript)
           .join('');
-        
+
         if (event.results[0].isFinal) {
-          onTranscript(transcript);
+          onTranscriptRef.current(transcript);
           setIsListening(false);
         }
       };
@@ -35,7 +37,7 @@ export function useMickiiEar(onTranscript) {
 
       setRecognition(rec);
     }
-  }, [onTranscript]);
+  }, []);
 
   const startListening = useCallback(() => {
     if (recognition) {
