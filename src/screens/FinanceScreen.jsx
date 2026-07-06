@@ -140,7 +140,7 @@ export default function FinanceScreen({ onNavigate }) {
           })}
 
           {/* Invoice List — Recent */}
-          <div className="col-span-12 lg:col-span-8 p-5" style={glassStyle({ glow: 'warning', borderColor: `${C.warning}55` })}>
+          <div key="invoices" className="col-span-12 lg:col-span-8 p-5" style={glassStyle({ glow: 'warning', borderColor: `${C.warning}55` })}>
             <div className="mb-5 flex items-center justify-between">
               <div>
                 <h3 className="font-black">Recent Invoices</h3>
@@ -191,7 +191,7 @@ export default function FinanceScreen({ onNavigate }) {
           </div>
 
           {/* Payment Status Summary */}
-          <div className="col-span-12 lg:col-span-4 p-5" style={glassStyle()}>
+          <div key="status" className="col-span-12 lg:col-span-4 p-5" style={glassStyle()}>
             <div className="mb-4">
               <h3 className="font-black">Payment Status</h3>
               <p className="mt-1 text-xs" style={{ color: C.textMuted }}>Invoice breakdown by current status</p>
@@ -218,7 +218,7 @@ export default function FinanceScreen({ onNavigate }) {
           </div>
 
           {/* GST Summary */}
-          <div className="col-span-12 lg:col-span-6 p-5" style={glassStyle({ glow: 'info' })}>
+          <div key="gst" className="col-span-12 lg:col-span-6 p-5" style={glassStyle({ glow: 'info' })}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-black">GST Summary</h3>
               <Badge tone="info">18% Rate</Badge>
@@ -241,7 +241,7 @@ export default function FinanceScreen({ onNavigate }) {
           </div>
 
           {/* AI Cost + Runway */}
-          <div className="col-span-12 lg:col-span-6 p-5" style={glassStyle()}>
+          <div key="aicost" className="col-span-12 lg:col-span-6 p-5" style={glassStyle()}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-black">AI Cost & Runway</h3>
               {runwayDays !== null && <Badge tone={runwayDays > 30 ? 'success' : 'danger'}>{runwayDays} days runway</Badge>}
