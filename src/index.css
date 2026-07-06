@@ -4,11 +4,11 @@
 @tailwind utilities;
 
 @layer base {
-  html, body, #root { 
-    @apply h-screen w-screen overflow-hidden; 
-    font-family: 'Jost', 'Segoe UI', system-ui, sans-serif; 
-    background-color: #F4F1EA;
-    color: #1B2E3A;
+  html, body, #root {
+    @apply h-screen w-screen overflow-hidden;
+    font-family: 'Jost', 'Segoe UI', system-ui, sans-serif;
+    background-color: #0F172A;
+    color: #EDE7DD;
   }
 
   * {
@@ -16,17 +16,17 @@
   }
 
   button, a, input, select, textarea {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-paper;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-1 focus-visible:ring-offset-transparent;
   }
   
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { 
-    background: rgba(36,59,74,0.22); 
-    border-radius: 3px; 
+  ::-webkit-scrollbar-thumb {
+    background: rgba(201,162,75,0.25);
+    border-radius: 3px;
   }
-  ::-webkit-scrollbar-thumb:hover { 
-    background: rgba(201,162,75,0.65); 
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(201,162,75,0.55);
   }
 }
 
