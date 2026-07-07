@@ -131,23 +131,29 @@ export const SearchService = {
 
     try {
       const apiKey = await getSetting('serper_api_key') || '';
-      
-      // Perform live Tauri serper_search invoke
+      console.log(`[SearchService] API key resolved: exists=${!!apiKey}, length=${apiKey?.length || 0}`);
+
+      if (!apiKey) {
+        throw new Error('Serper API key not found. Check Settings > API Keys.');
+      }
+
       rawResult = await invoke('serper_search', { query: cleanQuery, apiKey });
-      console.log(`[SearchService] Serper response:`, rawResult);
+      console.log(`[SearchService] Serper response keys:`, rawResult ? Object.keys(rawResult) : 'null');
+
+      if (rawResult && rawResult.message) {
+        console.error(`[SearchService] Serper API error:`, rawResult.message);
+      }
 
       if (!rawResult || !rawResult.organic || rawResult.organic.length === 0) {
-        // Fallback to simplified query or EXA
         console.warn(`[SearchService] Serper search empty, attempting simplified fallback`);
         const simpleQuery = cleanQuery.split(' ').slice(0, 3).join(' ');
-        // REFINED: Add negative keywords to prevent misinterpretation
         const refinedQuery = simpleQuery + ' -nfl -football -sports -basketball -cricket';
         rawResult = await invoke('serper_search', { query: refinedQuery, apiKey });
       }
     } catch (err) {
       console.error(`[SearchService] Serper network call failed:`, err);
       apiError = err.message || String(err);
-      status = 'Training Data'; // LLM fallback status
+      status = 'Training Data';
     }
 
     const responseTime = Date.now() - startTime;

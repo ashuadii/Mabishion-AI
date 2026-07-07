@@ -15,8 +15,11 @@
     letter-spacing: 0;
   }
 
-  button, a, input, select, textarea {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-1 focus-visible:ring-offset-transparent;
+  button, a, select, textarea {
+    @apply focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/20 focus-visible:ring-offset-0;
+  }
+  input {
+    @apply focus-visible:outline-none focus-visible:ring-0;
   }
   
   ::-webkit-scrollbar { width: 6px; }

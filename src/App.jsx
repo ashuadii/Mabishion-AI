@@ -13,6 +13,7 @@ import ReportsScreen from './screens/ReportsScreen';
 import FinanceScreen from './screens/FinanceScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import ResearchScreen from './screens/ResearchScreen';
+import BuildScreen from './screens/BuildScreen';
 import ApprovalCenterScreen from './screens/ApprovalCenterScreen';
 import ClientsScreen from './screens/ClientsScreen';
 import InvoicesScreen from './screens/InvoicesScreen';
@@ -54,9 +55,9 @@ export default function App() {
         <Route path="/login" element={<LoginScreen onUnlock={() => navigate('/dashboard')} />} />
         
         {/* Under the hood routes */}
-        <Route path="/new-build" element={<ResearchScreen onNavigate={handleNavigate} />} />
-        <Route path="/build-new" element={<ResearchScreen onNavigate={handleNavigate} />} />
-        <Route path="/research" element={<ResearchScreen onNavigate={handleNavigate} />} />
+        <Route path="/new-build" element={<BuildScreen onNavigate={handleNavigate} />} />
+        <Route path="/build-new" element={<BuildScreen onNavigate={handleNavigate} />} />
+        <Route path="/research" element={<BuildScreen onNavigate={handleNavigate} />} />
         <Route path="/automations" element={<AutomationsScreen onNavigate={handleNavigate} />} />
         
         {/* Core Sidebar 8 items */}

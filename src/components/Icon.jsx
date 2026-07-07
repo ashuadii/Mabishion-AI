@@ -148,7 +148,13 @@ const ICON_PATHS = {
   view_week: ['M4 3h5v18H4z','M10 3h4v18h-4z','M15 3h5v18h-5z'],
   visibility: ['M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z','M12 15a3 3 0 100-6 3 3 0 000 6z'],
   web: ['M12 22a10 10 0 100-20 10 10 0 000 20z','M2 12h20','M12 2a15 15 0 010 20','M12 2a15 15 0 000 20'],
-  inventory: ['M5 4h14v4H5z','M3 8h18v14H3z','M10 12h4']
+  inventory: ['M5 4h14v4H5z','M3 8h18v14H3z','M10 12h4'],
+  menu: ['M4 6h16','M4 12h16','M4 18h16'],
+  person: ['M12 11a4 4 0 100-8 4 4 0 000 8z','M20 21v-2a8 8 0 00-16 0v2'],
+  chevron_left: ['M15 18l-6-6 6-6'],
+  stop: ['M6 4h12v16H6z'],
+  contact_page: ['M4 4h16v16H4z','M12 10a2 2 0 100-4 2 2 0 000 4z','M8 16c0-2 2-3 4-3s4 1 4 3'],
+  wb_sunny: ['M12 18a6 6 0 100-12 6 6 0 000 12z','M12 2v2','M12 20v2','M4.9 4.9l1.4 1.4','M17.7 17.7l1.4 1.4','M2 12h2','M20 12h2','M4.9 19.1l1.4-1.4','M17.7 6.3l1.4-1.4']
 };
 
 export default function Icon({ name, size = 20, className = '', style }) {

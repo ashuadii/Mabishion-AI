@@ -7,7 +7,7 @@ import { getPendingApprovals } from '../data/db.js';
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Home', icon: 'dashboard' },
   { id: 'build-new', label: 'Build New', icon: 'rocket' },
-  { id: 'clients', label: 'Clients', icon: 'person' },
+  { id: 'clients', label: 'Clients', icon: 'contact_page' },
   { id: 'projects', label: 'Projects', icon: 'project' },
   { id: 'tasks', label: 'Tasks', icon: 'kanban' },
   { id: 'leads', label: 'Lead CRM', icon: 'users' },
@@ -23,7 +23,10 @@ const NAV_ITEMS = [
 ];
 
 export default function Sidebar({ activeNavId, onNavigate }) {
-  const [expanded] = useState(true);
+  const [expanded, setExpanded] = useState(() => {
+    const saved = localStorage.getItem('mabishion_sidebar');
+    return saved === null ? true : saved === '1';
+  });
   const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
@@ -52,28 +55,25 @@ export default function Sidebar({ activeNavId, onNavigate }) {
         boxShadow: expanded ? '24px 0 58px rgba(27,46,58,.18)' : '10px 0 30px rgba(27,46,58,.16)'
       }}>
       
-      <button className="mb-8 flex min-h-[72px] flex-col justify-center rounded-2xl text-left transition-all duration-300 hover:bg-white/[0.06]"
-        onClick={() => onNavigate('dashboard')}
-        title="Go to Dashboard"
-        style={{ 
-          padding: expanded ? '14px 16px' : '10px 0', 
-          border: '1px solid rgba(255, 255, 255, 0.10)', 
-          backgroundColor: 'rgba(255, 255, 255, 0.05)', 
-          color: C.gold,
-          alignItems: expanded ? 'flex-start' : 'center'
-        }}>
-        {expanded ? (
-          <div className="flex min-w-0 items-center gap-3">
-            <img src={mabishionMark} alt="" className="h-10 w-10 object-contain" />
+      <div className="mb-6 flex items-center gap-2">
+        <button
+          onClick={() => { const next = !expanded; setExpanded(next); localStorage.setItem('mabishion_sidebar', next ? '1' : '0'); }}
+          className="h-9 w-9 shrink-0 rounded-xl flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+          title={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
+        >
+          <Icon name="menu" size={20} />
+        </button>
+        {expanded && (
+          <button className="flex-1 min-w-0 flex items-center gap-2.5 rounded-xl py-2 px-2 hover:bg-white/[0.06] transition-all"
+            onClick={() => onNavigate('dashboard')} title="Go to Dashboard">
+            <img src={mabishionMark} alt="" className="h-8 w-8 object-contain" />
             <div className="min-w-0">
-              <p className="font-wordmark text-[18px] uppercase text-white">Mabishion</p>
-              <p className="tagline mt-1 text-[8px] font-bold" style={{ color: C.gold }}>Architects of Ambition</p>
+              <p className="font-wordmark text-[15px] uppercase text-white leading-tight">Mabishion</p>
+              <p className="tagline text-[7px] font-bold" style={{ color: C.gold }}>Architects of Ambition</p>
             </div>
-          </div>
-        ) : (
-          <img src={mabishionMark} alt="Mabishion" className="h-8 w-8 object-contain" />
+          </button>
         )}
-      </button>
+      </div>
 
       <nav className="flex flex-1 flex-col gap-1.5 overflow-y-auto pr-1" aria-label="Primary navigation">
         {NAV_ITEMS.map((item) => {

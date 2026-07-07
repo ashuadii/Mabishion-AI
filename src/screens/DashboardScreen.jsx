@@ -588,7 +588,7 @@ Reference URL or notes: ${planUrl || "None"}
   // ── Quick action nav items ──────────────────────────────────────────────────
   const QUICK_ACTIONS = [
     { label: 'New Lead',    icon: 'person_add', route: 'leads',    color: '#6366F1' },
-    { label: 'New Project', icon: 'rocket',     route: 'projects', color: '#F59E0B' },
+    { label: 'New Project', icon: 'rocket',     route: 'build-new', color: '#F59E0B' },
     { label: 'New Invoice', icon: 'receipt_long',route: 'invoices', color: '#10B981' },
     { label: 'Approval',    icon: 'approval',   route: 'approvals', color: '#EF4444' },
     { label: 'Reports',     icon: 'analytics',  route: 'analytics', color: '#8B5CF6' },
@@ -636,8 +636,8 @@ Reference URL or notes: ${planUrl || "None"}
       {/* ── Morning Brief — compact callout ────────────────────────────────── */}
       {morningBrief && (
         <div className="mb-5 flex items-start gap-3 px-4 py-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/5">
-          <span className="text-base mt-0.5">🌅</span>
-          <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">{morningBrief}</p>
+          <Icon name="wb_sunny" size={16} className="mt-0.5 text-emerald-400 shrink-0" />
+          <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">{morningBrief.replace(/[\u{1F300}-\u{1FAD6}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').replace(/\s{2,}/g, ' ').trim()}</p>
         </div>
       )}
 
@@ -717,7 +717,7 @@ Reference URL or notes: ${planUrl || "None"}
             {approvals.length === 0 ? (
               <div className="px-5 py-10 text-center">
                 <Icon name="check_circle" size={28} className="mx-auto mb-2 text-emerald-500/40" />
-                <p className="text-xs text-slate-500">Koi pending approval nahi. ✅</p>
+                <p className="text-xs text-slate-500">No pending approvals. ✅</p>
               </div>
             ) : (
               approvals.slice(0, 5).map((app) => (
@@ -762,7 +762,7 @@ Reference URL or notes: ${planUrl || "None"}
           {approvals.length > 5 && (
             <div className="px-5 py-3 border-t border-white/5">
               <button onClick={() => onNavigate('approvals')} className="text-xs text-violet-400 hover:text-violet-300 font-bold transition-colors">
-                +{approvals.length - 5} aur dekho →
+                +{approvals.length - 5} more →
               </button>
             </div>
           )}
@@ -795,7 +795,7 @@ Reference URL or notes: ${planUrl || "None"}
             </div>
             <div className="overflow-y-auto max-h-52 divide-y divide-white/5">
               {activityFeed.length === 0 ? (
-                <p className="px-4 py-6 text-xs text-slate-500 text-center">Abhi koi activity nahi.</p>
+                <p className="px-4 py-6 text-xs text-slate-500 text-center">No recent activity.</p>
               ) : activityFeed.slice(0, 20).map((e, i) => {
                 const isError = e.level === 'ERROR' || e.level === 'WARN' || e.level === 'failed';
                 const isDone  = e.level === 'completed' || e.level === 'INFO';
@@ -886,7 +886,7 @@ Reference URL or notes: ${planUrl || "None"}
               <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1.5">Requirements / Notes</label>
               <textarea
                 rows={3}
-                placeholder="Client ka kya chahiye, kya features, koi reference..."
+                placeholder="Client requirements, features needed, any references..."
                 className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-indigo-500 resize-none"
                 value={planContext}
                 onChange={e => setPlanContext(e.target.value)}

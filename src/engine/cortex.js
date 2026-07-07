@@ -871,10 +871,23 @@ export class Cortex {
               });
             }
 
-            // ── Kimi Search Result Validation ──────────────────────────────────
+            // ── Search Result Validation ──────────────────────────────────
             if (name === 'mickii_web_search') {
               const searchResult = observation;
-              if (!searchResult || searchResult.includes('error') || searchResult.includes('failed') || searchResult.includes('empty results')) {
+              let searchFailed = !searchResult || searchResult.trim() === '';
+              if (!searchFailed) {
+                try {
+                  const parsed = JSON.parse(searchResult);
+                  if (parsed.error) searchFailed = true;
+                } catch (_) {
+                  // Not JSON = formatted results text = success
+                }
+              }
+              if (!searchFailed && !searchResult.startsWith('RESULT ')) {
+                searchFailed = true;
+              }
+              if (searchFailed) {
+                console.warn('[Cortex] Search failed. Raw observation:', searchResult?.substring(0, 200));
                 observation = 'SEARCH_FAILED: No live data available. Do not hallucinate sources. Inform the user in Hinglish that the search failed and you can only give a standard disclaimer or tell them to check settings API keys.';
               }
             }

@@ -76,6 +76,20 @@ function OperatingModeBar({ lightSurface = true }) {
 export default function AppShell({ activeNavId, onNavigate, commandBar, children }) {
   const idleTimer = useRef(null);
   const lightSurface = LIGHT_SURFACE_NAV_IDS.has(activeNavId);
+  const [sidebarExpanded, setSidebarExpanded] = useState(() => {
+    const saved = localStorage.getItem('mabishion_sidebar');
+    return saved === null ? true : saved === '1';
+  });
+
+  useEffect(() => {
+    const onStorage = (e) => { if (e.key === 'mabishion_sidebar') setSidebarExpanded(e.newValue === '1'); };
+    window.addEventListener('storage', onStorage);
+    const interval = setInterval(() => {
+      const v = localStorage.getItem('mabishion_sidebar');
+      setSidebarExpanded(v === null ? true : v === '1');
+    }, 200);
+    return () => { window.removeEventListener('storage', onStorage); clearInterval(interval); };
+  }, []);
 
   const resetIdleTimer = useCallback(() => {
     if (idleTimer.current) clearTimeout(idleTimer.current);
@@ -99,10 +113,9 @@ export default function AppShell({ activeNavId, onNavigate, commandBar, children
       <Sidebar activeNavId={activeNavId} onNavigate={onNavigate} />
 
       <main
-        className="relative z-10 flex h-screen flex-col overflow-y-auto pb-28"
-        style={{ marginLeft: C.sidebarExpand }}
+        className={`relative z-10 flex h-screen flex-col overflow-y-auto ${commandBar ? 'pb-0' : 'pb-28'}`}
+        style={{ marginLeft: sidebarExpanded ? C.sidebarExpand : C.sidebarW, transition: 'margin-left 0.3s' }}
       >
-        <OperatingModeBar lightSurface={lightSurface} />
         <div className="flex-1 p-8">
           <div className="mx-auto max-w-[1480px]">{children}</div>
         </div>
