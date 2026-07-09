@@ -1010,3 +1010,104 @@ OWNER DECISIONS PENDING (4 items — cannot be resolved technically):
 Why changed: Full technical investigation to reconcile two conflicting Blueprint worker systems without owner choosing sides. Reconciliation layer produced as evidence base for future owner decisions.
 Status: Working
 Next step: Await owner decisions on the 4 items above. Phase C code changes (approval engine fixes) remain pending separate approval.
+
+[2026-07-07] [Session-Phase3] — [Claude Opus 4.6] — [src/tests/components/*.test.jsx (7 files created/fixed)]
+What changed:
+Phase 3 Component Tests — created and debugged 7 component test files using Vitest + React Testing Library + jsdom.
+
+FILES CREATED/MODIFIED:
+- src/tests/components/LoginScreen.test.jsx — 20 tests (PIN entry, validation, lockout, setup/confirm, accessibility)
+- src/tests/components/AppShell.test.jsx — 8 tests (layout, sidebar, auto-lock timer, sidebar toggle)
+- src/tests/components/Sidebar.test.jsx — 8 tests (nav items, active state, collapse/expand, branding)
+- src/tests/components/BuildScreen.test.jsx — 7 tests (service portfolio, intake form, pipeline tiers)
+- src/tests/components/DashboardScreen.test.jsx — 5 tests (render, data loading, stats cards)
+- src/tests/components/LeadsScreen.test.jsx — 8 tests (lead list, detail drawer, view tabs, empty state)
+- src/tests/components/ApprovalCenter.test.jsx — 6 tests (render, critical modal, standard queue)
+- package.json — added @testing-library/react, @testing-library/jest-dom, jsdom devDependencies
+
+BUGS FOUND & FIXED DURING TESTING:
+1. vi.mock asset paths used ../../../assets/ (3 levels up = project root) instead of ../../assets/ (correct: src/assets/)
+2. BuildScreen service categories behind showActions toggle — tests needed to click the add button first
+3. Intake form "Start Pipeline" button is a raw <button> not the Button component — test couldn't find by data-testid
+4. jsdom lacks scrollIntoView — added Element.prototype.scrollIntoView mock
+5. Vitest without globals:true needs manual cleanup() in afterEach for React Testing Library
+6. @testing-library/jest-dom v6 needs /vitest entry point, not bare import
+
+ARCHITECTURAL NOTES:
+- Uses per-file `// @vitest-environment jsdom` directive to avoid breaking 274 existing node-environment tests
+- All component tests mock: consts, Icon, Button, db.js, assets, Tauri APIs, hooks
+- No globals:true change needed — manual cleanup works reliably
+
+TEST PYRAMID STATUS:
+- Phase 1 Unit: 194 tests (10 files) — ALL PASS
+- Phase 2 Integration: 80 tests (7 files) — ALL PASS
+- Phase 3 Component: 63 tests (7 files) — ALL PASS
+- TOTAL: 337 tests (24 files) — ALL PASS — Runtime: 4.03s
+
+Why changed: Phase 3 Component Tests per docs/TESTING_STRATEGY.md specification. Covers 6 major screens + AppShell + Sidebar.
+Status: Working
+Next step: Phase 4 (E2E Tests) per TESTING_STRATEGY.md, or owner may prioritize other work.
+
+[2026-07-07] [Session-Phase4] — [Claude Opus 4.6] — [E2E test infrastructure + 4 test files + Playwright config]
+What changed:
+Phase 4 E2E Tests — configured Playwright for Tauri desktop app, created Tauri API mock layer, wrote 22 E2E tests covering 5 critical user journeys.
+
+FILES CREATED:
+- playwright.config.js — Playwright config with Chromium, auto-starts Vite E2E server on port 1421
+- vite.config.e2e.js — Separate Vite config that aliases @tauri-apps/* imports to local mocks
+- src/mocks/tauri-api-core.js — Mock for invoke(), Channel, Resource (no-op stubs)
+- src/mocks/tauri-api-event.js — Mock for emit(), listen(), once() with in-memory listener map
+- src/mocks/tauri-api-path.js — Mock for desktopDir(), join(), resolve()
+- src/mocks/tauri-plugin-sql.js — Mock Database.load() (app uses its own createDevelopmentPreviewDb fallback)
+- src/mocks/tauri-plugin-fs.js — Mock for writeFile(), readFile(), BaseDirectory
+- src/mocks/tauri-stub.js — Window.__TAURI_INTERNALS__ stub (alternative approach, not currently used)
+- src/tests/e2e/smoke.spec.js — 3 tests: app bootstrap, sidebar visible, Ctrl+K palette
+- src/tests/e2e/login-dashboard.spec.js — 5 tests: PIN setup, PIN confirm → unlock, dashboard render, sidebar nav, PIN mismatch error
+- src/tests/e2e/lead-intake.spec.js — 5 tests: CRM render, add form, fill+submit, validation, close form
+- src/tests/e2e/approval-flow.spec.js — 9 tests: approval center nav/render/empty state/WhatsApp, build pipeline nav/tiers/portfolio/categories/intake form
+- package.json — added @playwright/test devDependency, added test:unit/test:integration/test:components/test:e2e scripts
+
+ARCHITECTURAL NOTES:
+- App's db.js already has browser fallback (createDevelopmentPreviewDb) when window.__TAURI_INTERNALS__ is absent
+- E2E vite config aliases all @tauri-apps/* imports to local mocks so app boots cleanly in browser
+- Playwright auto-starts the E2E Vite server and runs headless Chromium
+- Tests are excluded from Vitest via vite.config.js test.exclude pattern
+- Key discovery: "Lead CRM Console" appears in 2 heading elements — used .first() for strict mode
+
+FULL TEST PYRAMID STATUS:
+- Phase 1 Unit: 194 tests (10 files) — ALL PASS
+- Phase 2 Integration: 80 tests (7 files) — ALL PASS
+- Phase 3 Component: 63 tests (7 files) — ALL PASS
+- Phase 4 E2E: 22 tests (4 files) — ALL PASS
+- VITEST TOTAL: 337 tests (24 files) — ALL PASS — Runtime: 3.88s
+- PLAYWRIGHT TOTAL: 22 tests (4 files) — ALL PASS — Runtime: 33s
+- GRAND TOTAL: 359 tests (28 files) — ALL PASS
+
+Why changed: Phase 4 E2E Tests per docs/TESTING_STRATEGY.md specification. Covers Login→Dashboard, Lead Intake, Approval Center, and Build Pipeline journeys.
+Status: Working
+Next step: All 4 testing phases complete. Testing pyramid fully implemented per TESTING_STRATEGY.md.
+
+[2026-07-08] [Session-Playground] — [Claude Fable 5] — [BuildScreen AI Playground redesign v2 + Icon fixes]
+What changed:
+BuildScreen.jsx fully rewritten as an AI Playground per owner request ("Skills, MCP, plugins jaisa playground"), then revised after owner screenshot review flagged 5 mistakes.
+
+FILES MODIFIED:
+- src/components/Icon.jsx — added ~25 missing icon paths (auto_awesome, smart_toy, construction, settings_suggest, bolt, expand_more/less, arrow_back, add, etc.) to fix the bug where every unknown icon name silently fell back to the sparkles icon.
+- src/screens/BuildScreen.jsx — full rewrite (2x, second pass after owner feedback):
+  v1 mistakes fixed in v2:
+  1. High contrast dark panels (bg-slate-950) removed → now uses app-standard glass panels: rgba(255,255,255,0.03) background + rgba(255,255,255,0.07) border, matching DashboardScreen.
+  2. Oversized form/fonts → reduced to app-standard text-[9px]/text-[10px]/text-[11px] scale, max-w-md form width.
+  3. Left "Playground bar" with fake Skills/Tools/Plugins sections removed → left sidebar now shows ONLY the T1–T16 Pipeline (tiers ARE the worker groups), and only appears during an active build.
+  4. Prompt-box button is now a true + icon (Icon name="add") and actually works: opens a menu that triggers Skills (4 categories), Plugins (4 doc generators — enabled only during build), and Attachments.
+  5. Skill duplication removed — the 4 service categories live in the center cards only; the + menu references them as triggers, no duplicate panel.
+
+PRESERVED (merge, never cut):
+- T1–T16 pipeline + handleRunTier/handleAdvanceTier, runWorker integration
+- handleGenerateDocument (proposal/brief/pricing/magnet PDFs) — now reachable via + menu
+- Mickii chat (useMickiiAgent), voice input (useMickiiEar), approval polling, demo data seeding
+- Mandatory validation: per-category required fields, build button disabled until readiness = 100% ("no build with incomplete information")
+
+VALIDATION: npx vite build — PASS (5.76s, no errors; pre-existing chunk-size warnings only)
+Why changed: Owner requested playground-style Build screen with mandatory pre-build information gating; v2 fixes owner's 5 screenshot-review findings.
+Status: Working (build verified; UI/runtime validation by owner pending)
+Next step: Owner visual review of v2; then update E2E/component tests for the new 3-state playground layout.
