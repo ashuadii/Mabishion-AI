@@ -141,7 +141,7 @@ export default function WorkerMonitorScreen({ onNavigate }) {
       )}
       {liveRuns.length === 0 && (
         <div className="mb-5 p-3 rounded-2xl border border-white/5 bg-white/3 text-center text-[10px] text-slate-600 uppercase tracking-wider font-bold">
-          No workers running — koi task shuru karo Dashboard se
+          No workers running — start a task from the Dashboard
         </div>
       )}
 

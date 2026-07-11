@@ -88,7 +88,7 @@ export default function LeadsScreen({ onNavigate }) {
     if (!file) return;
     const text = await file.text();
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-    if (lines.length < 2) { alert('CSV file mein koi data nahi hai.'); return; }
+    if (lines.length < 2) { alert('No data found in the CSV file.'); return; }
     const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
     let imported = 0, skipped = 0;
     for (let i = 1; i < lines.length; i++) {
@@ -133,7 +133,7 @@ export default function LeadsScreen({ onNavigate }) {
           extraBadges={
             <label
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all cursor-pointer text-[10px] font-bold uppercase tracking-wider"
-              title="FR-025: Bulk CSV se leads import karo"
+              title="FR-025: Bulk import leads from CSV"
               aria-label="Import leads from CSV file"
             >
               <Icon name="upload" size={13} />
@@ -223,7 +223,7 @@ export default function LeadsScreen({ onNavigate }) {
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 border ${
                 showArchived ? 'bg-amber-500/20 border-amber-500/40 text-amber-300' : 'bg-white/5 border-white/10 text-slate-400 hover:text-white'
               }`}
-              title={showArchived ? 'Active leads dikhao' : 'Archived leads dikhao'}
+              title={showArchived ? 'Show active leads' : 'Show archived leads'}
               aria-label={showArchived ? 'Show active leads' : 'Show archived leads'}
             >
               <Icon name={showArchived ? 'unarchive' : 'archive'} size={13} />

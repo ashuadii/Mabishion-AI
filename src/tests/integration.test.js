@@ -7,6 +7,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ── Shared mocks ──────────────────────────────────────────────────────────────
 vi.mock('../data/db.js', () => ({
   getDb: vi.fn(),
+  getWorkerDailyCost: vi.fn(async () => 0),
   addLead: vi.fn(async () => 'lead-test-uuid'),
   getLeads: vi.fn(async () => [
     { id: 'lead-1', name: 'Rahul Sharma', email: 'rahul@test.com', budget: '₹50000', score: 75, status: 'New', archived: 0 },

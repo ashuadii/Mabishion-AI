@@ -58,7 +58,7 @@ export default function ProductsScreen({ onNavigate }) {
   };
 
   const handleDelete = async (p) => {
-    if (!window.confirm(`"${p.name}" delete karein?`)) return;
+    if (!window.confirm(`Delete "${p.name}"?`)) return;
     await deleteProduct(p.id);
     await load();
   };
@@ -77,7 +77,7 @@ export default function ProductsScreen({ onNavigate }) {
       <ScreenHeader
         title="Digital Products"
         pageTitle="Products Catalog"
-        subtitle="BRD-015 — Apne digital products manage karo. Templates, courses, SaaS tools, ebooks — sab ek jagah."
+        subtitle="BRD-015 — Manage your digital products. Templates, courses, SaaS tools, ebooks — all in one place."
         index="13"
         primaryAction={showForm ? 'Close Form' : 'Add Product'}
         primaryIcon={showForm ? 'close' : 'add'}
@@ -106,7 +106,7 @@ export default function ProductsScreen({ onNavigate }) {
         <div className="mb-6 p-6 rounded-3xl animate-in fade-in duration-300" style={glassStyle({ strong: true })}>
           <h3 className="font-black text-white text-sm mb-4 flex items-center gap-2">
             <Icon name={editId ? 'edit' : 'add_box'} className="text-violet-400" />
-            {editId ? 'Product Edit Karo' : 'Naya Product Add Karo'}
+            {editId ? 'Edit Product' : 'Add New Product'}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
@@ -205,8 +205,8 @@ export default function ProductsScreen({ onNavigate }) {
       ) : filtered.length === 0 ? (
         <div className="text-center py-20 text-slate-400">
           <Icon name="inventory_2" size={40} className="mx-auto mb-3 opacity-30" />
-          <p className="text-sm font-bold">Koi product nahi mila</p>
-          <p className="text-xs mt-1">Upar "Add Product" button se apna pehla digital product add karo</p>
+          <p className="text-sm font-bold">No products found</p>
+          <p className="text-xs mt-1">Use the "Add Product" button above to add your first digital product</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

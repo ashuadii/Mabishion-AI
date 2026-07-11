@@ -240,11 +240,11 @@ export default function ApprovalDetailDrawer({ approval, onClose, onResolve, onU
                     <Icon name="keyboard_arrow_down" size={12} className="transform group-open:rotate-180 transition-transform duration-200" />
                   </summary>
                   <div className="p-3 border-t border-violet-500/20 text-[10px] text-slate-300 leading-relaxed space-y-2">
-                    <p>💡 <strong className="text-white">Boss, simple shabdo me samjhe to:</strong></p>
+                    <p>💡 <strong className="text-white">In simple terms:</strong></p>
                     <ul className="list-disc pl-3.5 space-y-1 text-slate-300">
-                      <li><strong className="text-violet-300">Aim:</strong> Client <strong className="text-white">{requestObj.clientName || 'Priya Sharma'}</strong> ke liye ek premium <strong className="text-white">{requestObj.projectName || 'AI Website Builder'}</strong> taiyar karna.</li>
-                      <li><strong className="text-violet-300">Features:</strong> Glassmorphic premium website theme aur admission capture system jo client ko wow karegi.</li>
-                      <li><strong className="text-violet-300">Action:</strong> Approve karte hi background worker actual landing page and dashboard files banana shuru kar dega.</li>
+                      <li><strong className="text-violet-300">Aim:</strong> Build a premium <strong className="text-white">{requestObj.projectName || 'AI Website Builder'}</strong> for client <strong className="text-white">{requestObj.clientName || 'Priya Sharma'}</strong>.</li>
+                      <li><strong className="text-violet-300">Features:</strong> Glassmorphic premium website theme and admission capture system designed to impress the client.</li>
+                      <li><strong className="text-violet-300">Action:</strong> On approval, the background worker will begin generating the actual landing page and dashboard files.</li>
                     </ul>
                   </div>
                 </details>
@@ -287,11 +287,11 @@ export default function ApprovalDetailDrawer({ approval, onClose, onResolve, onU
                     <Icon name="keyboard_arrow_down" size={12} className="transform group-open:rotate-180 transition-transform duration-200" />
                   </summary>
                   <div className="p-3 border-t border-emerald-500/20 text-[10px] text-slate-300 leading-relaxed space-y-2">
-                    <p>💡 <strong className="text-white">Boss, simple shabdo me samjhe to:</strong></p>
+                    <p>💡 <strong className="text-white">In simple terms:</strong></p>
                     <ul className="list-disc pl-3.5 space-y-1 text-slate-300">
-                      <li><strong className="text-emerald-300">Design:</strong> High-end layouts aur responsive mobile grids.</li>
-                      <li><strong className="text-emerald-300">Controls:</strong> Form data connect, animations aur optimized styles layout.</li>
-                      <li><strong className="text-emerald-300">Action:</strong> Approve karte hi design package structure ready hokar final delivery folder me chala jayega.</li>
+                      <li><strong className="text-emerald-300">Design:</strong> High-end layouts and responsive mobile grids.</li>
+                      <li><strong className="text-emerald-300">Controls:</strong> Form data connections, animations, and optimized style layouts.</li>
+                      <li><strong className="text-emerald-300">Action:</strong> On approval, the design package will be prepared and moved to the final delivery folder.</li>
                     </ul>
                   </div>
                 </details>
@@ -389,7 +389,7 @@ export default function ApprovalDetailDrawer({ approval, onClose, onResolve, onU
         <div className="space-y-4 pt-4 border-t border-white/5">
           {/* UX-013: Hinglish decision helper */}
           <div className="p-3 rounded-xl bg-violet-500/5 border border-violet-500/20 text-[10px] text-slate-400">
-            💡 <strong className="text-violet-300">AI Suggests, Human Decides.</strong> Approve karne se kaam shuru hoga. Reject karne se worker ruk jaayega. Notes optional hain.
+            💡 <strong className="text-violet-300">AI Suggests, Human Decides.</strong> Approving will start the task. Rejecting will stop the worker. Notes are optional.
           </div>
 
           <div className="space-y-1.5 text-left">
@@ -397,7 +397,7 @@ export default function ApprovalDetailDrawer({ approval, onClose, onResolve, onU
             <textarea
               value={ownerNotes}
               onChange={(e) => setOwnerNotes(e.target.value)}
-              placeholder="Koi feedback ya changes chahiye? Yahan likho..."
+              placeholder="Any feedback or changes needed? Write here..."
               className="w-full h-16 px-4 py-2 text-xs bg-slate-900 border border-white/10 rounded-xl focus:border-violet-500 text-white outline-none placeholder-slate-600 resize-none transition-all"
               aria-label="Resolution feedback notes"
             />
@@ -409,7 +409,7 @@ export default function ApprovalDetailDrawer({ approval, onClose, onResolve, onU
               variant="soft"
               className="py-2.5 rounded-xl text-xs font-bold text-red-400 hover:text-white border border-red-500/20 hover:bg-red-500"
               aria-label="Reject this approval request"
-              title="Nahi — yeh kaam mat karo"
+              title="No — do not proceed with this task"
             >
               ❌ Reject
             </Button>
@@ -419,7 +419,7 @@ export default function ApprovalDetailDrawer({ approval, onClose, onResolve, onU
                 // T7.2: If proposal approval → offer invoice creation
                 if (isProposalAction) {
                   const shouldCreate = window.confirm(
-                    '✅ Proposal approved!\n\nKya aap abhi invoice draft banana chahte hain?\n(Invoice screen pe jaayenge)'
+                    '✅ Proposal approved!\n\nWould you like to create an invoice draft now?\n(You will be taken to the Invoices screen)'
                   );
                   if (shouldCreate) {
                     window.history.pushState({}, '', '/invoices');
@@ -429,7 +429,7 @@ export default function ApprovalDetailDrawer({ approval, onClose, onResolve, onU
               }}
               className="py-2.5 rounded-xl text-xs font-black uppercase tracking-wider bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 shadow-xl"
               aria-label="Approve this request — worker will proceed"
-              title="Haan — yeh kaam karo"
+              title="Yes — proceed with this task"
             >
               ✅ Approve Action
             </Button>

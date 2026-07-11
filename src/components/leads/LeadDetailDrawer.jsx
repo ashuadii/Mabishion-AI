@@ -127,7 +127,7 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
 
   // FR-026-030: Convert Won lead to Client record
   const handleConvertToClient = async () => {
-    if (!window.confirm(`"${lead.name}" ko Client mein convert karein? Ek nayi client record banega.`)) return;
+    if (!window.confirm(`Convert "${lead.name}" to a Client? A new client record will be created.`)) return;
     try {
       await addClient({
         name: lead.name,
@@ -141,7 +141,7 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
         consent_given: 0,
       });
       await updateLeadStatus(lead.id, 'Closed Won');
-      alert(`✅ ${lead.name} ab Client ban gaya! Clients screen mein dekho.`);
+      alert(`✅ ${lead.name} is now a Client! View them on the Clients screen.`);
       if (onUpdate) onUpdate();
       onClose();
     } catch (err) {
@@ -533,7 +533,7 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
               onClick={handleArchiveLead}
               className="flex-1 text-xs font-bold"
               aria-label="Archive lead — hides from active list, not deleted"
-              title="Archive karo — active list se hatega, delete nahi hoga"
+              title="Archive — removes from active list, does not delete"
             >
               <Icon name="archive" size={15} /> Archive
             </Button>

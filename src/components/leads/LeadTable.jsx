@@ -109,7 +109,7 @@ export default function LeadTable({ leads, onSelectLead, onBulkDelete, onBulkSta
   };
 
   const handleMerge = async (primaryId, secondaryId) => {
-    if (!window.confirm('Primary lead mein merge karein? Secondary lead delete ho jaayega.')) return;
+    if (!window.confirm('Merge into primary lead? The secondary lead will be deleted.')) return;
     setIsMerging(true);
     try {
       await mergeLeads(primaryId, secondaryId);
@@ -269,7 +269,7 @@ export default function LeadTable({ leads, onSelectLead, onBulkDelete, onBulkSta
               <button onClick={() => setMergeMode(false)} className="text-slate-400 hover:text-white text-xs">✕ Close</button>
             </div>
             {pairs.length === 0 ? (
-              <p className="text-xs text-slate-400">Koi duplicate nahi mila. Sab unique hain! ✅</p>
+              <p className="text-xs text-slate-400">No duplicates found. All leads are unique! ✅</p>
             ) : (
               <div className="space-y-2">
                 {pairs.map(([a, b], i) => (
@@ -287,7 +287,7 @@ export default function LeadTable({ leads, onSelectLead, onBulkDelete, onBulkSta
                       onClick={() => handleMerge(a.id, b.id)}
                       disabled={isMerging}
                       className="px-3 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 font-bold text-[10px] transition-all disabled:opacity-50"
-                      title={`${b.name} ko ${a.name} mein merge karo`}
+                      title={`Merge ${b.name} into ${a.name}`}
                     >
                       {isMerging ? '...' : 'Merge →'}
                     </button>
@@ -331,7 +331,7 @@ export default function LeadTable({ leads, onSelectLead, onBulkDelete, onBulkSta
                 </th>
                 <th className="p-4 text-right">
                   <div className="flex items-center gap-1 justify-end">
-                    <Button variant="soft" onClick={() => setMergeMode(v => !v)} className="py-1 px-2 text-[10px]" title="Duplicate leads merge karo" aria-label="Find and merge duplicate leads">
+                    <Button variant="soft" onClick={() => setMergeMode(v => !v)} className="py-1 px-2 text-[10px]" title="Find and merge duplicate leads" aria-label="Find and merge duplicate leads">
                       <Icon name="merge" size={12} /> Merge
                     </Button>
                     <Button variant="soft" onClick={handleExportCSV} className="py-1 px-3 text-[10px]" aria-label="Export leads to CSV">

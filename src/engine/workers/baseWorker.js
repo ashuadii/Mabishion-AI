@@ -1,4 +1,4 @@
-import { getDb } from '../../data/db.js';
+import { getDb, getWorkerDailyCost } from '../../data/db.js';
 import { logWorkerStart, logWorkerEnd, logWorkerFail, logApprovalWait } from '../utils/runtimeHealth.js';
 import { emit } from '@tauri-apps/api/event';
 
@@ -104,17 +104,47 @@ export class BaseWorker {
         throw new Error(`Worker ${this.name} cancelled before execution.`);
       }
 
+      // ARCHITECTURE v1.1 §5: per-worker daily cost cap ₹50 (5000 paise, fail-open on read error)
+      const WORKER_DAILY_CAP_PAISE = 5000;
+      const workerSpentToday = await getWorkerDailyCost(this.name);
+      if (workerSpentToday >= WORKER_DAILY_CAP_PAISE) {
+        const capErr = new Error(`Worker ${this.name} daily cost cap reached (₹50). Resumes tomorrow.`);
+        capErr.code = 'WORKER_COST_CAP';
+        throw capErr;
+      }
+
       // B18: 5-minute per-task timeout (ARCHITECTURE §6.2 — default timeout: 300s)
       const timeoutMs = 5 * 60 * 1000;
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error(`Worker timeout: ${this.name} exceeded ${timeoutMs / 1000}s limit`)), timeoutMs)
-      );
       // FR-016: AbortSignal cancellation race
       const abortSignal = cleanParams.abortSignal;
       const cancelPromise = abortSignal
         ? new Promise((_, reject) => abortSignal.addEventListener('abort', () => reject(new Error(`Worker ${this.name} cancelled.`))))
         : new Promise(() => {});
-      const result = await Promise.race([this.execute(cleanTargetId, cleanParams), timeoutPromise, cancelPromise]);
+
+      // ARCHITECTURE v1.1 §5: max 3 attempts with exponential backoff — transient errors only.
+      // Cost-cap, cancellation, and timeout errors are never retried (retrying them wastes budget).
+      const MAX_ATTEMPTS = 3;
+      const isTransient = (err) => {
+        if (err?.code === 'COST_LIMIT_EXCEEDED' || err?.code === 'MONTHLY_COST_LIMIT_EXCEEDED' || err?.code === 'WORKER_COST_CAP') return false;
+        const msg = (err?.message || String(err)).toLowerCase();
+        if (msg.includes('cancelled') || msg.includes('worker timeout')) return false;
+        return /429|rate limit|503|502|network|fetch failed|econnreset|etimedout|overloaded|temporarily/.test(msg);
+      };
+      let result;
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        try {
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error(`Worker timeout: ${this.name} exceeded ${timeoutMs / 1000}s limit`)), timeoutMs)
+          );
+          result = await Promise.race([this.execute(cleanTargetId, cleanParams), timeoutPromise, cancelPromise]);
+          break;
+        } catch (attemptErr) {
+          if (attempt >= MAX_ATTEMPTS || !isTransient(attemptErr) || abortSignal?.aborted) throw attemptErr;
+          const backoffMs = 1000 * Math.pow(2, attempt - 1); // 1s, 2s
+          console.warn(`[BaseWorker] ${this.name} transient failure (attempt ${attempt}/${MAX_ATTEMPTS}), retrying in ${backoffMs}ms:`, attemptErr.message);
+          await new Promise(r => setTimeout(r, backoffMs));
+        }
+      }
 
       const durationMs = Date.now() - startTime;
       this.status = 'completed';

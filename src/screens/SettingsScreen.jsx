@@ -18,11 +18,11 @@ function CpanelDeployPanel() {
 
   const handleDeploy = async () => {
     if (!host || !user || !pass || !localDir) {
-      setResult('❌ Sab fields fill karo — host, username, password, aur local directory.');
+      setResult('❌ All fields required — host, username, password, and local directory.');
       return;
     }
     setDeploying(true);
-    setResult('🚀 Deploying... (FTP upload ho raha hai)');
+    setResult('🚀 Deploying... (FTP upload in progress)');
     try {
       const msg = await invoke('deploy_to_cpanel', {
         host: host.trim(),
@@ -46,7 +46,7 @@ function CpanelDeployPanel() {
         <Badge tone="warning">Requires Approval Gate</Badge>
       </div>
       <p className="text-xs text-gray-400">
-        Built project folder ko directly cPanel hosting pe FTP se upload karo. Local folder select karo, credentials daalein, Deploy karo.
+        Upload your built project folder directly to cPanel hosting via FTP. Select local folder, enter credentials, and deploy.
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -89,28 +89,28 @@ function CpanelDeployPanel() {
 // Addendum Ops §3.1-3.3: Daily/Weekly/Monthly Checklists
 const OPS_CHECKLISTS = {
   daily: [
-    { id: 'd1', label: 'Mickii Orchestrator start ho gaya — Dashboard load check karo' },
-    { id: 'd2', label: 'Worker Monitor mein koi failed jobs toh nahi hain' },
-    { id: 'd3', label: 'AI Cost gauge check karo — ₹150 limit ke andar hai?' },
-    { id: 'd4', label: 'Pending Approvals dekho — koi 2h+ se wait toh nahi kar raha' },
-    { id: 'd5', label: 'Morning Brief notification aaya ya nahi' },
-    { id: 'd6', label: 'Naye leads check karo — koi high-value lead pending toh nahi' },
+    { id: 'd1', label: 'Verify Mickii Orchestrator started — Dashboard loads correctly' },
+    { id: 'd2', label: 'Check Worker Monitor for any failed jobs' },
+    { id: 'd3', label: 'Check AI Cost gauge — within ₹150 daily limit?' },
+    { id: 'd4', label: 'Review Pending Approvals — none waiting 2h+' },
+    { id: 'd5', label: 'Confirm Morning Brief notification received' },
+    { id: 'd6', label: 'Check new leads — any high-value leads pending action' },
   ],
   weekly: [
-    { id: 'w1', label: 'Manual backup lo — Settings > Database > Export' },
-    { id: 'w2', label: 'Backup file open karke validate karo (valid JSON hai?)' },
-    { id: 'w3', label: 'Security Auditor worker chalao — API keys aur gates check' },
-    { id: 'w4', label: 'GST filing reminder check karo — GSTR-1 (11th) / GSTR-3B (20th)' },
-    { id: 'w5', label: 'Lead pipeline review — Qualified leads mein follow-up pending?' },
-    { id: 'w6', label: 'Invoice status check — koi overdue payment toh nahi' },
+    { id: 'w1', label: 'Take manual backup — Settings > Database > Export' },
+    { id: 'w2', label: 'Open backup file and validate (valid JSON?)' },
+    { id: 'w3', label: 'Run Security Auditor worker — verify API keys and gates' },
+    { id: 'w4', label: 'Check GST filing reminder — GSTR-1 (11th) / GSTR-3B (20th)' },
+    { id: 'w5', label: 'Lead pipeline review — any follow-ups pending on qualified leads?' },
+    { id: 'w6', label: 'Invoice status check — any overdue payments?' },
   ],
   monthly: [
-    { id: 'm1', label: 'Full DR drill — backup restore test karo Settings mein' },
-    { id: 'm2', label: 'Monthly AI cost review — ₹1,500 limit ke against actual spend' },
-    { id: 'm3', label: 'GST return file karo — GSTR-1 + GSTR-3B' },
-    { id: 'm4', label: 'Client communications review — sab clients ko touch karo' },
-    { id: 'm5', label: 'Product catalog review — koi nayi product add karna hai?' },
-    { id: 'm6', label: 'Worker performance review — koi worker consistently fail toh nahi ho raha' },
+    { id: 'm1', label: 'Full DR drill — test backup restore from Settings > Database' },
+    { id: 'm2', label: 'Monthly AI cost review — verify actual spend against ₹1,500 limit' },
+    { id: 'm3', label: 'File GST returns — GSTR-1 + GSTR-3B' },
+    { id: 'm4', label: 'Client communications review — follow up with all active clients' },
+    { id: 'm5', label: 'Product catalog review — any new products to add?' },
+    { id: 'm6', label: 'Worker performance review — check for consistently failing workers' },
   ],
 };
 
@@ -172,7 +172,7 @@ function OpsChecklistPanel() {
   return (
     <div className="space-y-4">
       <div className="p-4 rounded-xl bg-violet-500/10 border border-violet-500/20 text-xs text-slate-300">
-        <strong className="text-violet-300">Ops Discipline:</strong> Yeh checklists har din/hafte/mahine follow karo. State browser mein save hoti hai — app restart pe bhi yaad rehta hai.
+        <strong className="text-violet-300">Ops Discipline:</strong> Follow these checklists daily/weekly/monthly. State is saved in the browser — persists across app restarts.
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {renderList('daily', 'blue')}
@@ -893,7 +893,7 @@ const SettingsScreen = ({ onNavigate }) => {
                               return;
                             }
                             const confirmed = window.confirm(
-                              `✅ Backup verified!\n${integrity.tableCount} tables, ${integrity.totalRows} rows\n\nKya aap sure hain? Current data overwrite ho jaayega.`
+                              `✅ Backup verified!\n${integrity.tableCount} tables, ${integrity.totalRows} rows\n\nAre you sure? Current data will be overwritten.`
                             );
                             if (!confirmed) return;
                             await restoreDatabase(json);
@@ -927,15 +927,15 @@ const SettingsScreen = ({ onNavigate }) => {
               <div className="p-3 rounded-xl border" style={{ borderColor: 'rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.05)' }}>
                 <p className="text-xs font-black text-red-400 mb-1">🚨 Emergency Lockdown</p>
                 <p className="text-[10px] mb-2" style={{ color: C.textMuted }}>
-                  Sab workers band kar dega, pending approvals reject karega, aur AI calls block karega.
+                  Stops all workers, rejects pending approvals, and blocks AI calls.
                 </p>
                 <button
                   onClick={async () => {
-                    const confirmed = window.confirm('⚠️ EMERGENCY LOCKDOWN\n\nYeh action:\n• Sab AI workers rokta hai\n• Strict offline mode on karta hai\n• Ashu ko notify karta hai\n\nKya aap sure hain?');
+                    const confirmed = window.confirm('⚠️ EMERGENCY LOCKDOWN\n\nThis action will:\n• Stop all AI workers\n• Enable strict offline mode\n• Notify the owner\n\nAre you sure?');
                     if (!confirmed) return;
                     await setSetting('strict_offline_mode', 'true');
                     await setSetting('emergency_lockdown_at', new Date().toISOString());
-                    alert('🔒 Lockdown active. Strict offline mode ON. Settings mein jaake disable kar sakte hain.');
+                    alert('🔒 Lockdown active. Strict offline mode ON. You can disable it from Settings.');
                   }}
                   className="w-full py-2 rounded-lg text-xs font-black text-red-400 border border-red-500/30 hover:bg-red-500/20 transition-all"
                 >
@@ -945,7 +945,7 @@ const SettingsScreen = ({ onNavigate }) => {
 
               {/* PIN Reset */}
               <div>
-                <p className="text-xs text-gray-400 mb-2">PIN Reset — apna login PIN change karo</p>
+                <p className="text-xs text-gray-400 mb-2">PIN Reset — change your login PIN</p>
                 <div className="flex gap-2">
                   <input
                     id="new-pin-input"

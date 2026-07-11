@@ -1914,6 +1914,22 @@ export async function getDailyCostTotal() {
   }
 }
 
+// Per-worker daily spend in paise (ARCHITECTURE v1.1 §5 — ₹50/worker/day cap = 5000 paise)
+export async function getWorkerDailyCost(workerName) {
+  try {
+    const db = await getDb();
+    const today = new Date().toISOString().slice(0, 10);
+    const rows = await db.select(
+      `SELECT COALESCE(SUM(cost_inr), 0) as total FROM execution_spans WHERE worker_name = $1 AND timestamp >= $2`,
+      [workerName, `${today}T00:00:00.000Z`]
+    );
+    return Number(rows?.[0]?.total || 0);
+  } catch (err) {
+    console.warn('[getWorkerDailyCost] Failed (fail-open):', err);
+    return 0;
+  }
+}
+
 export async function getMonthlyCostTotal() {
   try {
     const db = await getDb();
@@ -2335,4 +2351,45 @@ export async function checkRateLimit(action, maxPerMinute = 10) {
   if (count >= maxPerMinute) return false; // rate limited
   await db.execute(`INSERT INTO rate_limit_log (id,action,created_at) VALUES (?,?,?)`, [id, action, now]).catch(() => {});
   return true; // allowed
+}
+
+// ── DPDP Act 2023: Consent management (ARCHITECTURE v1.1 P1B) ─────────────────
+// Table `consents` created in db_schema_upgrade.js; these are its access functions.
+export async function recordConsent(clientId, consentType, notes = '') {
+  const db = await getDb();
+  const id = crypto.randomUUID();
+  await db.execute(
+    `INSERT INTO consents (id, client_id, consent_type, granted, granted_at, notes)
+     VALUES ($1, $2, $3, 1, $4, $5)`,
+    [id, clientId, consentType, new Date().toISOString(), notes]
+  );
+  return id;
+}
+
+export async function getClientConsents(clientId) {
+  const db = await getDb();
+  return db.select(
+    `SELECT * FROM consents WHERE client_id = $1 ORDER BY granted_at DESC`,
+    [clientId]
+  ).catch(() => []);
+}
+
+export async function hasActiveConsent(clientId, consentType) {
+  const db = await getDb();
+  const rows = await db.select(
+    `SELECT COUNT(*) as cnt FROM consents
+     WHERE client_id = $1 AND consent_type = $2 AND granted = 1 AND revoked_at IS NULL`,
+    [clientId, consentType]
+  ).catch(() => [{ cnt: 0 }]);
+  return (rows[0]?.cnt || 0) > 0;
+}
+
+// DPDP right-to-withdraw: marks consent revoked (audit-preserving — row is kept, not deleted)
+export async function withdrawConsent(clientId, consentType) {
+  const db = await getDb();
+  await db.execute(
+    `UPDATE consents SET granted = 0, revoked_at = $1
+     WHERE client_id = $2 AND consent_type = $3 AND revoked_at IS NULL`,
+    [new Date().toISOString(), clientId, consentType]
+  );
 }

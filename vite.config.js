@@ -14,5 +14,11 @@ export default defineConfig(async () => ({
     alias: {
       '@': path.resolve(__dirname, './src')
     }
+  },
+  test: {
+    environment: 'node',
+    include: ['src/tests/**/*.test.{js,jsx}'],
+    exclude: ['src/tests/e2e/**'],
+    testTimeout: 10000
   }
 }))

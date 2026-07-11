@@ -9,12 +9,28 @@ export class ClientIntakeWorker extends BaseWorker {
 
   async execute(leadId, params = {}) {
     const db = await getDb();
+    const intake = params.intake || {};
 
+    let lead = null;
     const leadRows = await db.select('SELECT * FROM leads WHERE id = $1', [leadId]);
-    if (!leadRows || leadRows.length === 0) {
-      throw new Error(`Lead/Client ID "${leadId}" not found in leads table.`);
+    if (leadRows && leadRows.length > 0) {
+      lead = leadRows[0];
+    } else if (intake.clientName) {
+      const newLeadId = crypto.randomUUID();
+      await db.execute(
+        `INSERT INTO leads (id, name, email, phone, source, status, score, budget, notes, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP)`,
+        [
+          newLeadId, intake.clientName, '', '', 'Intake Form', 'New',
+          50, intake.budget || 'Not decided',
+          `${intake.businessType || ''} | ${intake.requirements || ''} | Timeline: ${intake.timeline || 'Flexible'}`
+        ]
+      );
+      leadId = newLeadId;
+      lead = { id: newLeadId, name: intake.clientName, budget: intake.budget || 'Not decided', notes: intake.requirements || '' };
+    } else {
+      throw new Error(`Lead/Client ID "${leadId}" not found in leads table. Provide intake data or a valid lead ID.`);
     }
-    const lead = leadRows[0];
 
     let project = null;
     if (params.project_id) {
@@ -22,15 +38,17 @@ export class ClientIntakeWorker extends BaseWorker {
       if (projRows && projRows.length > 0) project = projRows[0];
     }
 
-    const clientName  = lead.name     || 'Valued Client';
-    const projectName = project?.name || params.project_name || 'Custom AI Project';
-    const projectType = project?.type || 'Digital Product';
-    const budget      = lead.budget   || 'As discussed';
+    const clientName  = intake.clientName || lead.name || 'Valued Client';
+    const projectName = intake.serviceType || project?.name || params.projectName || 'Custom AI Project';
+    const projectType = intake.businessType || project?.type || 'Digital Product';
+    const budget      = intake.budget || lead.budget || 'As discussed';
 
     const systemPrompt = `You are Mickii Client Success Manager — expert in client onboarding for premium digital agencies.
 Return a valid JSON object ONLY with keys: welcomeEmail, questionnaire (10 items), projectTimeline (5 weeks), communicationPlan. No markdown.`;
 
-    const userPrompt = `Client: ${clientName} | Project: ${projectName} | Type: ${projectType} | Budget: ${budget} | Notes: ${lead.notes || 'None'}`;
+    const requirements = intake.requirements || lead.notes || 'None';
+    const timeline = intake.timeline || 'As discussed';
+    const userPrompt = `Client: ${clientName} | Project: ${projectName} | Type: ${projectType} | Budget: ${budget} | Timeline: ${timeline} | Requirements: ${requirements}`;
 
     let responseText;
     let lastError;
