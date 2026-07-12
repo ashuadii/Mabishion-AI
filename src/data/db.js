@@ -23,3 +23,4 @@ export * from './clients.js';
 export * from './knowledge.js';
 export * from './security.js';
 export * from './system.js';
+export * from './marketing.js';

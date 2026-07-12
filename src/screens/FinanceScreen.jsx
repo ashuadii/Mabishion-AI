@@ -118,7 +118,7 @@ export default function FinanceScreen({ onNavigate }) {
         </>
 }
       />
-      <HubTabs tabs={[{ id: 'finance', label: 'Finance' }, { id: 'invoices', label: 'Invoices' }, { id: 'products', label: 'Products' }, { id: 'analytics', label: 'Reports' }]} active="finance" onNavigate={onNavigate} />
+      <HubTabs tabs={[{ id: 'finance', label: 'Finance' }, { id: 'invoices', label: 'Invoices' }, { id: 'products', label: 'Products' }, { id: 'analytics', label: 'Reports' }, { id: 'retainers', label: 'Retainers' }]} active="finance" onNavigate={onNavigate} />
 
       {loading ? (
         <p className="text-sm py-12 text-center" style={{ color: C.textMuted }}>Loading financial data...</p>

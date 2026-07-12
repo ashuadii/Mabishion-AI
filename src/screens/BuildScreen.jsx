@@ -86,6 +86,17 @@ const SERVICE_CATEGORIES = [
       { key: 'currentTools', label: 'Current Tools', type: 'text', placeholder: 'Excel, WhatsApp, Google Sheets, Tally...' },
     ],
   },
+  {
+    id: 'design_branding', label: 'Design & Branding', icon: 'palette',
+    color: '#EC4899', bgColor: 'rgba(236,72,153,0.08)',
+    desc: 'Logos, brand kits, social creatives, marketing materials',
+    items: ['Logo & Brand Kit', 'Social Media Creatives (Monthly Pack)', 'Marketing Materials', 'Thumbnails & Ad Creatives', 'Brand Guidelines Document'],
+    requiredFields: [
+      { key: 'clientName', label: 'Client Name', type: 'text', placeholder: 'e.g. Royal Sweets Jaipur' },
+      { key: 'projectGoal', label: 'What are we designing?', type: 'textarea', placeholder: 'New logo, monthly Instagram creatives, brochure...' },
+      { key: 'brandStyle', label: 'Brand Style & Colors', type: 'textarea', placeholder: 'Premium gold-black, playful pastel, minimal...' },
+    ],
+  },
 ];
 
 const OPTIONAL_FIELDS = [
@@ -109,6 +120,7 @@ const QUICK_TEMPLATES = [
   { label: 'Sales CRM dashboard', icon: 'dashboard', catId: 'software_dev' },
   { label: 'Social media content plan', icon: 'campaign', catId: 'digital_marketing' },
   { label: 'E-commerce catalog', icon: 'storefront', catId: 'software_dev' },
+  { label: 'Logo & brand kit', icon: 'palette', catId: 'design_branding' },
 ];
 
 // ─── Glass panel helper (matches rest of app) ────────────────────────────────

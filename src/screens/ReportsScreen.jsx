@@ -152,7 +152,7 @@ export default function ReportsScreen({ onNavigate }) {
           </>
         }
       />
-      <HubTabs tabs={[{ id: 'finance', label: 'Finance' }, { id: 'invoices', label: 'Invoices' }, { id: 'products', label: 'Products' }, { id: 'analytics', label: 'Reports' }]} active="analytics" onNavigate={onNavigate} />
+      <HubTabs tabs={[{ id: 'finance', label: 'Finance' }, { id: 'invoices', label: 'Invoices' }, { id: 'products', label: 'Products' }, { id: 'analytics', label: 'Reports' }, { id: 'retainers', label: 'Retainers' }]} active="analytics" onNavigate={onNavigate} />
       <section className="grid grid-cols-12 gap-5">
         {/* KPI Cards */}
         <div className="col-span-12 p-5" style={glassStyle({ strong: true, glow: 'warning' })}>

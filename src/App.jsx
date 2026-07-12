@@ -9,6 +9,8 @@ import ProjectsScreen from './screens/ProjectsScreen';
 import LeadsScreen from './screens/LeadsScreen';
 import AutomationsScreen from './screens/AutomationsScreen';
 import SalesMarketingHubScreen from './screens/SalesMarketingHubScreen';
+import MarketingStudioScreen from './screens/MarketingStudioScreen';
+import RetainersScreen from './screens/RetainersScreen';
 import ReportsScreen from './screens/ReportsScreen';
 import FinanceScreen from './screens/FinanceScreen';
 import SettingsScreen from './screens/SettingsScreen';
@@ -66,6 +68,8 @@ export default function App() {
         <Route path="/tasks" element={<TasksScreen onNavigate={handleNavigate} />} />
         <Route path="/leads" element={<LeadsScreen onNavigate={handleNavigate} />} />
         <Route path="/marketing" element={<SalesMarketingHubScreen onNavigate={handleNavigate} />} />
+        <Route path="/marketing-studio" element={<MarketingStudioScreen onNavigate={handleNavigate} />} />
+        <Route path="/retainers" element={<RetainersScreen onNavigate={handleNavigate} />} />
         <Route path="/promotion" element={<SalesMarketingHubScreen onNavigate={handleNavigate} />} />
         <Route path="/sales" element={<SalesMarketingHubScreen onNavigate={handleNavigate} />} />
         <Route path="/sales-marketing" element={<SalesMarketingHubScreen onNavigate={handleNavigate} />} />

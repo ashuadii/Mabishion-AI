@@ -10,7 +10,7 @@ import { getPendingApprovals } from '../data/db.js';
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
   { id: 'build-new', label: 'Playground', icon: 'rocket' },
-  { id: 'sales-marketing', label: 'Marketing Studio', icon: 'megaphone' },
+  { id: 'marketing-studio', label: 'Marketing Studio', icon: 'megaphone' },
   { id: 'leads', label: 'Leads', icon: 'users' },
   { id: 'projects', label: 'Projects', icon: 'project' },
   { id: 'clients', label: 'Clients', icon: 'contact_page' },

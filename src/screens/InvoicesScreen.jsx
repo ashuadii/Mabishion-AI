@@ -142,7 +142,7 @@ export default function InvoicesScreen({ onNavigate }) {
         extraBadges={<><Badge tone="success">{invoices.length} Total</Badge><Badge tone="gold">GST 18%</Badge></>
 }
       />
-      <HubTabs tabs={[{ id: 'finance', label: 'Finance' }, { id: 'invoices', label: 'Invoices' }, { id: 'products', label: 'Products' }, { id: 'analytics', label: 'Reports' }]} active="invoices" onNavigate={onNavigate} />
+      <HubTabs tabs={[{ id: 'finance', label: 'Finance' }, { id: 'invoices', label: 'Invoices' }, { id: 'products', label: 'Products' }, { id: 'analytics', label: 'Reports' }, { id: 'retainers', label: 'Retainers' }]} active="invoices" onNavigate={onNavigate} />
 
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-4 mb-6">

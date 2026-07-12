@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { C, glassStyle } from '../components/consts';
 import AppShell from '../components/AppShell';
 import ScreenHeader from '../components/ScreenHeader';
+import HubTabs from '../components/HubTabs';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
@@ -84,7 +85,7 @@ export default function SalesMarketingHubScreen({ onNavigate }) {
   const productName = currentBuild?.brief || 'Premium Custom Software Package';
 
   return (
-    <AppShell activeNavId="sales-marketing" onNavigate={onNavigate}>
+    <AppShell activeNavId="marketing-studio" onNavigate={onNavigate}>
       <div className="space-y-6 max-w-7xl mx-auto p-4 select-none pb-24">
         
         {/* Header Section */}
@@ -97,6 +98,7 @@ export default function SalesMarketingHubScreen({ onNavigate }) {
           primaryIcon="refresh"
           onActionClick={fetchLeads}
         />
+      <HubTabs tabs={[{ id: 'marketing-studio', label: 'Studio' }, { id: 'sales-marketing', label: 'Campaigns' }]} active="sales-marketing" onNavigate={onNavigate} />
 
         {/* Dynamic Glassmorphic Sub-Tabs */}
         <div className="flex gap-2 p-1 rounded-2xl bg-black/40 border border-white/5 max-w-lg">

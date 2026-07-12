@@ -84,7 +84,7 @@ export default function ProductsScreen({ onNavigate }) {
         primaryIcon={showForm ? 'close' : 'add'}
         onPrimaryClick={() => { setShowForm(v => !v); setForm(BLANK); setEditId(null); }}
       />
-      <HubTabs tabs={[{ id: 'finance', label: 'Finance' }, { id: 'invoices', label: 'Invoices' }, { id: 'products', label: 'Products' }, { id: 'analytics', label: 'Reports' }]} active="products" onNavigate={onNavigate} />
+      <HubTabs tabs={[{ id: 'finance', label: 'Finance' }, { id: 'invoices', label: 'Invoices' }, { id: 'products', label: 'Products' }, { id: 'analytics', label: 'Reports' }, { id: 'retainers', label: 'Retainers' }]} active="products" onNavigate={onNavigate} />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

@@ -135,3 +135,56 @@ export async function deleteProduct(id) {
 }
 
 // ── HAF-007: Rate limit check (10 actions/min per action type) ────────────────
+
+// ── RETAINERS — monthly recurring clients (ARCHITECTURE v1.1 §3 Money, Phase 4) ──
+async function ensureRetainersTable(db) {
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS retainers (
+      id TEXT PRIMARY KEY,
+      client_name TEXT NOT NULL,
+      service TEXT NOT NULL,                 -- e.g. Website Management, Social Media Management
+      amount_inr INTEGER NOT NULL DEFAULT 0, -- paise per month
+      billing_day INTEGER DEFAULT 1,         -- day of month invoice is due
+      status TEXT DEFAULT 'active',          -- active, paused, ended
+      started_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      ended_at TEXT,
+      notes TEXT
+    );
+  `).catch(() => {});
+}
+
+export async function addRetainer({ client_name, service, amount_inr, billing_day, notes }) {
+  const db = await getDb();
+  await ensureRetainersTable(db);
+  const id = crypto.randomUUID();
+  await db.execute(
+    `INSERT INTO retainers (id, client_name, service, amount_inr, billing_day, status, started_at, notes)
+     VALUES ($1,$2,$3,$4,$5,'active',$6,$7)`,
+    [id, client_name, service, Math.round(amount_inr || 0), billing_day || 1, new Date().toISOString(), notes || '']
+  );
+  return id;
+}
+
+export async function getRetainers(status = null) {
+  const db = await getDb();
+  await ensureRetainersTable(db);
+  if (status) {
+    return db.select(`SELECT * FROM retainers WHERE status=$1 ORDER BY billing_day ASC`, [status]).catch(() => []);
+  }
+  return db.select(`SELECT * FROM retainers ORDER BY status ASC, billing_day ASC`).catch(() => []);
+}
+
+export async function updateRetainerStatus(id, status) {
+  const db = await getDb();
+  await ensureRetainersTable(db);
+  const endedAt = status === 'ended' ? new Date().toISOString() : null;
+  await db.execute(`UPDATE retainers SET status=$1, ended_at=COALESCE($2, ended_at) WHERE id=$3`, [status, endedAt, id]);
+}
+
+// Monthly recurring revenue from active retainers (paise)
+export async function getMonthlyRecurringRevenue() {
+  const db = await getDb();
+  await ensureRetainersTable(db);
+  const rows = await db.select(`SELECT COALESCE(SUM(amount_inr),0) as mrr FROM retainers WHERE status='active'`).catch(() => [{ mrr: 0 }]);
+  return Number(rows?.[0]?.mrr || 0);
+}
