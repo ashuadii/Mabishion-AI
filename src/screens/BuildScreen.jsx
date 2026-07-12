@@ -11,7 +11,7 @@ import { useMickiiEar } from '../hooks/useMickiiEar.js';
 import { useBuild } from '../context/BuildContext';
 import { runWorker } from '../engine/workers/index.js';
 import {
-  getProjects, getLeads, getWorkerLogs, getPendingApprovals, getDb
+  getProjects, getLeads, getWorkerLogs, getPendingApprovals, getDb, getDocumentsByProject
 } from '../data/db.js';
 import { normalizeWorkerId, getWorkerLabel } from '../utils/approvalRouting.js';
 import { executeLlmWithFallback } from '../services/llmManager.js';
@@ -132,6 +132,10 @@ export default function BuildScreen({ onNavigate }) {
   // Build state
   const [input, setInput] = useState('');
   const [showRightPanel, setShowRightPanel] = useState(false);
+  // ARCHITECTURE v1.1 — Playground right panel: Preview / Files / Code (Cursor-style)
+  const [rightTab, setRightTab] = useState('preview');
+  const [buildFiles, setBuildFiles] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null);
   const [previewContent, setPreviewContent] = useState(null);
   const [systemMessages, setSystemMessages] = useState([]);
   const [workerLogs, setWorkerLogs] = useState([]);
@@ -800,20 +804,83 @@ export default function BuildScreen({ onNavigate }) {
     </div>
   );
 
-  // ─── Render: Right Panel (Output/Preview) ────────────────────────────────
+  // ─── Render: Right Panel (Preview / Files / Code) ────────────────────────
+  const loadBuildFiles = async () => {
+    try {
+      const pid = selectedProjectId || activePipeline?.projectId || null;
+      const docs = pid ? await getDocumentsByProject(pid) : [];
+      setBuildFiles(docs || []);
+    } catch { setBuildFiles([]); }
+  };
+
   const renderRightPanel = () => {
     if (!showRightPanel) return null;
     return (
       <div className="w-[280px] shrink-0 border-l border-white/5 flex flex-col overflow-hidden">
         <div className="px-3 py-2.5 border-b border-white/5 flex items-center justify-between">
           <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: C.gold }}>
-            {previewContent?.title || 'Output'}
+            {rightTab === 'files' ? 'Files' : rightTab === 'code' ? (selectedFile?.title || 'Code') : (previewContent?.title || 'Output')}
           </span>
           <button onClick={() => setShowRightPanel(false)} className="text-slate-500 hover:text-white">
             <Icon name="close" size={12} />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-3">
+        {/* Preview | Files | Code tabs */}
+        <div className="flex gap-0.5 px-2 py-1.5 border-b border-white/5">
+          {[['preview','Preview'],['files','Files'],['code','Code']].map(([id, label]) => (
+            <button key={id}
+              onClick={() => { setRightTab(id); if (id === 'files') loadBuildFiles(); }}
+              className="flex-1 py-1 rounded-md text-[8px] font-black uppercase tracking-wider transition-all"
+              style={rightTab === id
+                ? { background: `linear-gradient(135deg, ${C.gold}, ${C.goldDeep})`, color: '#0B1120' }
+                : { color: 'rgba(237,231,221,0.55)' }}>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {rightTab === 'files' && (
+          <div className="flex-1 overflow-y-auto p-2">
+            {buildFiles.length === 0 && (
+              <p className="text-[9px] text-slate-500 text-center py-6">Is build ki koi file abhi nahi bani. Pipeline chalao — files yahan dikhengi.</p>
+            )}
+            {buildFiles.map(doc => (
+              <button key={doc.id}
+                onClick={() => { setSelectedFile(doc); setRightTab('code'); }}
+                className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-white/5 transition-colors flex items-center gap-2">
+                <Icon name={doc.doc_type === 'code' ? 'code' : 'file'} size={12} className="text-slate-400 shrink-0" />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[9px] font-bold text-white truncate">{doc.title}</span>
+                  <span className="block text-[7px] text-slate-500 uppercase">{doc.doc_type} · v{doc.version}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {rightTab === 'code' && (
+          <div className="flex-1 overflow-y-auto p-2 flex flex-col">
+            {!selectedFile && (
+              <p className="text-[9px] text-slate-500 text-center py-6">Files tab se koi file chuno — uska code yahan khulega.</p>
+            )}
+            {selectedFile && (
+              <>
+                <pre className="flex-1 rounded-lg p-2.5 font-mono text-[9px] leading-relaxed whitespace-pre-wrap overflow-y-auto"
+                  style={{ background: 'rgba(0,0,0,0.35)', color: '#A5D6FF' }}>
+                  {selectedFile.content || '(empty file)'}
+                </pre>
+                <button
+                  onClick={() => navigator.clipboard.writeText(selectedFile.content || '')}
+                  className="mt-2 py-1 text-[8px] font-bold text-white rounded-lg hover:bg-white/5 transition-colors"
+                  style={{ background: panelBg, border: panelBorder }}>
+                  Copy Code
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        <div className={`flex-1 overflow-y-auto p-3 ${rightTab !== 'preview' ? 'hidden' : ''}`}>
           {!previewContent && (
             <div className="flex flex-col items-center justify-center h-full text-center gap-2 opacity-30">
               <Icon name="preview" size={28} className="text-slate-600" />

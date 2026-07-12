@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AppShell from '../components/AppShell';
 import ScreenHeader from '../components/ScreenHeader';
+import HubTabs from '../components/HubTabs';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
@@ -128,8 +129,10 @@ export default function ClientsScreen({ onNavigate }) {
         primaryAction="Add Client"
         primaryIcon="person_add"
         onPrimaryClick={openNew}
-        extraBadges={<><Badge tone="success">{clients.length} Total</Badge><Badge tone="info">Live DB</Badge></>}
+        extraBadges={<><Badge tone="success">{clients.length} Total</Badge><Badge tone="info">Live DB</Badge></>
+}
       />
+      <HubTabs tabs={[{ id: 'clients', label: 'Clients' }, { id: 'documents', label: 'Documents' }, { id: 'knowledge', label: 'Knowledge' }]} active="clients" onNavigate={onNavigate} />
 
       {/* Search bar */}
       <div className="mb-5">

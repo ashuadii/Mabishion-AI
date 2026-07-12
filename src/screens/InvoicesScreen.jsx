@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AppShell from '../components/AppShell';
 import ScreenHeader from '../components/ScreenHeader';
+import HubTabs from '../components/HubTabs';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
@@ -129,7 +130,7 @@ export default function InvoicesScreen({ onNavigate }) {
     .reduce((s, i) => s + (i.total_inr || 0) / 100, 0);
 
   return (
-    <AppShell activeNavId="invoices" onNavigate={onNavigate}>
+    <AppShell activeNavId="finance" onNavigate={onNavigate}>
       <ScreenHeader
         title="Invoices"
         index="12"
@@ -138,8 +139,10 @@ export default function InvoicesScreen({ onNavigate }) {
         primaryAction="New Invoice"
         primaryIcon="file"
         onPrimaryClick={() => setShowForm(true)}
-        extraBadges={<><Badge tone="success">{invoices.length} Total</Badge><Badge tone="gold">GST 18%</Badge></>}
+        extraBadges={<><Badge tone="success">{invoices.length} Total</Badge><Badge tone="gold">GST 18%</Badge></>
+}
       />
+      <HubTabs tabs={[{ id: 'finance', label: 'Finance' }, { id: 'invoices', label: 'Invoices' }, { id: 'products', label: 'Products' }, { id: 'analytics', label: 'Reports' }]} active="invoices" onNavigate={onNavigate} />
 
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-4 mb-6">

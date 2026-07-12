@@ -44,23 +44,23 @@ describe('Sidebar — Navigation Items', () => {
 
   it('renders all primary navigation items', () => {
     render(<Sidebar activeNavId="dashboard" onNavigate={() => {}} />);
-    expect(screen.getByText('Home')).toBeInTheDocument();
-    expect(screen.getByText('Build New')).toBeInTheDocument();
-    expect(screen.getByText('Lead CRM')).toBeInTheDocument();
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Playground')).toBeInTheDocument();
+    expect(screen.getByText('Leads')).toBeInTheDocument();
     expect(screen.getByText('Settings')).toBeInTheDocument();
-    expect(screen.getByText('Approval Center')).toBeInTheDocument();
+    expect(screen.getByText('Approvals')).toBeInTheDocument();
   });
 
-  it('renders Projects and Tasks nav items', () => {
+  it('renders Projects and Marketing Studio nav items (10-screen architecture)', () => {
     render(<Sidebar activeNavId="dashboard" onNavigate={() => {}} />);
     expect(screen.getByText('Projects')).toBeInTheDocument();
-    expect(screen.getByText('Tasks')).toBeInTheDocument();
+    expect(screen.getByText('Marketing Studio')).toBeInTheDocument();
   });
 
-  it('renders Finance and Analytics items', () => {
+  it('renders Money and Workers items', () => {
     render(<Sidebar activeNavId="dashboard" onNavigate={() => {}} />);
-    expect(screen.getByText('Finance Hub')).toBeInTheDocument();
-    expect(screen.getByText('Analytics')).toBeInTheDocument();
+    expect(screen.getByText('Money')).toBeInTheDocument();
+    expect(screen.getByText('Workers')).toBeInTheDocument();
   });
 });
 
@@ -74,7 +74,7 @@ describe('Sidebar — Active State', () => {
   it('highlights the active navigation item', () => {
     const { container } = render(<Sidebar activeNavId="leads" onNavigate={() => {}} />);
     const navButtons = container.querySelectorAll('button');
-    const leadsButton = Array.from(navButtons).find(b => b.textContent.includes('Lead CRM'));
+    const leadsButton = Array.from(navButtons).find(b => b.textContent.includes('Leads'));
     expect(leadsButton).toBeTruthy();
   });
 
@@ -85,10 +85,10 @@ describe('Sidebar — Active State', () => {
     expect(onNavigate).toHaveBeenCalledWith('settings');
   });
 
-  it('calls onNavigate with correct id for Build New', () => {
+  it('calls onNavigate with correct id for Playground', () => {
     const onNavigate = vi.fn();
     render(<Sidebar activeNavId="dashboard" onNavigate={onNavigate} />);
-    fireEvent.click(screen.getByText('Build New'));
+    fireEvent.click(screen.getByText('Playground'));
     expect(onNavigate).toHaveBeenCalledWith('build-new');
   });
 });

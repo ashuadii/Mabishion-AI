@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { C, glassStyle } from '../components/consts';
 import AppShell from '../components/AppShell';
 import ScreenHeader from '../components/ScreenHeader';
+import HubTabs from '../components/HubTabs';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
@@ -114,8 +115,10 @@ export default function FinanceScreen({ onNavigate }) {
           <Badge tone="gold">Live Data</Badge>
           <Badge tone="success">{invoices.length} Invoices</Badge>
           <Badge tone="violet">Approval Gated</Badge>
-        </>}
+        </>
+}
       />
+      <HubTabs tabs={[{ id: 'finance', label: 'Finance' }, { id: 'invoices', label: 'Invoices' }, { id: 'products', label: 'Products' }, { id: 'analytics', label: 'Reports' }]} active="finance" onNavigate={onNavigate} />
 
       {loading ? (
         <p className="text-sm py-12 text-center" style={{ color: C.textMuted }}>Loading financial data...</p>

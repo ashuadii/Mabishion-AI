@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import AppShell from '../components/AppShell';
 import ScreenHeader from '../components/ScreenHeader';
+import HubTabs from '../components/HubTabs';
 import { C, glassStyle } from '../components/consts';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
@@ -65,7 +66,7 @@ export default function SkillLibraryScreen({ onNavigate }) {
 
   if (loading) {
     return (
-      <AppShell activeNavId="system-monitor" onNavigate={onNavigate}>
+      <AppShell activeNavId="worker-monitor" onNavigate={onNavigate}>
         <div className="flex items-center justify-center h-screen">
           <div className="text-center">
             <Icon name="brain" size={48} style={{ color: C.warning }} />
@@ -78,7 +79,7 @@ export default function SkillLibraryScreen({ onNavigate }) {
   }
 
   return (
-    <AppShell activeNavId="system-monitor" onNavigate={onNavigate}
+    <AppShell activeNavId="worker-monitor" onNavigate={onNavigate}
       commandBar={
         <div className="fixed bottom-5 right-6 z-40 flex h-[64px] items-center gap-4 px-4"
           style={{ left: C.sidebarW + 24, ...glassStyle({ strong: true, glow: 'warning' }) }}>
@@ -96,6 +97,7 @@ export default function SkillLibraryScreen({ onNavigate }) {
         secondaryAction="Filter Category" secondaryIcon="filter"
         extraBadges={<><Badge tone="gold">{skills.length} Skills</Badge><Badge tone="success">{templates.length} Templates</Badge><Badge tone="violet">100% Local</Badge></>}
       />
+      <HubTabs tabs={[{ id: 'worker-monitor', label: 'Workers' }, { id: 'mickii-status', label: 'Skill Library' }]} active="mickii-status" onNavigate={onNavigate} />
 
       <section className="grid grid-cols-12 gap-5">
         {/* Category Filter */}

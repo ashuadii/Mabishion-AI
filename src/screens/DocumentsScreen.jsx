@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AppShell from '../components/AppShell';
 import ScreenHeader from '../components/ScreenHeader';
+import HubTabs from '../components/HubTabs';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
@@ -84,14 +85,16 @@ export default function DocumentsScreen({ onNavigate }) {
   };
 
   return (
-    <AppShell activeNavId="documents" onNavigate={onNavigate}>
+    <AppShell activeNavId="clients" onNavigate={onNavigate}>
       <ScreenHeader
         title="Documents"
         index="14"
         subtitle="All project documents — proposals, blueprints, contracts, and reports in one place."
         badgeLabel="Proposals · Blueprints · Contracts"
-        extraBadges={<><Badge tone="info">{allDocs.length} Total</Badge><Badge tone="gold">Live DB</Badge></>}
+        extraBadges={<><Badge tone="info">{allDocs.length} Total</Badge><Badge tone="gold">Live DB</Badge></>
+}
       />
+      <HubTabs tabs={[{ id: 'clients', label: 'Clients' }, { id: 'documents', label: 'Documents' }, { id: 'knowledge', label: 'Knowledge' }]} active="documents" onNavigate={onNavigate} />
 
       {/* Tabs + Search */}
       <div className="flex items-center gap-2 mb-5 flex-wrap">

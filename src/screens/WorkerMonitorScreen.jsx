@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AppShell from '../components/AppShell';
 import ScreenHeader from '../components/ScreenHeader';
+import HubTabs from '../components/HubTabs';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
 import { glassStyle, C } from '../components/consts';
@@ -88,8 +89,10 @@ export default function WorkerMonitorScreen({ onNavigate }) {
         extraBadges={<>
           <Badge tone={running > 0 ? 'info' : 'muted'}>{running} Running</Badge>
           <Badge tone="success">{successRate}% Success</Badge>
-        </>}
+        </>
+}
       />
+      <HubTabs tabs={[{ id: 'worker-monitor', label: 'Workers' }, { id: 'mickii-status', label: 'Skill Library' }]} active="worker-monitor" onNavigate={onNavigate} />
 
       {/* FR-042: Real-time workflow progress timeline */}
       {liveRuns.length > 0 && (

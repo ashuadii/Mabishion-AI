@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AppShell from '../components/AppShell';
 import ScreenHeader from '../components/ScreenHeader';
+import HubTabs from '../components/HubTabs';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
@@ -96,7 +97,7 @@ export default function KnowledgeBaseScreen({ onNavigate }) {
   };
 
   return (
-    <AppShell activeNavId="knowledge" onNavigate={onNavigate}>
+    <AppShell activeNavId="clients" onNavigate={onNavigate}>
       <ScreenHeader
         title="Knowledge Base"
         index="15"
@@ -105,8 +106,10 @@ export default function KnowledgeBaseScreen({ onNavigate }) {
         primaryAction="Add Source"
         primaryIcon="plus"
         onPrimaryClick={() => setShowAdd(true)}
-        extraBadges={<><Badge tone="info">{sources.length} Sources</Badge><Badge tone="success">{reports.length} Reports</Badge></>}
+        extraBadges={<><Badge tone="info">{sources.length} Sources</Badge><Badge tone="success">{reports.length} Reports</Badge></>
+}
       />
+      <HubTabs tabs={[{ id: 'clients', label: 'Clients' }, { id: 'documents', label: 'Documents' }, { id: 'knowledge', label: 'Knowledge' }]} active="knowledge" onNavigate={onNavigate} />
 
       {/* Search bar — FR-028 FTS5 keyword search */}
       <div className="relative mb-4">

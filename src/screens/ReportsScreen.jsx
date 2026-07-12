@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { C, glassStyle } from '../components/consts';
 import AppShell from '../components/AppShell';
 import ScreenHeader from '../components/ScreenHeader';
+import HubTabs from '../components/HubTabs';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
@@ -131,7 +132,7 @@ export default function ReportsScreen({ onNavigate }) {
   };
 
   return (
-    <AppShell activeNavId="reports" onNavigate={onNavigate}
+    <AppShell activeNavId="finance" onNavigate={onNavigate}
       commandBar={<QuickCommandBar contextLabel="Reports Context" placeholder="Ask Mickii: generate weekly report, explain KPI drop, find opportunity, export PDF..." />}>
       <ScreenHeader title="Reports" index="09"
         subtitle="Weekly reality check and analytics room. No sugar-coating: revenue, leads, projects, marketing ROI, post-mortems, and opportunity spotlight."
@@ -151,6 +152,7 @@ export default function ReportsScreen({ onNavigate }) {
           </>
         }
       />
+      <HubTabs tabs={[{ id: 'finance', label: 'Finance' }, { id: 'invoices', label: 'Invoices' }, { id: 'products', label: 'Products' }, { id: 'analytics', label: 'Reports' }]} active="analytics" onNavigate={onNavigate} />
       <section className="grid grid-cols-12 gap-5">
         {/* KPI Cards */}
         <div className="col-span-12 p-5" style={glassStyle({ strong: true, glow: 'warning' })}>

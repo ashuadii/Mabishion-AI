@@ -125,6 +125,7 @@ export default function AppShell({ activeNavId, onNavigate, commandBar, children
         <QuickCommandBar
           contextLabel="Mabishion Command"
           placeholder="Ask Mabishion to find a lead, summarize a project, draft a proposal, or open a workflow..."
+          onNavigate={onNavigate}
         />
       )}
     </div>

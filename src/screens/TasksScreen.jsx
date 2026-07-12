@@ -1,5 +1,6 @@
 import React from 'react';
 import AppShell from '../components/AppShell';
+import HubTabs from '../components/HubTabs';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
 import Icon from '../components/Icon';
@@ -49,7 +50,8 @@ const QUEUE = [
 
 export default function TasksScreen({ onNavigate }) {
   return (
-    <AppShell activeNavId="tasks" onNavigate={onNavigate}>
+    <AppShell activeNavId="projects" onNavigate={onNavigate}>
+      <HubTabs tabs={[{ id: 'projects', label: 'Projects' }, { id: 'tasks', label: 'Tasks' }]} active="tasks" onNavigate={onNavigate} />
       <div className="space-y-8">
         <section className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-3xl">

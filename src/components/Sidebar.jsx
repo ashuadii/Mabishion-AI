@@ -4,21 +4,19 @@ import Icon from './Icon';
 import mabishionMark from '../assets/mabishion-mark.svg';
 import { getPendingApprovals } from '../data/db.js';
 
+// ARCHITECTURE v1.1 §3 — 10-screen navigation. Former screens live on as tabs:
+// Tasks→Projects · Invoices/Products/Reports→Money · Documents/Knowledge→Clients
+// SkillLibrary→Workers · Automations→Playground
 const NAV_ITEMS = [
-  { id: 'dashboard', label: 'Home', icon: 'dashboard' },
-  { id: 'build-new', label: 'Build New', icon: 'rocket' },
-  { id: 'clients', label: 'Clients', icon: 'contact_page' },
+  { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+  { id: 'build-new', label: 'Playground', icon: 'rocket' },
+  { id: 'sales-marketing', label: 'Marketing Studio', icon: 'megaphone' },
+  { id: 'leads', label: 'Leads', icon: 'users' },
   { id: 'projects', label: 'Projects', icon: 'project' },
-  { id: 'tasks', label: 'Tasks', icon: 'kanban' },
-  { id: 'leads', label: 'Lead CRM', icon: 'users' },
-  { id: 'sales-marketing', label: 'Sales & Marketing Hub', icon: 'megaphone' },
-  { id: 'approvals', label: 'Approval Center', icon: 'approval', badge: true },
-  { id: 'finance', label: 'Finance Hub', icon: 'wallet' },
-  { id: 'analytics', label: 'Analytics', icon: 'analytics' },
-  { id: 'worker-monitor', label: 'Worker Monitor', icon: 'brain' },
-  { id: 'products', label: 'Products', icon: 'inventory' },
-  { id: 'documents', label: 'Documents', icon: 'file' },
-  { id: 'knowledge', label: 'Knowledge Base', icon: 'chart' },
+  { id: 'clients', label: 'Clients', icon: 'contact_page' },
+  { id: 'finance', label: 'Money', icon: 'wallet' },
+  { id: 'worker-monitor', label: 'Workers', icon: 'brain' },
+  { id: 'approvals', label: 'Approvals', icon: 'approval', badge: true },
   { id: 'settings', label: 'Settings', icon: 'settings' },
 ];
 

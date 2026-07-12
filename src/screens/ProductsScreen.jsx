@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getProducts, addProduct, updateProduct, deleteProduct } from '../data/db.js';
 import AppShell from '../components/AppShell';
 import ScreenHeader from '../components/ScreenHeader';
+import HubTabs from '../components/HubTabs';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
 import Icon from '../components/Icon';
@@ -73,7 +74,7 @@ export default function ProductsScreen({ onNavigate }) {
   const activeCount = products.filter(p => p.status === 'active').length;
 
   return (
-    <AppShell activeNavId="products" onNavigate={onNavigate}>
+    <AppShell activeNavId="finance" onNavigate={onNavigate}>
       <ScreenHeader
         title="Digital Products"
         pageTitle="Products Catalog"
@@ -83,6 +84,7 @@ export default function ProductsScreen({ onNavigate }) {
         primaryIcon={showForm ? 'close' : 'add'}
         onPrimaryClick={() => { setShowForm(v => !v); setForm(BLANK); setEditId(null); }}
       />
+      <HubTabs tabs={[{ id: 'finance', label: 'Finance' }, { id: 'invoices', label: 'Invoices' }, { id: 'products', label: 'Products' }, { id: 'analytics', label: 'Reports' }]} active="products" onNavigate={onNavigate} />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

@@ -886,8 +886,8 @@ export async function initDb() {
 
   console.log("Database initialized successfully!");
 
-  // B05: Seed workers table from WORKER_REGISTRY (non-blocking)
-  seedWorkersTable().catch(() => {});
+  // B05: Seed workers table from WORKER_REGISTRY (non-blocking; lives in knowledge.js — dynamic import avoids a static core→domain cycle)
+  import('./knowledge.js').then(m => m.seedWorkersTable()).catch(() => {});
 }
 
 export async function getSetting(key) {

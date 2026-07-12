@@ -13,6 +13,7 @@ import 'reactflow/dist/style.css';
 import { C, glassStyle } from '../components/consts';
 import AppShell from '../components/AppShell';
 import ScreenHeader from '../components/ScreenHeader';
+import HubTabs from '../components/HubTabs';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
@@ -241,6 +242,7 @@ export default function AutomationsScreen({ onNavigate }) {
           </>
         }
       />
+      <HubTabs tabs={[{ id: 'build-new', label: 'Playground' }, { id: 'automations', label: 'Automations' }]} active="automations" onNavigate={onNavigate} />
 
       <section className="grid grid-cols-12 gap-5">
         {/* Drag & Drop Tool Box */}

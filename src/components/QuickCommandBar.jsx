@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { C, glassStyle } from './consts';
 import MickiiOrb from './MickiiOrb';
 import Badge from './Badge';
@@ -6,16 +6,33 @@ import Button from './Button';
 import Icon from './Icon';
 import { useMickiiAgent } from '../hooks/useMickiiAgent.js';
 import { useMickiiEar } from '../hooks/useMickiiEar.js';
+import { getPendingApprovals } from '../data/approvals.js';
+import { getDailyCostTotal } from '../data/system.js';
 
 import SearchResult from './search/SearchResult';
 
-export default function QuickCommandBar({ contextLabel, placeholder }) {
+export default function QuickCommandBar({ contextLabel, placeholder, onNavigate }) {
   const { messages, send, status, isProcessing } = useMickiiAgent({
     model: 'llama3.1:8b',
     baseURL: 'http://localhost:11434/v1'
   });
 
   const [input, setInput] = useState('');
+  // ARCHITECTURE v1.1 — Mickii bar shows pending approvals + today's AI spend on every screen
+  const [pendingCount, setPendingCount] = useState(0);
+  const [dailyCostPaise, setDailyCostPaise] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    const refresh = async () => {
+      try {
+        const [list, cost] = await Promise.all([getPendingApprovals(), getDailyCostTotal()]);
+        if (alive) { setPendingCount(list.length); setDailyCostPaise(cost); }
+      } catch { /* fail-open: chips just stay stale */ }
+    };
+    refresh();
+    const t = setInterval(refresh, 15000);
+    return () => { alive = false; clearInterval(t); };
+  }, []);
   const lastMessage = messages[messages.length - 1];
 
   const { isListening, startListening, stopListening } = useMickiiEar((transcript) => {
@@ -70,6 +87,23 @@ export default function QuickCommandBar({ contextLabel, placeholder }) {
         style={{ ...glassStyle({ strong: true, glow: 'primary' }), backgroundColor: 'rgba(15,23,42,0.94)' }}>
         <MickiiOrb isThinking={isProcessing} />
         <Badge tone="gold">{status.toUpperCase()}</Badge>
+        {pendingCount > 0 && (
+          <button
+            onClick={() => onNavigate && onNavigate('approvals')}
+            title="Pending approvals — click to open Approvals"
+            className="flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-black transition-all hover:scale-105"
+            style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)', color: '#FCA5A5' }}
+          >
+            <Icon name="approval" size={13} /> {pendingCount}
+          </button>
+        )}
+        <span
+          title="Aaj ka AI kharcha (cap ₹150)"
+          className="hidden md:inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold"
+          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: dailyCostPaise >= 14000 ? '#FCA5A5' : 'rgba(237,231,221,0.75)' }}
+        >
+          ₹{(dailyCostPaise / 100).toFixed(0)}/150
+        </span>
         <input 
           className="min-w-0 flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-slate-400"
           style={{ color: '#FFFFFF' }}

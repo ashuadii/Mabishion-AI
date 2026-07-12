@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { C, glassStyle } from '../components/consts';
 import AppShell from '../components/AppShell';
 import ScreenHeader from '../components/ScreenHeader';
+import HubTabs from '../components/HubTabs';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
@@ -327,8 +328,10 @@ export default function ProjectsScreen({ onNavigate }) {
         secondaryIcon="filter"
         onPrimaryClick={() => setIsNewModalOpen(true)}
         onSecondaryClick={loadProjects}
-        extraBadges={<><Badge tone="gold">Factory Mode</Badge><Badge tone="success">Local SQLite Live</Badge><Badge tone="violet">Approval Gates On</Badge></>}
+        extraBadges={<><Badge tone="gold">Factory Mode</Badge><Badge tone="success">Local SQLite Live</Badge><Badge tone="violet">Approval Gates On</Badge></>
+}
       />
+      <HubTabs tabs={[{ id: 'projects', label: 'Projects' }, { id: 'tasks', label: 'Tasks' }]} active="projects" onNavigate={onNavigate} />
 
       <section className="grid grid-cols-12 gap-5">
 
