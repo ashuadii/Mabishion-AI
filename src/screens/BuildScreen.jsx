@@ -527,27 +527,27 @@ export default function BuildScreen({ onNavigate }) {
   // ─── Render: Skills View (Center — idle) ─────────────────────────────────
   const renderSkillsView = () => (
     <div className="flex-1 flex flex-col items-center justify-center px-6 py-6 overflow-y-auto">
-      <div className="w-full max-w-lg mx-auto space-y-5">
+      <div className="w-full max-w-4xl mx-auto space-y-6">
         <div className="text-center space-y-1.5">
           <p className="text-[9px] font-black uppercase tracking-[0.2em]" style={{ color: C.gold }}>Build Playground</p>
-          <h2 className="text-base font-black text-white">What are we building?</h2>
-          <p className="text-[10px] text-slate-400">Select a category, fill details, then the 16-tier pipeline takes over.</p>
+          <h2 className="font-heading text-3xl text-white">What are we building?</h2>
+          <p className="text-sm text-slate-400">Select a category, fill details, then the 16-tier pipeline takes over.</p>
         </div>
 
         <div className="grid grid-cols-2 gap-2.5">
           {SERVICE_CATEGORIES.map(cat => (
             <button key={cat.id}
               onClick={() => handleSelectCat(cat)}
-              className="flex items-start gap-2.5 p-3 rounded-2xl transition-all group text-left hover:bg-white/5"
+              className="flex items-start gap-3 p-4 rounded-2xl min-h-[104px] transition-all group text-left hover:bg-white/5"
               style={{ background: panelBg, border: panelBorder }}>
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
                 style={{ backgroundColor: cat.color + '12' }}>
-                <Icon name={cat.icon} size={16} style={{ color: cat.color }} />
+                <Icon name={cat.icon} size={20} style={{ color: cat.color }} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-bold text-white">{cat.label}</p>
-                <p className="text-[9px] text-slate-500 mt-0.5 leading-snug">{cat.desc}</p>
-                <span className="text-[8px] font-bold mt-1 inline-block px-1.5 py-0.5 rounded-full"
+                <p className="text-sm font-bold text-white">{cat.label}</p>
+                <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">{cat.desc}</p>
+                <span className="text-[10px] font-bold mt-1.5 inline-block px-2 py-0.5 rounded-full"
                   style={{ color: cat.color, background: cat.color + '10', border: `1px solid ${cat.color}20` }}>
                   {cat.items.length} services
                 </span>
@@ -562,9 +562,9 @@ export default function BuildScreen({ onNavigate }) {
             {QUICK_TEMPLATES.map(t => (
               <button key={t.label}
                 onClick={() => handleTemplateClick(t)}
-                className="flex items-center gap-1 px-2 py-1 rounded-full text-[9px] font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all"
                 style={{ border: panelBorder }}>
-                <Icon name={t.icon} size={10} className="text-slate-500" />
+                <Icon name={t.icon} size={12} className="text-slate-500" />
                 {t.label}
               </button>
             ))}
@@ -581,7 +581,7 @@ export default function BuildScreen({ onNavigate }) {
 
     return (
       <div className="flex-1 flex flex-col overflow-y-auto">
-        <div className="w-full max-w-md mx-auto px-5 py-5 space-y-4">
+        <div className="w-full max-w-2xl mx-auto px-5 py-5 space-y-4">
           <button onClick={handleBackToSkills}
             className="flex items-center gap-1 text-[9px] font-bold text-slate-400 hover:text-white transition-colors">
             <Icon name="arrow_back" size={12} />

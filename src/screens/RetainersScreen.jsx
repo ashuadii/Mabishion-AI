@@ -3,6 +3,7 @@ import AppShell from '../components/AppShell';
 import ScreenHeader from '../components/ScreenHeader';
 import HubTabs from '../components/HubTabs';
 import Icon from '../components/Icon';
+import StatCard from '../components/StatCard';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
 import { C, glassStyle } from '../components/consts';
@@ -87,17 +88,14 @@ export default function RetainersScreen({ onNavigate }) {
 
       {/* MRR strip */}
       <section className="grid grid-cols-12 gap-4 mb-6">
-        <div className="col-span-6 lg:col-span-4 p-4 rounded-2xl" style={glassStyle({ glow: 'gold' })}>
-          <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'rgba(237,231,221,0.62)' }}>Monthly Recurring Revenue</p>
-          <p className="mt-1 font-heading text-3xl" style={{ color: C.gold }}>{fmtINR(mrr)}<span className="text-sm text-slate-400">/mahina</span></p>
+        <div className="col-span-6 lg:col-span-4">
+          <StatCard label="Monthly Recurring Revenue" value={fmtINR(mrr)} sub="/mahina" valueColor={C.gold} glow="gold" />
         </div>
-        <div className="col-span-6 lg:col-span-4 p-4 rounded-2xl" style={glassStyle()}>
-          <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'rgba(237,231,221,0.62)' }}>Active Retainers</p>
-          <p className="mt-1 font-heading text-3xl" style={{ color: '#FFFFFF' }}>{active.length}</p>
+        <div className="col-span-6 lg:col-span-4">
+          <StatCard label="Active Retainers" value={active.length} />
         </div>
-        <div className="col-span-12 lg:col-span-4 p-4 rounded-2xl" style={glassStyle()}>
-          <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'rgba(237,231,221,0.62)' }}>Saal ka andaza (active × 12)</p>
-          <p className="mt-1 font-heading text-3xl" style={{ color: '#FFFFFF' }}>{fmtINR(mrr * 12)}</p>
+        <div className="col-span-12 lg:col-span-4">
+          <StatCard label="Saal ka andaza (active × 12)" value={fmtINR(mrr * 12)} />
         </div>
       </section>
 

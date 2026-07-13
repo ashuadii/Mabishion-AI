@@ -6,6 +6,7 @@ import HubTabs from '../components/HubTabs';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
+import StatCard from '../components/StatCard';
 import ProgressBar from '../components/ProgressBar';
 import QuickCommandBar from '../components/QuickCommandBar';
 import { getInvoices, getTotalRevenue, getDailyCostTotal, getMonthlyCostTotal, getDb } from '../data/db.js';
@@ -129,15 +130,9 @@ export default function FinanceScreen({ onNavigate }) {
           {metrics.map((m) => {
             const toneColor = m.tone === 'success' ? C.success : m.tone === 'danger' ? C.danger : m.tone === 'info' ? C.info : C.warning;
             return (
-              <div key={m.label} className="col-span-6 lg:col-span-3 p-5" style={glassStyle({ glow: m.tone === 'warning' ? 'gold' : 'none' })}>
-                <div className="flex items-center justify-between gap-3">
-                  <div className="rounded-2xl p-3" style={{ color: C.warning, background: 'rgba(255,255,255,.055)', border: `1px solid ${C.glassBorder}` }}>
-                    <Icon name={m.icon} size={20} />
-                  </div>
-                  <Badge tone={m.tone}>{m.delta}</Badge>
-                </div>
-                <p className="mt-5 text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: C.textMuted }}>{m.label}</p>
-                <p className="mt-2 text-2xl font-black tracking-tight" style={{ color: toneColor }}>{m.value}</p>
+              <div key={m.label} className="col-span-6 lg:col-span-3">
+                <StatCard label={m.label} value={m.value} valueColor={toneColor}
+                  badge={m.delta} badgeTone={m.tone} glow={m.tone === 'warning' ? 'gold' : 'none'} />
               </div>
             );
           })}

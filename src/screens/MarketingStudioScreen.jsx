@@ -3,6 +3,7 @@ import AppShell from '../components/AppShell';
 import ScreenHeader from '../components/ScreenHeader';
 import HubTabs from '../components/HubTabs';
 import Icon from '../components/Icon';
+import StatCard from '../components/StatCard';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
 import { C, glassStyle } from '../components/consts';
@@ -96,9 +97,8 @@ export default function MarketingStudioScreen({ onNavigate }) {
           ['Scheduled', summary.scheduled, 'violet'],
           ['Published (is mahine)', summary.published_this_month, 'success'],
         ].map(([label, value]) => (
-          <div key={label} className="col-span-6 lg:col-span-3 p-4 rounded-2xl" style={glassStyle()}>
-            <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'rgba(237,231,221,0.62)' }}>{label}</p>
-            <p className="mt-1 font-heading text-3xl" style={{ color: '#FFFFFF' }}>{Number(value) || 0}</p>
+          <div key={label} className="col-span-6 lg:col-span-3">
+            <StatCard label={label} value={Number(value) || 0} />
           </div>
         ))}
       </section>

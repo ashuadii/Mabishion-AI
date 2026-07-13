@@ -34,6 +34,7 @@ import { C, glassStyle } from "../components/consts";
 import Badge from "../components/Badge";
 import Button from "../components/Button";
 import Icon from "../components/Icon";
+import StatCard from '../components/StatCard';
 import ProgressBar from "../components/ProgressBar";
 import SkeletonCard from "../components/SkeletonCard.jsx";
 import MickiiOrb from "../components/MickiiOrb";
@@ -635,9 +636,9 @@ Reference URL or notes: ${planUrl || "None"}
     >
       {/* ── Morning Brief — compact callout ────────────────────────────────── */}
       {morningBrief && (
-        <div className="mb-5 flex items-start gap-3 px-4 py-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/5">
-          <Icon name="wb_sunny" size={16} className="mt-0.5 text-emerald-400 shrink-0" />
-          <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">{morningBrief.replace(/[\u{1F300}-\u{1FAD6}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').replace(/\s{2,}/g, ' ').trim()}</p>
+        <div className="mb-5 p-4 rounded-2xl flex items-start gap-3" style={glassStyle({ glow: 'gold' })}>
+          <Icon name="wb_sunny" size={16} className="mt-0.5 shrink-0" style={{ color: C.gold }} />
+          <p className="text-sm leading-relaxed line-clamp-2" style={{ color: 'rgba(237,231,221,0.85)' }}>{morningBrief.replace(/[\u{1F300}-\u{1FAD6}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').replace(/\s{2,}/g, ' ').trim()}</p>
         </div>
       )}
 
@@ -677,19 +678,8 @@ Reference URL or notes: ${planUrl || "None"}
             barColor: dailyPct >= 90 ? '#EF4444' : dailyPct >= 70 ? '#F59E0B' : '#10B981',
           },
         ].map(card => (
-          <div key={card.label} className="p-4 rounded-2xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] uppercase tracking-wider text-slate-400">{card.label}</span>
-              <Icon name={card.icon} size={14} className="text-slate-600" />
-            </div>
-            <p className="text-2xl font-black text-white mb-1">{card.value}</p>
-            {card.pct !== null && (
-              <div className="h-1 rounded-full bg-white/10 mb-1.5 overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${card.pct}%`, background: card.barColor }} />
-              </div>
-            )}
-            <p className="text-[10px] text-slate-500">{card.sub}</p>
-          </div>
+          <StatCard key={card.label} label={card.label} value={card.value} sub={card.sub}
+            icon={card.icon} pct={card.pct} barColor={card.barColor} />
         ))}
       </div>
 
