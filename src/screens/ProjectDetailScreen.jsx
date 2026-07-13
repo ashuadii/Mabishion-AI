@@ -76,7 +76,7 @@ export default function ProjectDetailScreen({ onNavigate }) {
               <Badge tone="gold">{project.stage}</Badge>
               <Badge tone="cyan">{project.type}</Badge>
             </div>
-            <h1 className="font-heading text-5xl leading-tight" style={{ color: C.navyDeep }}>{project.name}</h1>
+            <h1 className="font-heading text-4xl leading-tight" style={{ color: C.navyDeep }}>{project.name}</h1>
             <p className="mt-4 max-w-3xl text-lg leading-8" style={{ color: C.textMuted }}>{project.thesis}</p>
 
             <div className="mt-8 grid gap-4 md:grid-cols-4">
@@ -96,7 +96,7 @@ export default function ProjectDetailScreen({ onNavigate }) {
 
           <aside className="rounded-[30px] border p-6" style={{ borderColor: C.glassBorder, background: C.navyDeep, color: '#FFFFFF' }}>
             <p className="tagline text-[10px] font-bold" style={{ color: C.gold }}>Readiness</p>
-            <p className="mt-5 font-heading text-6xl">{project.progress}%</p>
+            <p className="mt-5 font-heading text-4xl">{project.progress}%</p>
             <div className="mt-5 h-2 rounded-full bg-white/12">
               <div className="h-2 rounded-full" style={{ width: `${project.progress}%`, background: C.gold }} />
             </div>

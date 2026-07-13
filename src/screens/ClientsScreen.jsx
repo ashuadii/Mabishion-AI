@@ -242,7 +242,7 @@ export default function ClientsScreen({ onNavigate }) {
           onClick={() => setShowForm(false)}
         >
           <div
-            className="w-full max-w-md p-6 rounded-3xl"
+            className="w-full max-w-md p-6 rounded-2xl"
             style={glassStyle({ strong: true, glow: 'primary' })}
             onClick={e => e.stopPropagation()}
           >
@@ -309,7 +309,7 @@ export default function ClientsScreen({ onNavigate }) {
               </div>
               <div>
                 <label className="text-[10px] uppercase font-bold block mb-1" style={{ color: C.textMuted }}>
-                  GSTIN <span className="text-[9px] normal-case">(15 chars, for GST invoice)</span>
+                  GSTIN <span className="text-[10px] normal-case">(15 chars, for GST invoice)</span>
                 </label>
                 <input type="text" placeholder="e.g. 22AAAAA0000A1Z5" maxLength={15} value={form.gstin}
                   onChange={e => setForm(p => ({ ...p, gstin: e.target.value.toUpperCase() }))}
@@ -379,7 +379,7 @@ export default function ClientsScreen({ onNavigate }) {
           onClick={() => setDeleteConfirm(null)}
         >
           <div
-            className="w-full max-w-sm p-6 rounded-3xl text-center"
+            className="w-full max-w-sm p-6 rounded-2xl text-center"
             style={glassStyle({ glow: 'danger' })}
             onClick={e => e.stopPropagation()}
           >
@@ -442,7 +442,7 @@ export default function ClientsScreen({ onNavigate }) {
                 <div key={c.id} className="p-3 rounded-xl bg-black/20 border border-white/5">
                   <div className="flex items-center justify-between mb-1">
                     <Badge tone={c.type === 'call' ? 'success' : c.type === 'email' ? 'info' : c.type === 'meeting' ? 'gold' : 'muted'}>{c.type}</Badge>
-                    <span className="text-[9px] text-slate-500">{c.created_at ? new Date(c.created_at).toLocaleString('en-IN') : ''}</span>
+                    <span className="text-[10px] text-slate-500">{c.created_at ? new Date(c.created_at).toLocaleString('en-IN') : ''}</span>
                   </div>
                   <p className="text-xs text-slate-300 leading-relaxed">{c.body}</p>
                 </div>

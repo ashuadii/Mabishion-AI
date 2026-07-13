@@ -421,7 +421,7 @@ export default function ResearchScreen({ onNavigate }) {
       <div className="max-w-6xl mx-auto pb-24">
         
         {/* Glowing Head Context Bar */}
-        <div className="mb-6 p-6 rounded-3xl border bg-slate-900/60 backdrop-blur-xl border-white/10 shadow-2xl relative overflow-hidden"
+        <div className="mb-6 p-6 rounded-2xl border bg-slate-900/60 backdrop-blur-xl border-white/10 shadow-2xl relative overflow-hidden"
              style={glassStyle({ glow: 'indigo' })}>
           <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/5 rounded-full blur-3xl" />
           
@@ -709,7 +709,7 @@ export default function ResearchScreen({ onNavigate }) {
                 {analysis ? (
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="col-span-2 bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10" style={glassStyle({ glow: 'indigo' })}>
+                      <div className="col-span-2 bg-white/5 backdrop-blur-md p-5 rounded-2xl border border-white/10" style={glassStyle({ glow: 'indigo' })}>
                         <div className="flex items-center gap-3 mb-4">
                           <div className="h-10 w-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400">
                             <Icon name="summarize" size={20} />
@@ -721,7 +721,7 @@ export default function ResearchScreen({ onNavigate }) {
                         </p>
                       </div>
 
-                      <div className="bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10" style={glassStyle({ glow: 'success' })}>
+                      <div className="bg-white/5 backdrop-blur-md p-5 rounded-2xl border border-white/10" style={glassStyle({ glow: 'success' })}>
                         <div className="flex items-center gap-3 mb-4">
                           <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center">
                             <Icon name="warning" size={20} className="text-emerald-400" />
@@ -729,7 +729,7 @@ export default function ResearchScreen({ onNavigate }) {
                           <h2 className="text-xl font-bold text-white">Risk Score</h2>
                         </div>
                         <div className="text-center">
-                          <span className="text-5xl font-black text-emerald-400">2</span>
+                          <span className="text-4xl font-black text-emerald-400">2</span>
                           <span className="text-gray-500 text-lg">/10</span>
                         </div>
                         <div className="mt-4 text-center">
@@ -767,7 +767,7 @@ export default function ResearchScreen({ onNavigate }) {
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-white/5 backdrop-blur-md p-10 rounded-3xl border border-white/10 text-center" style={glassStyle()}>
+                  <div className="bg-white/5 backdrop-blur-md p-5 rounded-2xl border border-white/10 text-center" style={glassStyle()}>
                     <Icon name="analytics" size={48} className="text-indigo-400 mb-4 mx-auto" />
                     <h3 className="text-lg font-bold text-white">Initiate Competitive Intelligence</h3>
                     <p className="text-xs text-slate-400 mt-2 max-w-lg mx-auto">
@@ -779,7 +779,7 @@ export default function ResearchScreen({ onNavigate }) {
             ) : (
               <div className="grid grid-cols-12 gap-5">
                 <div className="col-span-12 md:col-span-5 space-y-5">
-                  <div className="p-6" style={glassStyle({ glow: 'indigo' })}>
+                  <div className="p-5" style={glassStyle({ glow: 'indigo' })}>
                     <div className="mb-4 flex items-center gap-3">
                       <div className="h-9 w-9 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400">
                         <Icon name="language" size={18} />
@@ -803,7 +803,7 @@ export default function ResearchScreen({ onNavigate }) {
                     </div>
                   </div>
 
-                  <div className="p-6" style={glassStyle({ glow: 'warning' })}>
+                  <div className="p-5" style={glassStyle({ glow: 'warning' })}>
                     <div className="mb-4 flex items-center gap-3">
                       <div className="h-9 w-9 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-400">
                         <Icon name="upload" size={18} />
@@ -828,7 +828,7 @@ export default function ResearchScreen({ onNavigate }) {
                   </div>
                 </div>
 
-                <div className="col-span-12 md:col-span-7 p-6" style={glassStyle({ strong: true, glow: 'indigo' })}>
+                <div className="col-span-12 md:col-span-7 p-5" style={glassStyle({ strong: true, glow: 'indigo' })}>
                   <div className="mb-4 flex items-center justify-between">
                     <h3 className="font-black text-sm text-white">Client Context Store</h3>
                     <Badge tone="indigo">{knowledgeSources.length} Contexts Loaded</Badge>
@@ -872,7 +872,7 @@ export default function ResearchScreen({ onNavigate }) {
         {activeTab === 'build' && (
           <div className="grid grid-cols-12 gap-6 h-[550px]">
             {/* Visual File Explorer */}
-            <div className="col-span-3 p-4 bg-slate-950/60 rounded-3xl border border-white/10 flex flex-col h-full">
+            <div className="col-span-3 p-4 bg-slate-950/60 rounded-2xl border border-white/10 flex flex-col h-full">
               <h3 className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-3">Project Workspace</h3>
               <div className="flex-1 space-y-1.5 overflow-y-auto pr-1">
                 {Object.keys(MOCK_FILES).map(fileName => (
@@ -893,7 +893,7 @@ export default function ResearchScreen({ onNavigate }) {
             {/* Visual Editor + React Flow simulator */}
             <div className="col-span-9 grid grid-rows-2 gap-4 h-full">
               {/* React Flow Graph */}
-              <div className="p-4 bg-slate-900/40 rounded-3xl border border-white/10 relative overflow-hidden flex flex-col justify-between">
+              <div className="p-4 bg-slate-900/40 rounded-2xl border border-white/10 relative overflow-hidden flex flex-col justify-between">
                 <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/5 rounded-full blur-2xl" />
                 <div className="flex justify-between items-center z-10">
                   <h3 className="text-xs font-black text-indigo-400 uppercase tracking-widest">React Flow Visual Builder</h3>
@@ -935,7 +935,7 @@ export default function ResearchScreen({ onNavigate }) {
               </div>
 
               {/* Code Previewer */}
-              <div className="bg-slate-950 rounded-3xl border border-white/10 p-4 font-mono text-xs flex flex-col justify-between overflow-hidden">
+              <div className="bg-slate-950 rounded-2xl border border-white/10 p-4 font-mono text-xs flex flex-col justify-between overflow-hidden">
                 <div className="flex justify-between items-center mb-2 pb-2 border-b border-white/5">
                   <span className="text-slate-500 text-[10px]">{selectedFile}</span>
                   <span className="text-[10px] text-indigo-400">ReadOnly View</span>
@@ -987,7 +987,7 @@ export default function ResearchScreen({ onNavigate }) {
               </div>
 
               {/* Tauri Desktop Compiler */}
-              <div className="p-6 rounded-3xl bg-slate-950/60 border border-white/10" style={glassStyle({ glow: 'warning' })}>
+              <div className="p-5 rounded-2xl bg-slate-950/60 border border-white/10" style={glassStyle({ glow: 'warning' })}>
                 <h3 className="text-xs font-black text-amber-400 uppercase tracking-widest mb-2">Tauri Desktop Assets Package</h3>
                 <p className="text-xs text-slate-400 mb-4">Compile production-ready native desktop installers (.deb, .msi) from static HTML bundles.</p>
                 <button 
@@ -1009,7 +1009,7 @@ export default function ResearchScreen({ onNavigate }) {
             </div>
 
             {/* Live Terminal compiler logs */}
-            <div className="col-span-7 p-5 bg-slate-950 rounded-3xl border border-white/10 flex flex-col h-full">
+            <div className="col-span-7 p-5 bg-slate-950 rounded-2xl border border-white/10 flex flex-col h-full">
               <div className="flex justify-between items-center pb-2 mb-3 border-b border-white/5">
                 <span className="text-xs font-black text-indigo-400 uppercase tracking-widest">Compiler Terminal Logs</span>
                 <button 
@@ -1039,7 +1039,7 @@ export default function ResearchScreen({ onNavigate }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             {/* Card 1: Proposal PDF */}
-            <div className="p-6 rounded-3xl bg-slate-900/40 border border-white/10 hover:border-indigo-500/30 transition-all flex flex-col justify-between h-[200px]"
+            <div className="p-6 rounded-2xl bg-slate-900/40 border border-white/10 hover:border-indigo-500/30 transition-all flex flex-col justify-between h-[200px]"
                  style={glassStyle({ glow: 'indigo' })}>
               <div>
                 <div className="flex items-center justify-between">
@@ -1063,7 +1063,7 @@ export default function ResearchScreen({ onNavigate }) {
             </div>
 
             {/* Card 2: Project Brief */}
-            <div className="p-6 rounded-3xl bg-slate-900/40 border border-white/10 hover:border-indigo-500/30 transition-all flex flex-col justify-between h-[200px]"
+            <div className="p-6 rounded-2xl bg-slate-900/40 border border-white/10 hover:border-indigo-500/30 transition-all flex flex-col justify-between h-[200px]"
                  style={glassStyle({ glow: 'info' })}>
               <div>
                 <div className="flex items-center justify-between">
@@ -1087,7 +1087,7 @@ export default function ResearchScreen({ onNavigate }) {
             </div>
 
             {/* Card 3: Lead Magnet */}
-            <div className="p-6 rounded-3xl bg-slate-900/40 border border-white/10 hover:border-indigo-500/30 transition-all flex flex-col justify-between h-[200px]"
+            <div className="p-6 rounded-2xl bg-slate-900/40 border border-white/10 hover:border-indigo-500/30 transition-all flex flex-col justify-between h-[200px]"
                  style={glassStyle({ glow: 'warning' })}>
               <div>
                 <div className="flex items-center justify-between">
@@ -1111,7 +1111,7 @@ export default function ResearchScreen({ onNavigate }) {
             </div>
 
             {/* Card 4: Pricing Sheet */}
-            <div className="p-6 rounded-3xl bg-slate-900/40 border border-white/10 hover:border-indigo-500/30 transition-all flex flex-col justify-between h-[200px]"
+            <div className="p-6 rounded-2xl bg-slate-900/40 border border-white/10 hover:border-indigo-500/30 transition-all flex flex-col justify-between h-[200px]"
                  style={glassStyle({ glow: 'primary' })}>
               <div>
                 <div className="flex items-center justify-between">
@@ -1143,7 +1143,7 @@ export default function ResearchScreen({ onNavigate }) {
       {/* FIX 3: Enhanced Output Modal with Copy + Download buttons */}
       {expandedOutput && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
-          <div className="w-full max-w-2xl bg-slate-900/90 border border-white/10 p-6 rounded-3xl shadow-2xl relative"
+          <div className="w-full max-w-2xl bg-slate-900/90 border border-white/10 p-6 rounded-2xl shadow-2xl relative"
                style={glassStyle({ glow: 'indigo' })}>
             <button
               onClick={() => setExpandedOutput(null)}
@@ -1272,7 +1272,7 @@ function SwotCard({ title, icon, color, items }) {
 
   return (
     <div
-      className="bg-white/5 backdrop-blur-md p-6 rounded-3xl border border-white/10"
+      className="bg-white/5 backdrop-blur-md p-5 rounded-2xl border border-white/10"
       style={glassStyle({ glow: c.glow })}
     >
       <div className="flex items-center gap-3 mb-4">

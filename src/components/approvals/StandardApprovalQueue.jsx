@@ -33,7 +33,7 @@ export default function StandardApprovalQueue({ approvals, onSelectApproval, onR
   });
 
   return (
-    <div className="bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 p-6 flex flex-col h-full animate-in fade-in duration-300">
+    <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-6 flex flex-col h-full animate-in fade-in duration-300">
       
       {/* Header and Counters */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b border-white/5 pb-4">

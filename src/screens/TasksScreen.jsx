@@ -56,7 +56,7 @@ export default function TasksScreen({ onNavigate }) {
         <section className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-3xl">
             <p className="tagline text-[10px] font-bold" style={{ color: C.gold }}>Kanban</p>
-            <h1 className="mt-3 font-heading text-5xl" style={{ color: '#FFFFFF' }}>Task command board</h1>
+            <h1 className="mt-3 font-heading text-4xl" style={{ color: '#FFFFFF' }}>Task command board</h1>
             <p className="mt-4 text-lg leading-8" style={{ color: 'rgba(237,231,221,.70)' }}>
               A spacious production board for the work that moves offers, builds, approvals, and launches forward.
             </p>

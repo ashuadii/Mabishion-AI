@@ -157,7 +157,7 @@ export default function SalesMarketingHubScreen({ onNavigate }) {
         {activeTab === 'promo' && (
           <div className="space-y-6 animate-in fade-in duration-300">
             {isPromoDone ? (
-              <div className="p-8 rounded-3xl text-center flex flex-col items-center max-w-2xl mx-auto" style={glassStyle({ glow: 'success' })}>
+              <div className="p-5 rounded-2xl text-center flex flex-col items-center max-w-2xl mx-auto" style={glassStyle({ glow: 'success' })}>
                 <div className="h-16 w-16 rounded-full bg-emerald-500/20 flex items-center justify-center border-2 border-emerald-500/30 mb-6">
                   <Icon name="check" size={32} className="text-emerald-400" />
                 </div>
@@ -186,7 +186,7 @@ export default function SalesMarketingHubScreen({ onNavigate }) {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {assets.map((asset, i) => (
-                    <div key={i} className="p-6 rounded-3xl" style={glassStyle({ glow: asset.tone })}>
+                    <div key={i} className="p-5 rounded-2xl" style={glassStyle({ glow: asset.tone })}>
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
                           <Icon name={asset.icon || 'ads_click'} size={18} className="text-indigo-400" />
@@ -210,7 +210,7 @@ export default function SalesMarketingHubScreen({ onNavigate }) {
         {/* Tab 3: Sales Checkouts */}
         {activeTab === 'sales' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-300">
-            <div className="p-8 rounded-3xl" style={glassStyle({ glow: 'success' })}>
+            <div className="p-5 rounded-2xl" style={glassStyle({ glow: 'success' })}>
               <h3 className="text-xl font-black text-white mb-6 flex items-center gap-2">
                 <Icon name="receipt_long" size={20} className="text-emerald-400" />
                 Active Invoice Specification
@@ -247,7 +247,7 @@ export default function SalesMarketingHubScreen({ onNavigate }) {
               </div>
             </div>
 
-            <div className="p-8 rounded-3xl flex flex-col items-center justify-center text-center" style={glassStyle({ glow: 'primary' })}>
+            <div className="p-5 rounded-2xl flex flex-col items-center justify-center text-center" style={glassStyle({ glow: 'primary' })}>
               {isStripeDone ? (
                 <div className="animate-in zoom-in duration-500 space-y-4">
                   <div className="h-12 w-12 rounded-full bg-emerald-500/20 border-2 border-emerald-500/30 flex items-center justify-center mx-auto text-emerald-400">

@@ -455,7 +455,7 @@ export default function ProjectsScreen({ onNavigate }) {
                             <ProgressBar value={p.progress || 0} tone={ht} />
                             {/* FR-073: Due date display */}
                             {p.due_date && (
-                              <div className={`mt-1.5 flex items-center gap-1 text-[9px] font-bold ${new Date(p.due_date) < new Date() ? 'text-red-400' : 'text-slate-500'}`}>
+                              <div className={`mt-1.5 flex items-center gap-1 text-[10px] font-bold ${new Date(p.due_date) < new Date() ? 'text-red-400' : 'text-slate-500'}`}>
                                 <Icon name="calendar" size={10} />
                                 Due: {new Date(p.due_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                                 {new Date(p.due_date) < new Date() && ' ⚠️ Overdue'}
@@ -716,11 +716,11 @@ export default function ProjectsScreen({ onNavigate }) {
                       <span className="text-[10px] font-bold text-white">{svc.price}</span>
                     </div>
                     <div>
-                      <p className="text-[9px] uppercase tracking-wider mb-1" style={{ color: 'rgba(148,163,184,0.5)' }}>Required Tiers</p>
+                      <p className="text-[10px] uppercase tracking-wider mb-1" style={{ color: 'rgba(148,163,184,0.5)' }}>Required Tiers</p>
                       <p className="text-[10px]" style={{ color: 'rgba(148,163,184,0.8)' }}>{svc.tiers}</p>
                     </div>
                     <div>
-                      <p className="text-[9px] uppercase tracking-wider mb-1" style={{ color: 'rgba(148,163,184,0.5)' }}>Worker Pipeline <span style={{ color: '#F59E0B' }}>⚠️ = approval gate</span></p>
+                      <p className="text-[10px] uppercase tracking-wider mb-1" style={{ color: 'rgba(148,163,184,0.5)' }}>Worker Pipeline <span style={{ color: '#F59E0B' }}>⚠️ = approval gate</span></p>
                       <p className="text-[10px] break-words leading-5" style={{ color: 'rgba(148,163,184,0.8)' }}>{svc.pipeline}</p>
                     </div>
                   </div>

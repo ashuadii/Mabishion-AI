@@ -129,7 +129,7 @@ export default function LoginScreen({ onUnlock }) {
 
         <div className="max-w-3xl py-10">
           <p className="tagline mb-5 text-[11px] font-bold" style={{ color: C.goldDeep }}>Business Engineering OS</p>
-          <h2 className="font-heading text-5xl leading-tight md:text-7xl" style={{ color: C.navyDeep }}>
+          <h2 className="font-heading text-4xl leading-tight md:text-7xl" style={{ color: C.navyDeep }}>
             Build the business like a system.
           </h2>
           <p className="mt-6 max-w-2xl text-lg leading-8" style={{ color: C.textMuted }}>

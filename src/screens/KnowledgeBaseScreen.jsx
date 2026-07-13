@@ -236,7 +236,7 @@ export default function KnowledgeBaseScreen({ onNavigate }) {
       {/* Add Source Modal */}
       {showAdd && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setShowAdd(false)}>
-          <div className="w-full max-w-md p-6 rounded-3xl" style={glassStyle({ strong: true, glow: 'primary' })} onClick={e => e.stopPropagation()}>
+          <div className="w-full max-w-md p-5 rounded-2xl" style={glassStyle({ strong: true, glow: 'primary' })} onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-black text-white">Add Knowledge Source</h2>
               <button onClick={() => setShowAdd(false)} className="p-1 rounded-lg hover:bg-white/10" style={{ color: C.textMuted }}><Icon name="close" size={20} /></button>

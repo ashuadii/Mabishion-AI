@@ -150,7 +150,7 @@ export default function LeadTable({ leads, onSelectLead, onBulkDelete, onBulkSta
   return (
     <div className="space-y-4">
       {/* ── Filters Toolbar ─────────────────────────────────────────────────── */}
-      <div className="p-4 rounded-3xl grid grid-cols-1 md:grid-cols-4 gap-3 bg-white/5 border border-white/10">
+      <div className="p-4 rounded-2xl grid grid-cols-1 md:grid-cols-4 gap-3 bg-white/5 border border-white/10">
         <div>
           <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Search Leads</label>
           <input
@@ -300,7 +300,7 @@ export default function LeadTable({ leads, onSelectLead, onBulkDelete, onBulkSta
       })()}
 
       {/* ── Table ────────────────────────────────────────────────────────────── */}
-      <div className="rounded-3xl border border-white/10 overflow-hidden" style={glassStyle({ strong: false })}>
+      <div className="rounded-2xl border border-white/10 overflow-hidden" style={glassStyle({ strong: false })}>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>

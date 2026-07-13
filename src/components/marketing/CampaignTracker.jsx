@@ -82,25 +82,25 @@ export default function CampaignTracker({ leads }) {
     <div className="space-y-6">
       {/* Dynamic Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="p-5 rounded-3xl" style={glassStyle({ glow: 'primary' })}>
+        <div className="p-5 rounded-2xl" style={glassStyle({ glow: 'primary' })}>
           <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Total Ad Spend</span>
           <span className="text-2xl font-black text-white font-mono">₹{totalSpend.toLocaleString('en-IN')}</span>
           <p className="text-[10px] text-slate-500 mt-2">Active paid acquisition spent</p>
         </div>
 
-        <div className="p-5 rounded-3xl" style={glassStyle({ glow: 'info' })}>
+        <div className="p-5 rounded-2xl" style={glassStyle({ glow: 'info' })}>
           <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Total Leads Generated</span>
           <span className="text-2xl font-black text-white font-mono">{totalLeads}</span>
           <p className="text-[10px] text-slate-500 mt-2">Aggregated all traffic channels</p>
         </div>
 
-        <div className="p-5 rounded-3xl" style={glassStyle({ glow: 'warning' })}>
+        <div className="p-5 rounded-2xl" style={glassStyle({ glow: 'warning' })}>
           <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Average Cost Per Lead (CPL)</span>
           <span className="text-2xl font-black text-white font-mono">₹{Number(averageCpl).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           <p className="text-[10px] text-slate-500 mt-2">Net cost per customer acquisition</p>
         </div>
 
-        <div className="p-5 rounded-3xl" style={glassStyle({ glow: 'success' })}>
+        <div className="p-5 rounded-2xl" style={glassStyle({ glow: 'success' })}>
           <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Marketing ROI</span>
           <span className="text-2xl font-black text-emerald-400 font-mono">+{totalRoi}%</span>
           <p className="text-[10px] text-slate-500 mt-2">Net marketing profit yield</p>
@@ -108,7 +108,7 @@ export default function CampaignTracker({ leads }) {
       </div>
 
       {/* Campaigns Table Grid */}
-      <div className="p-6 rounded-3xl" style={glassStyle({ strong: true })}>
+      <div className="p-6 rounded-2xl" style={glassStyle({ strong: true })}>
         <div className="flex items-center justify-between mb-4 pb-2 border-b border-white/5">
           <div>
             <h3 className="font-black text-white text-md">Outbound Channel Performance Index</h3>

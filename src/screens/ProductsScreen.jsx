@@ -93,7 +93,7 @@ export default function ProductsScreen({ onNavigate }) {
           { label: 'Active Listings', value: activeCount, icon: 'check_circle', tone: 'success' },
           { label: 'Est. Revenue', value: formatINR(totalRevenue), icon: 'currency_rupee', tone: 'gold' },
         ].map(c => (
-          <div key={c.label} className="p-5 rounded-3xl" style={glassStyle({ glow: c.tone })}>
+          <div key={c.label} className="p-5 rounded-2xl" style={glassStyle({ glow: c.tone })}>
             <div className="flex items-center gap-3 mb-1">
               <Icon name={c.icon} size={18} className="text-violet-400" />
               <span className="text-[10px] uppercase font-bold text-slate-400">{c.label}</span>
@@ -105,7 +105,7 @@ export default function ProductsScreen({ onNavigate }) {
 
       {/* Add / Edit Form */}
       {showForm && (
-        <div className="mb-6 p-6 rounded-3xl animate-in fade-in duration-300" style={glassStyle({ strong: true })}>
+        <div className="mb-6 p-5 rounded-2xl animate-in fade-in duration-300" style={glassStyle({ strong: true })}>
           <h3 className="font-black text-white text-sm mb-4 flex items-center gap-2">
             <Icon name={editId ? 'edit' : 'add_box'} className="text-violet-400" />
             {editId ? 'Edit Product' : 'Add New Product'}
@@ -213,13 +213,13 @@ export default function ProductsScreen({ onNavigate }) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map(p => (
-            <div key={p.id} className="p-5 rounded-3xl flex flex-col gap-3 group" style={glassStyle({ glow: p.status === 'active' ? 'primary' : undefined })}>
+            <div key={p.id} className="p-5 rounded-2xl flex flex-col gap-3 group" style={glassStyle({ glow: p.status === 'active' ? 'primary' : undefined })}>
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <h3 className="font-black text-white text-sm truncate">{p.name}</h3>
                   <div className="flex items-center gap-2 mt-1">
                     <Badge tone={p.status === 'active' ? 'success' : 'muted'}>{p.status}</Badge>
-                    <span className="text-[9px] text-slate-500 uppercase font-bold">{p.category}</span>
+                    <span className="text-[10px] text-slate-500 uppercase font-bold">{p.category}</span>
                   </div>
                 </div>
                 <span className="text-lg font-black text-emerald-400 shrink-0">{formatINR(p.price_inr / 100)}</span>

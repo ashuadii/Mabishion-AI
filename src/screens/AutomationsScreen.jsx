@@ -362,7 +362,7 @@ export default function AutomationsScreen({ onNavigate }) {
             <Badge tone="cyan">{nodes.length} Nodes Loaded</Badge>
           </div>
 
-          <div className="relative rounded-3xl overflow-hidden" style={{ border: `1px solid ${C.glassBorder}` }}>
+          <div className="relative rounded-2xl overflow-hidden" style={{ border: `1px solid ${C.glassBorder}` }}>
             <ReactFlow
               nodes={nodes}
               edges={edges}

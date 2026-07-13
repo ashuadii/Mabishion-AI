@@ -120,7 +120,7 @@ export default function SkillLibraryScreen({ onNavigate }) {
         {/* Skills Grid */}
         <div className="col-span-8 space-y-4">
           {filteredSkills.length > 0 ? filteredSkills.map(skill => (
-            <div key={skill.id} className="rounded-[22px] p-5" style={glassStyle()}>
+            <div key={skill.id} className="rounded-2xl p-5" style={glassStyle()}>
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-2">
@@ -142,7 +142,7 @@ export default function SkillLibraryScreen({ onNavigate }) {
               </div>
             </div>
           )) : (
-            <div className="rounded-[22px] p-10 text-center" style={glassStyle()}>
+            <div className="rounded-2xl p-5 text-center" style={glassStyle()}>
               <Icon name="archive" size={48} className="mx-auto mb-4 opacity-20" />
               <p className="text-lg font-bold">No skills found in this category</p>
               <p className="text-sm opacity-50">Sync brain or add new skills to get started</p>

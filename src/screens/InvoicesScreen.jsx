@@ -228,7 +228,7 @@ export default function InvoicesScreen({ onNavigate }) {
           onClick={() => setShowForm(false)}
         >
           <div
-            className="w-full max-w-lg p-6 rounded-3xl overflow-y-auto max-h-[90vh]"
+            className="w-full max-w-lg p-6 rounded-2xl overflow-y-auto max-h-[90vh]"
             style={glassStyle({ strong: true, glow: 'warning' })}
             onClick={e => e.stopPropagation()}
           >

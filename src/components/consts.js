@@ -39,3 +39,21 @@ export function glassStyle({ strong = false, glow = 'none', borderColor } = {}) 
     boxShadow: glowMap[glow] || glowMap.none
   };
 }
+
+
+// ── DESIGN TOKENS — fixed sizes, whole app (ARCHITECTURE v1.1; owner rule: ek size, har jagah) ──
+// Standard screens use these. Exception: Playground/Research dense workspace uses the micro scale.
+export const TYPE = {
+  statValue: 'font-heading text-3xl',                          // bade numbers (revenue, counts)
+  sectionLabel: 'text-[10px] font-black uppercase tracking-widest', // panel/section headings
+  cardTitle: 'text-sm font-bold',                              // card ke andar ka title
+  body: 'text-sm',                                             // normal text
+  caption: 'text-[11px]',                                      // secondary/meta text
+  micro: 'text-[10px]',                                        // chips, timestamps
+};
+export const CARD = {
+  radius: 'rounded-2xl',   // har card ka corner — sirf yehi
+  pad: 'p-5',              // panel card padding
+  padStat: 'p-4',          // chhoti stat tile padding
+  gap: 'gap-4',            // cards ke beech ka standard gap
+};

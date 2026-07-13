@@ -102,7 +102,7 @@ export default function WorkerMonitorScreen({ onNavigate }) {
               <span className="w-2 h-2 rounded-full bg-indigo-400 animate-ping inline-block" />
               Running Now ({liveRuns.length} / 2 max)
             </p>
-            <span className="text-[9px] text-slate-500 uppercase tracking-wider">FR-042 Live Timeline</span>
+            <span className="text-[10px] text-slate-500 uppercase tracking-wider">FR-042 Live Timeline</span>
           </div>
           <div className="space-y-3">
             {liveRuns.map(run => {
@@ -132,7 +132,7 @@ export default function WorkerMonitorScreen({ onNavigate }) {
                       style={{ width: `${pct}%` }}
                     />
                   </div>
-                  <div className="flex justify-between mt-1 text-[9px] text-slate-600">
+                  <div className="flex justify-between mt-1 text-[10px] text-slate-600">
                     <span>Started {run.startedAt ? new Date(run.startedAt).toLocaleTimeString('en-IN') : '—'}</span>
                     <span>{Math.round(pct)}% of max 5min</span>
                   </div>

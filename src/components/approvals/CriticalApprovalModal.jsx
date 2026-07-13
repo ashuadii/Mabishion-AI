@@ -76,7 +76,7 @@ export default function CriticalApprovalModal({
       onClick={handleOverlayClick}
     >
       <div
-        className="w-full max-w-lg p-8 rounded-3xl border border-white/10 flex flex-col relative text-left select-none animate-in zoom-in duration-300"
+        className="w-full max-w-lg p-8 rounded-2xl border border-white/10 flex flex-col relative text-left select-none animate-in zoom-in duration-300"
         style={glassStyle({ glow: "red", strong: true })}
         onClick={handleOverlayClick}
       >

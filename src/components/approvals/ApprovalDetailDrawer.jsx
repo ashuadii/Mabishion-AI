@@ -485,7 +485,7 @@ export default function ApprovalDetailDrawer({ approval, onClose, onResolve, onU
           onClick={() => setShowFullDocModal(false)}
         >
           <div 
-            className="w-full max-w-4xl max-h-[85vh] p-8 rounded-3xl border border-white/10 flex flex-col relative text-left select-text animate-in zoom-in duration-300 overflow-hidden"
+            className="w-full max-w-4xl max-h-[85vh] p-8 rounded-2xl border border-white/10 flex flex-col relative text-left select-text animate-in zoom-in duration-300 overflow-hidden"
             style={glassStyle({ glow: 'primary', strong: true })}
             onClick={e => e.stopPropagation()}
           >

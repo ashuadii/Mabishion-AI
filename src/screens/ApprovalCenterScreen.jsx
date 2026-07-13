@@ -249,7 +249,7 @@ export default function ApprovalCenterScreen({ onNavigate }) {
           />
 
           {/* Incoming Simulated WhatsApp remote commands console */}
-          <div className="bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 p-6 space-y-4 text-left">
+          <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-5 space-y-4 text-left">
             <div>
               <h3 className="text-lg font-black text-white flex items-center gap-2">
                 <span className="material-icons text-cyan-400">terminal</span>
@@ -266,7 +266,7 @@ export default function ApprovalCenterScreen({ onNavigate }) {
                 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[9px] uppercase font-bold text-slate-400 block mb-1">Simulated Sender Phone</label>
+                    <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Simulated Sender Phone</label>
                     <input 
                       type="text"
                       value={simulatedPhone}
@@ -276,17 +276,17 @@ export default function ApprovalCenterScreen({ onNavigate }) {
                   </div>
 
                   <div>
-                    <label className="text-[9px] uppercase font-bold text-slate-400 block mb-1">Action Quick-Macros</label>
+                    <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Action Quick-Macros</label>
                     <div className="flex gap-2">
                       <button
                         onClick={() => insertTemplateCommand('APPROVE', approvals.find(a => (a.status||'').toLowerCase() === 'pending')?.id)}
-                        className="px-2.5 py-1 text-[9px] font-black uppercase bg-green-500/10 text-green-400 border border-green-500/20 rounded-lg hover:bg-green-500/20"
+                        className="px-2.5 py-1 text-[10px] font-black uppercase bg-green-500/10 text-green-400 border border-green-500/20 rounded-lg hover:bg-green-500/20"
                       >
                         + Approve
                       </button>
                       <button
                         onClick={() => insertTemplateCommand('REJECT', approvals.find(a => (a.status||'').toLowerCase() === 'pending')?.id)}
-                        className="px-2.5 py-1 text-[9px] font-black uppercase bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500/20"
+                        className="px-2.5 py-1 text-[10px] font-black uppercase bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500/20"
                       >
                         + Reject
                       </button>
@@ -328,7 +328,7 @@ export default function ApprovalCenterScreen({ onNavigate }) {
         <div className="lg:col-span-4 space-y-8">
           
           {/* Outbound WhatsApp Web Session Manager panel */}
-          <div className="bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 p-6 space-y-6 text-left">
+          <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-5 space-y-6 text-left">
             <div>
               <h3 className="text-lg font-black text-white flex items-center gap-2">
                 <span className="material-icons text-green-400">chat</span>
@@ -433,7 +433,7 @@ export default function ApprovalCenterScreen({ onNavigate }) {
             {/* Settings Parameter update block */}
             <div className="space-y-4 border-t border-white/5 pt-4">
               <div className="space-y-1.5">
-                <label className="text-[9px] uppercase font-bold text-slate-400 block">Owner WhatsApp Mobile Number</label>
+                <label className="text-[10px] uppercase font-bold text-slate-400 block">Owner WhatsApp Mobile Number</label>
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -455,7 +455,7 @@ export default function ApprovalCenterScreen({ onNavigate }) {
           </div>
 
           {/* Outbound Telegram/WhatsApp Logs telemetry array */}
-          <div className="bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 p-6 space-y-4 text-left">
+          <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-5 space-y-4 text-left">
             <div>
               <h3 className="text-lg font-black text-white flex items-center gap-2">
                 <span className="material-icons text-violet-400">history</span>
@@ -467,14 +467,14 @@ export default function ApprovalCenterScreen({ onNavigate }) {
             <div className="space-y-3 max-h-60 overflow-y-auto pr-1 scrollbar-thin">
               {whatsAppLogs.map(log => (
                 <div key={log.id} className="p-3 bg-black/30 border border-white/5 rounded-xl space-y-1.5">
-                  <div className="flex items-center justify-between text-[9px]">
+                  <div className="flex items-center justify-between text-[10px]">
                     <span className="font-bold text-slate-400">To: {log.phone}</span>
                     <Badge tone={log.status === 'sent' ? 'success' : 'danger'}>
                       {log.status}
                     </Badge>
                   </div>
                   <p className="text-[10px] text-slate-300 leading-relaxed font-mono truncate">{log.message}</p>
-                  <span className="text-[8px] text-slate-500 block">{new Date(log.timestamp).toLocaleString()}</span>
+                  <span className="text-[10px] text-slate-500 block">{new Date(log.timestamp).toLocaleString()}</span>
                 </div>
               ))}
 

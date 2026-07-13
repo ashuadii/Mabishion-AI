@@ -143,7 +143,7 @@ export default function LeadForm({ onSubmitSuccess }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-6 space-y-5 rounded-3xl animate-in fade-in duration-300" style={glassStyle({ strong: true })}>
+    <form onSubmit={handleSubmit} className="p-6 space-y-5 rounded-2xl animate-in fade-in duration-300" style={glassStyle({ strong: true })}>
       <div className="flex items-center justify-between border-b border-white/5 pb-3">
         <div>
           <h3 className="font-black text-white text-lg flex items-center gap-2">

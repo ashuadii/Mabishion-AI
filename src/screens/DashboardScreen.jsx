@@ -855,7 +855,7 @@ Reference URL or notes: ${planUrl || "None"}
       {/* ── Plan Modal ───────────────────────────────────────────────────────── */}
       {isPlanModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setIsPlanModalOpen(false)}>
-          <div className="w-full max-w-md rounded-3xl p-6 space-y-4" style={{ background: 'rgba(15,23,42,0.97)', border: '1px solid rgba(99,102,241,0.3)' }} onClick={e => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-2xl p-6 space-y-4" style={{ background: 'rgba(15,23,42,0.97)', border: '1px solid rgba(99,102,241,0.3)' }} onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-black text-white">New Project Plan</h3>
               <button onClick={() => setIsPlanModalOpen(false)} className="text-slate-500 hover:text-white"><Icon name="close" size={18} /></button>
@@ -919,7 +919,7 @@ Reference URL or notes: ${planUrl || "None"}
       {/* ── Design Modal ─────────────────────────────────────────────────────── */}
       {isDesignModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setIsDesignModalOpen(false)}>
-          <div className="w-full max-w-md rounded-3xl p-6 space-y-4" style={{ background: 'rgba(15,23,42,0.97)', border: '1px solid rgba(16,185,129,0.3)' }} onClick={e => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-2xl p-6 space-y-4" style={{ background: 'rgba(15,23,42,0.97)', border: '1px solid rgba(16,185,129,0.3)' }} onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-black text-white">Design Website</h3>
               <button onClick={() => setIsDesignModalOpen(false)} className="text-slate-500 hover:text-white"><Icon name="close" size={18} /></button>
