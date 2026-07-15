@@ -656,6 +656,29 @@ const SettingsScreen = ({ onNavigate }) => {
                 </div>
               </div>
             </div>
+
+            {/* Blueprint P3 placeholder (Owner Decision 2026-07-15): App Lock deferred — set up when needed */}
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-5 opacity-80">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    🔒 App Lock — Master Password / PIN
+                    <span className="text-[9px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full">Not Configured</span>
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Optional security layer: password/PIN on app launch + AES-256 encryption for stored API keys.
+                    Deferred by owner decision — set it up here when you need it.
+                  </p>
+                </div>
+                <button
+                  disabled
+                  title="Coming soon — planned as Blueprint adoption P3"
+                  className="text-xs px-4 py-2 rounded-xl bg-white/10 text-gray-500 cursor-not-allowed flex-shrink-0"
+                >
+                  Set Up Lock
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

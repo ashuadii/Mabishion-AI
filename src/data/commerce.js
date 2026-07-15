@@ -18,6 +18,64 @@ export async function getTotalRevenue() {
   return res[0]?.total || 0;
 }
 
+// ── Expenses & P&L (Blueprint adoption P2, schema v22) ──────────────────────
+// Amounts stored in rupees (REAL), matching the revenue table's unit.
+
+export async function addExpense({ title, category = 'Other', amount, spent_on, notes = '' }) {
+  const db = await getDb();
+  const id = crypto.randomUUID();
+  await db.execute(
+    'INSERT INTO expenses (id, title, category, amount, spent_on, notes) VALUES ($1, $2, $3, $4, $5, $6)',
+    [id, title, category, Number(amount), spent_on || new Date().toISOString().slice(0, 10), notes]
+  );
+  await logAudit('INFO', 'EXPENSE_ADDED', JSON.stringify({ id, title, category, amount: Number(amount) })).catch(() => {});
+  return id;
+}
+
+export async function getExpenses(limit = 50) {
+  const db = await getDb();
+  return await db.select(
+    'SELECT * FROM expenses ORDER BY spent_on DESC, created_at DESC LIMIT $1',
+    [Number(limit)]
+  );
+}
+
+export async function deleteExpense(id) {
+  const db = await getDb();
+  await db.execute('DELETE FROM expenses WHERE id = $1', [id]);
+  await logAudit('INFO', 'EXPENSE_DELETED', JSON.stringify({ id })).catch(() => {});
+}
+
+/**
+ * Month-to-date P&L: revenue (revenue table, `timestamp` column) minus expenses
+ * (`spent_on` date). Returns rupee numbers: { revenue, expenses, net, byCategory }.
+ */
+export async function getMonthlyPnl() {
+  const db = await getDb();
+  const firstOfMonth = new Date();
+  firstOfMonth.setDate(1);
+  firstOfMonth.setHours(0, 0, 0, 0);
+  const monthStartIso = firstOfMonth.toISOString();
+  const monthStartDay = monthStartIso.slice(0, 10);
+
+  const revRows = await db.select(
+    'SELECT COALESCE(SUM(amount),0) as total FROM revenue WHERE timestamp >= $1',
+    [monthStartIso]
+  );
+  const expRows = await db.select(
+    'SELECT COALESCE(SUM(amount),0) as total FROM expenses WHERE spent_on >= $1',
+    [monthStartDay]
+  );
+  const byCategory = await db.select(
+    `SELECT category, COALESCE(SUM(amount),0) as total FROM expenses
+     WHERE spent_on >= $1 GROUP BY category ORDER BY total DESC`,
+    [monthStartDay]
+  );
+  const revenue = Number(revRows?.[0]?.total || 0);
+  const expenses = Number(expRows?.[0]?.total || 0);
+  return { revenue, expenses, net: revenue - expenses, byCategory: byCategory || [] };
+}
+
 // Settings Helpers
 
 export async function createInvoice(data) {

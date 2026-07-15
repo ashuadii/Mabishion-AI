@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { id: 'clients', label: 'Clients', icon: 'contact_page' },
   { id: 'finance', label: 'Money', icon: 'wallet' },
   { id: 'worker-monitor', label: 'Workers', icon: 'brain' },
+  { id: 'internal-tools', label: 'Internal Tools', icon: 'settings_suggest' },
   { id: 'approvals', label: 'Approvals', icon: 'approval', badge: true },
   { id: 'settings', label: 'Settings', icon: 'settings' },
 ];

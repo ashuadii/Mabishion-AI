@@ -82,63 +82,11 @@ class BrowserCronEngine {
 
 export const cronEngine = new BrowserCronEngine();
 
-/**
- * Auto-Approve Job logic
- */
-export async function runAutoApproveJob() {
-  const db = await getDb();
-  
-  // Select all pending approvals
-  const pending = await db.select("SELECT * FROM approvals WHERE status = 'pending'");
-  if (!pending || pending.length === 0) {
-    return;
-  }
-
-  const now = new Date();
-  let count = 0;
-
-  for (const approval of pending) {
-    const expiresAt = new Date(approval.expires_at);
-    
-    // Check if expired
-    if (now >= expiresAt) {
-      const isStandard = approval.type === 'standard' || approval.type === 'Standard';
-      
-      const finalStatus = isStandard ? 'approved' : 'rejected';
-      const auditNote = isStandard 
-        ? `Auto-approved by Mabishion Cron Gate after timeout at ${now.toISOString()}`
-        : `Auto-rejected by Mabishion Cron Gate (Critical timeout) at ${now.toISOString()}`;
-      
-      console.log(`[Cron Engine] Expired item ID: ${approval.id} (${approval.title}). Status set to: ${finalStatus}`);
-      
-      // Update in SQLite
-      await db.execute(
-        "UPDATE approvals SET status = $1, owner_notes = $2 WHERE id = $3",
-        [finalStatus, auditNote, approval.id]
-      );
-
-      // Log action inside action_ledger if exists
-      try {
-        const ledgerId = crypto.randomUUID();
-        await db.execute(
-          "INSERT INTO action_ledger (id, action_type, decision, risk_level, rollback_data) VALUES ($1, $2, $3, $4, $5)",
-          [ledgerId, isStandard ? 'Auto-Approve' : 'Auto-Reject', `${isStandard ? 'Approved' : 'Rejected'}: ${approval.title}`, approval.type, JSON.stringify(approval)]
-        );
-      } catch (ledgerErr) {
-        console.warn("[Cron Engine] Ledger log skipped:", ledgerErr);
-      }
-
-      count++;
-    }
-  }
-
-  if (count > 0) {
-    console.log(`[Cron Engine] Processed ${count} expired pending items.`);
-  }
-}
-
-// Register the standard auto-approve cron job to run every 30 seconds
-cronEngine.schedule('AutoApproveEngine', 30000, runAutoApproveJob);
+// Legacy AutoApproveEngine removed (Owner Decision 2026-07-15): it auto-approved expired
+// STANDARD and auto-rejected expired CRITICAL approvals, contradicting the approval policy
+// in approvalEngine.js (CRITICAL: no timeout, waits for owner; STANDARD: escalates to
+// CRITICAL after 24h). Expiry handling now lives solely in approvalEngine.js's scanner.
+// "AI Suggests, Human Decides" — no approval may ever resolve without the owner.
 
 /**
  * Daily Backup Job — writes a timestamped JSON backup to app data directory.

@@ -59,6 +59,7 @@ export default function App() {
         {/* Under the hood routes */}
         <Route path="/new-build" element={<BuildScreen onNavigate={handleNavigate} />} />
         <Route path="/build-new" element={<BuildScreen onNavigate={handleNavigate} />} />
+        <Route path="/internal-tools" element={<BuildScreen onNavigate={handleNavigate} internalMode />} />
         <Route path="/research" element={<BuildScreen onNavigate={handleNavigate} />} />
         <Route path="/automations" element={<AutomationsScreen onNavigate={handleNavigate} />} />
         

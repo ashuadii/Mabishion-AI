@@ -25,7 +25,10 @@ vi.mock('../../data/db.js', () => ({
   getWorkerDailyCost: vi.fn(async () => 0),
   getSetting: vi.fn(async (key) => settingsStore[key] || null),
   logLlmUsage: vi.fn(async () => {}),
-  logAudit: vi.fn(async () => {})
+  logAudit: vi.fn(async () => {}),
+  // Blueprint P1: LLM cache — default to cache miss so existing fallback tests are unaffected
+  getLlmCacheEntry: vi.fn(async () => null),
+  saveLlmCacheEntry: vi.fn(async () => {})
 }));
 
 vi.mock('../../engine/utils/runtimeHealth.js', () => ({
@@ -33,6 +36,7 @@ vi.mock('../../engine/utils/runtimeHealth.js', () => ({
 }));
 
 import { executeLlmWithFallback, validateApiKey } from '../../services/llmManager.js';
+import { getLlmCacheEntry, saveLlmCacheEntry } from '../../data/db.js';
 import { getSetting } from '../../data/db.js';
 
 // Mock global fetch
@@ -218,5 +222,53 @@ describe('API Key Validation', () => {
   it('returns false on network error', async () => {
     global.fetch = vi.fn(async () => { throw new Error('Network'); });
     expect(await validateApiKey('gemini', 'some-key')).toBe(false);
+  });
+});
+
+describe('LLM Response Cache (Blueprint P1)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    for (const key of Object.keys(settingsStore)) delete settingsStore[key];
+  });
+
+  it('returns cached response without calling any provider', async () => {
+    getLlmCacheEntry.mockResolvedValueOnce({ id: 1, provider: 'gemini', model: 'gemini-2.5-flash', response: 'CACHED ANSWER' });
+    global.fetch = vi.fn(async () => { throw new Error('should not be called'); });
+
+    const result = await executeLlmWithFallback('same prompt', 'same system');
+    expect(result).toBe('CACHED ANSWER');
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('stores response in cache after a successful live call', async () => {
+    settingsStore['gemini_api_key'] = 'AIza-valid';
+    global.fetch = vi.fn(async () => ({
+      ok: true, status: 200,
+      json: async () => ({
+        candidates: [{ content: { parts: [{ text: 'LIVE ANSWER' }] } }],
+        usageMetadata: { promptTokenCount: 5, candidatesTokenCount: 7, totalTokenCount: 12 }
+      })
+    }));
+
+    const result = await executeLlmWithFallback('fresh prompt', '');
+    expect(result).toBe('LIVE ANSWER');
+    expect(saveLlmCacheEntry).toHaveBeenCalledTimes(1);
+    expect(saveLlmCacheEntry.mock.calls[0][3]).toBe('LIVE ANSWER');
+  });
+
+  it('skips cache entirely when llm_cache_enabled is off', async () => {
+    settingsStore['llm_cache_enabled'] = 'off';
+    settingsStore['gemini_api_key'] = 'AIza-valid';
+    global.fetch = vi.fn(async () => ({
+      ok: true, status: 200,
+      json: async () => ({
+        candidates: [{ content: { parts: [{ text: 'LIVE' }] } }],
+        usageMetadata: { promptTokenCount: 1, candidatesTokenCount: 1, totalTokenCount: 2 }
+      })
+    }));
+
+    await executeLlmWithFallback('prompt', '');
+    expect(getLlmCacheEntry).not.toHaveBeenCalled();
+    expect(saveLlmCacheEntry).not.toHaveBeenCalled();
   });
 });

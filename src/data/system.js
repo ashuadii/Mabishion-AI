@@ -28,6 +28,48 @@ export async function getLlmUsage() {
   return await db.select('SELECT * FROM llm_usage ORDER BY timestamp DESC');
 }
 
+// ── LLM response cache (Blueprint adoption P1, schema v21) ──────────────────
+
+export async function getLlmCacheEntry(promptHash, maxAgeHours = 24) {
+  const db = await getDb();
+  const rows = await db.select(
+    `SELECT * FROM llm_cache
+     WHERE prompt_hash = $1 AND created_at >= datetime('now', '-' || $2 || ' hours')
+     LIMIT 1`,
+    [promptHash, Number(maxAgeHours)]
+  );
+  if (!rows || rows.length === 0) return null;
+  await db.execute(
+    "UPDATE llm_cache SET hits = hits + 1, last_hit_at = datetime('now') WHERE id = $1",
+    [rows[0].id]
+  ).catch(() => {});
+  return rows[0];
+}
+
+export async function saveLlmCacheEntry(promptHash, provider, model, response) {
+  const db = await getDb();
+  await db.execute(
+    `INSERT INTO llm_cache (prompt_hash, provider, model, response)
+     VALUES ($1, $2, $3, $4)
+     ON CONFLICT(prompt_hash) DO UPDATE SET
+       provider = excluded.provider, model = excluded.model,
+       response = excluded.response, created_at = datetime('now')`,
+    [promptHash, provider, model, response]
+  );
+}
+
+export async function clearLlmCache(olderThanHours = null) {
+  const db = await getDb();
+  if (olderThanHours == null) {
+    await db.execute('DELETE FROM llm_cache');
+  } else {
+    await db.execute(
+      "DELETE FROM llm_cache WHERE created_at < datetime('now', '-' || $1 || ' hours')",
+      [Number(olderThanHours)]
+    );
+  }
+}
+
 export async function logCronExecution(taskName, status, message) {
   const db = await getDb();
   const id = crypto.randomUUID();

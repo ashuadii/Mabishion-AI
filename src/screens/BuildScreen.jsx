@@ -39,35 +39,23 @@ const PROJECT_TIERS = [
 ];
 
 // ─── 4 Service Categories (shown as cards in center) ─────────────────────────
+// Catalog restructure (Owner Decision 2026-07-15): 4 client-facing services + 1 internal
+// category. Removed from client catalog: Marketing Materials, CRM System, Internal
+// Business Tool builds. App is founder/co-founder use only; clients receive deliverables.
 const SERVICE_CATEGORIES = [
-  {
-    id: 'ai_automation', label: 'AI & Automation', icon: 'smart_toy',
-    color: '#8B5CF6', bgColor: 'rgba(139,92,246,0.08)',
-    desc: 'Custom AI agents, chatbots, workflow automation',
-    items: ['Custom AI Agents', 'Multi-Agent Systems', 'AI Chatbots', 'Workflow Automation', 'AI Consulting'],
-    requiredFields: [
-      { key: 'clientName', label: 'Client Name', type: 'text', placeholder: 'e.g. Sharma Electronics' },
-      { key: 'projectGoal', label: 'What should the AI do?', type: 'textarea', placeholder: 'Customer support, lead qualification, data analysis...' },
-      { key: 'coreFeatures', label: 'Core Features', type: 'textarea', placeholder: 'Chat, voice, file analysis, API integration...' },
-    ],
-  },
-  {
-    id: 'software_dev', label: 'Software Development', icon: 'code',
-    color: '#3B82F6', bgColor: 'rgba(59,130,246,0.08)',
-    desc: 'Websites, SaaS, CRMs, mobile & desktop apps',
-    items: ['Website / Landing Page', 'SaaS Application', 'CRM System', 'Internal Business Tool', 'Desktop Application', 'Mobile Application', 'Progressive Web App'],
-    requiredFields: [
-      { key: 'clientName', label: 'Client Name', type: 'text', placeholder: 'e.g. Urban Cafe Delhi' },
-      { key: 'projectGoal', label: 'What are we building?', type: 'textarea', placeholder: 'Landing page, full app, dashboard...' },
-      { key: 'coreFeatures', label: 'Key Features', type: 'textarea', placeholder: 'Contact form, payment, blog, admin panel...' },
-      { key: 'targetPlatform', label: 'Platform', type: 'text', placeholder: 'Web, Android, iOS, Desktop...' },
-    ],
-  },
   {
     id: 'digital_marketing', label: 'Digital Marketing', icon: 'campaign',
     color: '#F59E0B', bgColor: 'rgba(245,158,11,0.08)',
-    desc: 'Content, social media, SEM, Google Ads, funnels',
-    items: ['Content Marketing', 'Social Media Marketing', 'Search Engine Marketing', 'Google Ads', 'Funnel Building', 'Analytics & Reporting'],
+    desc: 'Social Media Marketing (SMM) + Search Engine Marketing (SEM)',
+    items: [
+      'SMM — Brand Guidelines Document',
+      'SMM — Thumbnails & Ad Creatives',
+      'SMM — Social Media Creatives (Monthly Pack)',
+      'SEM — Google Ads',
+      'SEM — Funnel Building',
+      'SEM — Analytics & Reporting',
+      'SEM — Content Marketing',
+    ],
     requiredFields: [
       { key: 'clientName', label: 'Client Name', type: 'text', placeholder: 'e.g. Fitness Studio Mumbai' },
       { key: 'marketingGoal', label: 'Marketing Goal', type: 'textarea', placeholder: 'More leads? Brand awareness? Sales?' },
@@ -76,25 +64,48 @@ const SERVICE_CATEGORIES = [
     ],
   },
   {
-    id: 'biz_automation', label: 'Business Automation', icon: 'settings_suggest',
-    color: '#10B981', bgColor: 'rgba(16,185,129,0.08)',
-    desc: 'CRM, lead, sales, HR, finance automation',
-    items: ['CRM Automation', 'Lead Automation', 'Sales Pipelines', 'Marketing Automation', 'HR Automation', 'Finance Automation', 'Document Automation', 'Internal Workflow Systems', 'Website Management', 'Social Media Management', 'SEM Management'],
+    id: 'software_dev', label: 'Website Development', icon: 'web',
+    color: '#3B82F6', bgColor: 'rgba(59,130,246,0.08)',
+    desc: 'Landing pages, full websites, SaaS, PWA, logo & brand kits',
+    items: ['Landing Pages', 'Full Website', 'SaaS Application', 'Progressive Web App', 'Logo & Brand Kit'],
     requiredFields: [
-      { key: 'clientName', label: 'Client Name', type: 'text', placeholder: 'e.g. ABC Trading Company' },
-      { key: 'processName', label: 'Process to Automate', type: 'textarea', placeholder: 'Lead follow-up, invoice generation...' },
-      { key: 'currentTools', label: 'Current Tools', type: 'text', placeholder: 'Excel, WhatsApp, Google Sheets, Tally...' },
+      { key: 'clientName', label: 'Client Name', type: 'text', placeholder: 'e.g. Urban Cafe Delhi' },
+      { key: 'projectGoal', label: 'What are we building?', type: 'textarea', placeholder: 'Landing page, full site, SaaS dashboard...' },
+      { key: 'coreFeatures', label: 'Key Features', type: 'textarea', placeholder: 'Contact form, payment, blog, admin panel...' },
     ],
   },
   {
-    id: 'design_branding', label: 'Design & Branding', icon: 'palette',
+    id: 'custom_software', label: 'Custom Software Development', icon: 'code',
     color: '#EC4899', bgColor: 'rgba(236,72,153,0.08)',
-    desc: 'Logos, brand kits, social creatives, marketing materials',
-    items: ['Logo & Brand Kit', 'Social Media Creatives (Monthly Pack)', 'Marketing Materials', 'Thumbnails & Ad Creatives', 'Brand Guidelines Document'],
+    desc: 'Desktop & mobile applications',
+    items: ['Desktop Application', 'Mobile Application'],
     requiredFields: [
-      { key: 'clientName', label: 'Client Name', type: 'text', placeholder: 'e.g. Royal Sweets Jaipur' },
-      { key: 'projectGoal', label: 'What are we designing?', type: 'textarea', placeholder: 'New logo, monthly Instagram creatives, brochure...' },
-      { key: 'brandStyle', label: 'Brand Style & Colors', type: 'textarea', placeholder: 'Premium gold-black, playful pastel, minimal...' },
+      { key: 'clientName', label: 'Client Name', type: 'text', placeholder: 'e.g. ABC Trading Company' },
+      { key: 'projectGoal', label: 'What are we building?', type: 'textarea', placeholder: 'Billing app, inventory manager, field-team app...' },
+      { key: 'coreFeatures', label: 'Key Features', type: 'textarea', placeholder: 'Offline mode, reports, notifications, sync...' },
+      { key: 'targetPlatform', label: 'Platform', type: 'text', placeholder: 'Windows, Linux, Android, iOS...' },
+    ],
+  },
+  {
+    id: 'ai_automation', label: 'AI Development', icon: 'smart_toy',
+    color: '#8B5CF6', bgColor: 'rgba(139,92,246,0.08)',
+    desc: 'Custom AI agents, multi-agent systems, chatbots, AI consulting',
+    items: ['Multi-Agent Systems', 'Custom AI Agents', 'AI Chatbots', 'Workflow Automation', 'AI Consulting'],
+    requiredFields: [
+      { key: 'clientName', label: 'Client Name', type: 'text', placeholder: 'e.g. Sharma Electronics' },
+      { key: 'projectGoal', label: 'What should the AI do?', type: 'textarea', placeholder: 'Customer support, lead qualification, data analysis...' },
+      { key: 'coreFeatures', label: 'Core Features', type: 'textarea', placeholder: 'Chat, voice, file analysis, API integration...' },
+    ],
+  },
+  {
+    id: 'biz_automation', label: 'Internal Business Tool', icon: 'settings_suggest',
+    color: '#10B981', bgColor: 'rgba(16,185,129,0.08)',
+    desc: 'Mabishion internal automations — founder/co-founder use only',
+    items: ['CRM Automation', 'Lead Automation', 'Sales Pipelines', 'Marketing Automation', 'HR Automation', 'Finance Automation', 'Document Automation', 'Internal Workflow Systems', 'Website Management', 'Social Media Management', 'SEM Management'],
+    requiredFields: [
+      { key: 'clientName', label: 'Business Area', type: 'text', placeholder: 'e.g. Sales, Finance, Founder Office' },
+      { key: 'processName', label: 'Process to Automate', type: 'textarea', placeholder: 'Lead follow-up, invoice generation...' },
+      { key: 'currentTools', label: 'Current Tools', type: 'text', placeholder: 'Excel, WhatsApp, Google Sheets, Tally...' },
     ],
   },
 ];
@@ -117,10 +128,10 @@ const QUICK_TEMPLATES = [
   { label: 'AI chatbot for support', icon: 'smart_toy', catId: 'ai_automation' },
   { label: 'Business landing page', icon: 'web', catId: 'software_dev' },
   { label: 'WhatsApp lead automation', icon: 'bolt', catId: 'biz_automation' },
-  { label: 'Sales CRM dashboard', icon: 'dashboard', catId: 'software_dev' },
+  { label: 'Sales CRM dashboard', icon: 'dashboard', catId: 'biz_automation' },
   { label: 'Social media content plan', icon: 'campaign', catId: 'digital_marketing' },
   { label: 'E-commerce catalog', icon: 'storefront', catId: 'software_dev' },
-  { label: 'Logo & brand kit', icon: 'palette', catId: 'design_branding' },
+  { label: 'Logo & brand kit', icon: 'palette', catId: 'software_dev' },
 ];
 
 // ─── Glass panel helper (matches rest of app) ────────────────────────────────
@@ -128,7 +139,16 @@ const panelBg = 'rgba(255,255,255,0.03)';
 const panelBorder = '1px solid rgba(255,255,255,0.07)';
 
 // ─── Component ───────────────────────────────────────────────────────────────
-export default function BuildScreen({ onNavigate }) {
+// internalMode (Owner Decision 2026-07-15): same 16-tier engine, separate entry point.
+// Playground (/build-new) = 4 client-facing categories; Internal Tools (/internal-tools)
+// = biz_automation only (founder/co-founder internal automations).
+export default function BuildScreen({ onNavigate, internalMode = false }) {
+  const visibleCategories = SERVICE_CATEGORIES.filter(c =>
+    internalMode ? c.id === 'biz_automation' : c.id !== 'biz_automation'
+  );
+  const visibleTemplates = QUICK_TEMPLATES.filter(t =>
+    internalMode ? t.catId === 'biz_automation' : t.catId !== 'biz_automation'
+  );
   const { currentBuild } = useBuild();
   const { messages, send, status, isProcessing } = useMickiiAgent({
     model: 'llama3.1:8b',
@@ -529,13 +549,13 @@ export default function BuildScreen({ onNavigate }) {
     <div className="flex-1 flex flex-col items-center justify-center px-6 py-6 overflow-y-auto">
       <div className="w-full max-w-4xl mx-auto space-y-6">
         <div className="text-center space-y-1.5">
-          <p className="text-[9px] font-black uppercase tracking-[0.2em]" style={{ color: C.gold }}>Build Playground</p>
-          <h2 className="font-heading text-3xl text-white">What are we building?</h2>
-          <p className="text-sm text-slate-400">Select a category, fill details, then the 16-tier pipeline takes over.</p>
+          <p className="text-[9px] font-black uppercase tracking-[0.2em]" style={{ color: C.gold }}>{internalMode ? 'Internal Tools — Founder Only' : 'Build Playground'}</p>
+          <h2 className="font-heading text-3xl text-white">{internalMode ? 'What are we automating?' : 'What are we building?'}</h2>
+          <p className="text-sm text-slate-400">{internalMode ? 'Mabishion internal automations — same 16-tier pipeline, never client-facing.' : 'Select a category, fill details, then the 16-tier pipeline takes over.'}</p>
         </div>
 
         <div className="grid grid-cols-2 gap-2.5">
-          {SERVICE_CATEGORIES.map(cat => (
+          {visibleCategories.map(cat => (
             <button key={cat.id}
               onClick={() => handleSelectCat(cat)}
               className="flex items-start gap-3 p-4 rounded-2xl min-h-[104px] transition-all group text-left hover:bg-white/5"
@@ -559,7 +579,7 @@ export default function BuildScreen({ onNavigate }) {
         <div className="space-y-1.5">
           <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider text-center">Quick Start</p>
           <div className="flex flex-wrap gap-1.5 justify-center">
-            {QUICK_TEMPLATES.map(t => (
+            {visibleTemplates.map(t => (
               <button key={t.label}
                 onClick={() => handleTemplateClick(t)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all"
@@ -978,7 +998,7 @@ export default function BuildScreen({ onNavigate }) {
                 <div className="px-2.5 py-1">
                   <span className="text-[7px] font-black text-slate-500 uppercase tracking-wider">Skills</span>
                 </div>
-                {SERVICE_CATEGORIES.map(cat => (
+                {visibleCategories.map(cat => (
                   <button key={cat.id}
                     onClick={() => handleSelectCat(cat)}
                     className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[10px] font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
@@ -1072,7 +1092,7 @@ export default function BuildScreen({ onNavigate }) {
 
   // ─── Main Return ─────────────────────────────────────────────────────────
   return (
-    <AppShell activeNavId="build-new" onNavigate={onNavigate} commandBar={customCommandBar}>
+    <AppShell activeNavId={internalMode ? 'internal-tools' : 'build-new'} onNavigate={onNavigate} commandBar={customCommandBar}>
       <div className="flex h-[calc(100vh-64px)] -mx-8 -mt-8">
         {/* Pipeline sidebar — only during active build */}
         {pgView === 'build' && renderPipelineSidebar()}

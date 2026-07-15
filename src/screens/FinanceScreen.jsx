@@ -9,11 +9,14 @@ import Icon from '../components/Icon';
 import StatCard from '../components/StatCard';
 import ProgressBar from '../components/ProgressBar';
 import QuickCommandBar from '../components/QuickCommandBar';
-import { getInvoices, getTotalRevenue, getDailyCostTotal, getMonthlyCostTotal, getDb } from '../data/db.js';
+import { getInvoices, getTotalRevenue, getDailyCostTotal, getMonthlyCostTotal, getDb, addExpense, getExpenses, deleteExpense, getMonthlyPnl } from '../data/db.js';
 import { generatePdfInvoice, saveFileToUserDirectory } from '../services/fileOperationService.js';
 import { useNavigate } from 'react-router-dom';
 
 const STATUS_TONE = { draft: 'muted', sent: 'info', paid: 'success', overdue: 'danger' };
+
+// Blueprint adoption P2 — expense categories for the Money hub
+const EXPENSE_CATEGORIES = ['Software & Tools', 'Marketing & Ads', 'Hardware', 'Services & Freelancers', 'Travel', 'Office', 'Other'];
 
 export default function FinanceScreen({ onNavigate }) {
   const navigate = useNavigate();
@@ -24,6 +27,45 @@ export default function FinanceScreen({ onNavigate }) {
   const [loading, setLoading] = useState(true);
   const [exportingId, setExportingId] = useState(null);
   const [providerCosts, setProviderCosts] = useState([]); // CGF-008
+  // Blueprint P2: expenses + P&L
+  const [expenses, setExpenses] = useState([]);
+  const [pnl, setPnl] = useState({ revenue: 0, expenses: 0, net: 0, byCategory: [] });
+  const [expForm, setExpForm] = useState({ title: '', category: 'Software & Tools', amount: '', spent_on: new Date().toISOString().slice(0, 10), notes: '' });
+  const [savingExpense, setSavingExpense] = useState(false);
+
+  const refreshExpenses = async () => {
+    try {
+      const [expData, pnlData] = await Promise.all([getExpenses(), getMonthlyPnl()]);
+      setExpenses(expData || []);
+      setPnl(pnlData || { revenue: 0, expenses: 0, net: 0, byCategory: [] });
+    } catch (e) {
+      console.warn('[FinanceScreen expenses]', e);
+    }
+  };
+
+  const handleAddExpense = async () => {
+    if (savingExpense || !expForm.title.trim() || !Number(expForm.amount)) return;
+    setSavingExpense(true);
+    try {
+      await addExpense({ ...expForm, amount: Number(expForm.amount) });
+      setExpForm({ title: '', category: expForm.category, amount: '', spent_on: new Date().toISOString().slice(0, 10), notes: '' });
+      await refreshExpenses();
+    } catch (e) {
+      console.error('[FinanceScreen addExpense]', e);
+    } finally {
+      setSavingExpense(false);
+    }
+  };
+
+  const handleDeleteExpense = async (exp) => {
+    if (!window.confirm(`Delete expense "${exp.title}" (₹${Number(exp.amount).toLocaleString('en-IN')})?`)) return;
+    try {
+      await deleteExpense(exp.id);
+      await refreshExpenses();
+    } catch (e) {
+      console.error('[FinanceScreen deleteExpense]', e);
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -39,6 +81,7 @@ export default function FinanceScreen({ onNavigate }) {
         setTotalRevenue(rev || 0);
         setDailyCostPaise(daily || 0);
         setMonthlyCostPaise(monthly || 0);
+        await refreshExpenses();
 
         // CGF-008: Provider-level cost breakdown from execution_spans
         try {
@@ -283,6 +326,119 @@ export default function FinanceScreen({ onNavigate }) {
                   <p className="text-sm font-black" style={{ color: C.warning }}>{val}</p>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Blueprint P2: Expenses entry + list */}
+          <div key="expenses" className="col-span-12 lg:col-span-7 p-5" style={glassStyle({ glow: 'danger', borderColor: `${C.danger}40` })}>
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h3 className="font-black">Expenses</h3>
+                <p className="mt-1 text-xs" style={{ color: C.textMuted }}>Business kharcha — tools, ads, hardware, services</p>
+              </div>
+              <Badge tone="danger">₹{pnl.expenses.toLocaleString('en-IN')} this month</Badge>
+            </div>
+
+            {/* Entry form */}
+            <div className="grid grid-cols-12 gap-2 mb-4">
+              <input
+                className="col-span-12 md:col-span-4 rounded-xl px-3 py-2 text-sm bg-white/5 text-white placeholder:text-slate-500"
+                style={{ border: `1px solid ${C.glassBorder}` }}
+                placeholder="What did you spend on?"
+                value={expForm.title}
+                onChange={(e) => setExpForm(f => ({ ...f, title: e.target.value }))}
+              />
+              <select
+                className="col-span-6 md:col-span-3 rounded-xl px-2 py-2 text-sm bg-white/5 text-white"
+                style={{ border: `1px solid ${C.glassBorder}` }}
+                value={expForm.category}
+                onChange={(e) => setExpForm(f => ({ ...f, category: e.target.value }))}
+              >
+                {EXPENSE_CATEGORIES.map(c => <option key={c} value={c} style={{ color: '#000' }}>{c}</option>)}
+              </select>
+              <input
+                type="number" min="0"
+                className="col-span-6 md:col-span-2 rounded-xl px-3 py-2 text-sm bg-white/5 text-white placeholder:text-slate-500"
+                style={{ border: `1px solid ${C.glassBorder}` }}
+                placeholder="₹ Amount"
+                value={expForm.amount}
+                onChange={(e) => setExpForm(f => ({ ...f, amount: e.target.value }))}
+              />
+              <input
+                type="date"
+                className="col-span-6 md:col-span-2 rounded-xl px-2 py-2 text-sm bg-white/5 text-white"
+                style={{ border: `1px solid ${C.glassBorder}` }}
+                value={expForm.spent_on}
+                onChange={(e) => setExpForm(f => ({ ...f, spent_on: e.target.value }))}
+              />
+              <Button
+                className="col-span-6 md:col-span-1 px-2 py-2 text-xs"
+                disabled={savingExpense || !expForm.title.trim() || !Number(expForm.amount)}
+                onClick={handleAddExpense}
+              >
+                {savingExpense ? '...' : 'Add'}
+              </Button>
+            </div>
+
+            {/* Recent expenses */}
+            {expenses.length === 0 ? (
+              <p className="text-center text-sm py-4" style={{ color: C.textMuted }}>No expenses recorded yet — add your first above.</p>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                {expenses.slice(0, 12).map(exp => (
+                  <div key={exp.id} className="flex items-center gap-3 rounded-2xl p-3" style={{ background: 'rgba(255,255,255,.045)', border: `1px solid ${C.glassBorder}` }}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold text-white truncate">{exp.title}</p>
+                        <Badge tone="muted">{exp.category}</Badge>
+                      </div>
+                      <p className="text-xs" style={{ color: C.textMuted }}>{exp.spent_on}</p>
+                    </div>
+                    <p className="text-sm font-black flex-shrink-0" style={{ color: C.danger }}>−₹{Number(exp.amount).toLocaleString('en-IN')}</p>
+                    <Button variant="soft" className="px-2 py-1 text-xs flex-shrink-0" onClick={() => handleDeleteExpense(exp)}>
+                      <Icon name="delete" size={12} />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Blueprint P2: Month-to-date P&L */}
+          <div key="pnl" className="col-span-12 lg:col-span-5 p-5" style={glassStyle({ glow: pnl.net >= 0 ? 'success' : 'danger' })}>
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-black">Profit &amp; Loss (This Month)</h3>
+              <Badge tone={pnl.net >= 0 ? 'success' : 'danger'}>{pnl.net >= 0 ? 'PROFIT' : 'LOSS'}</Badge>
+            </div>
+            <div className="space-y-3">
+              {[
+                ['Revenue (MTD)', `₹${pnl.revenue.toLocaleString('en-IN')}`, C.success],
+                ['Expenses (MTD)', `−₹${pnl.expenses.toLocaleString('en-IN')}`, C.danger],
+              ].map(([label, value, color]) => (
+                <div key={label} className="flex items-center justify-between rounded-[18px] p-3"
+                  style={{ background: 'rgba(255,255,255,.04)', border: `1px solid ${C.glassBorder}` }}>
+                  <p className="text-sm" style={{ color: C.textMuted }}>{label}</p>
+                  <p className="text-sm font-black" style={{ color }}>{value}</p>
+                </div>
+              ))}
+              <div className="flex items-center justify-between rounded-[18px] p-4"
+                style={{ background: 'rgba(255,255,255,.06)', border: `1px solid ${pnl.net >= 0 ? C.success : C.danger}55` }}>
+                <p className="text-sm font-bold text-white">Net P&amp;L</p>
+                <p className="text-xl font-black" style={{ color: pnl.net >= 0 ? C.success : C.danger }}>
+                  {pnl.net >= 0 ? '' : '−'}₹{Math.abs(pnl.net).toLocaleString('en-IN')}
+                </p>
+              </div>
+              {pnl.byCategory.length > 0 && (
+                <div className="pt-2" style={{ borderTop: `1px solid ${C.glassBorder}` }}>
+                  <p className="text-[10px] font-bold mb-2 uppercase tracking-wider" style={{ color: C.textMuted }}>Expenses by Category</p>
+                  {pnl.byCategory.map(c => (
+                    <div key={c.category} className="flex items-center justify-between py-1">
+                      <span className="text-xs" style={{ color: C.textMuted }}>{c.category}</span>
+                      <span className="text-xs font-bold" style={{ color: C.danger }}>₹{Number(c.total).toLocaleString('en-IN')}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

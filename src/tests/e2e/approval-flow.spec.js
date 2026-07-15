@@ -77,8 +77,8 @@ test.describe('P1: Build Pipeline Journey', () => {
     if (await addBtn.isVisible()) {
       await addBtn.click();
       await page.waitForTimeout(500);
-      await expect(page.getByText('AI & Automation')).toBeVisible({ timeout: 3000 });
-      await expect(page.getByText('Software Development')).toBeVisible();
+      await expect(page.getByText('AI Development')).toBeVisible({ timeout: 3000 });
+      await expect(page.getByText('Website Development')).toBeVisible();
       await expect(page.getByText('Digital Marketing')).toBeVisible();
     }
   });
@@ -92,12 +92,12 @@ test.describe('P1: Build Pipeline Journey', () => {
       await addBtn.click();
       await page.waitForTimeout(500);
 
-      // Click Software Development
-      await page.getByText('Software Development').click();
+      // Click Website Development
+      await page.getByText('Website Development').click();
       await page.waitForTimeout(300);
 
-      // Click Website / Landing Page
-      await page.getByText('Website / Landing Page').click();
+      // Click Landing Pages
+      await page.getByText('Landing Pages').click();
       await page.waitForTimeout(500);
 
       // Intake form should appear

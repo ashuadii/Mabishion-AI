@@ -144,7 +144,7 @@ export default function DashboardScreen({ onNavigate }) {
   const [morningBrief, setMorningBrief] = useState('');
   const [skillRunning, setSkillRunning] = useState(null); // null or skillId
   const [llmStatus, setLlmStatus] = useState(null); // FR-038: LLM health status
-  const [visionMetrics, setVisionMetrics] = useState({ monthlyRevenue: 0, leadToProposal: 0, proposalToWin: 0, projectsDelivered: 0 }); // VIS-011
+  const [visionMetrics, setVisionMetrics] = useState({ monthlyRevenue: 0, monthlyExpenses: 0, leadToProposal: 0, proposalToWin: 0, projectsDelivered: 0 }); // VIS-011 + Blueprint P2
   const [todayDeadlines, setTodayDeadlines] = useState([]); // FR-003
   const [activityFeed, setActivityFeed] = useState([]); // FR-005
 
@@ -253,11 +253,20 @@ export default function DashboardScreen({ onNavigate }) {
         try {
           const db = await getDb();
           const firstOfMonth = new Date(); firstOfMonth.setDate(1); firstOfMonth.setHours(0,0,0,0);
-          // Monthly revenue from paid invoices this month
+          // Monthly revenue this month (BUGFIX 2026-07-15: revenue table's date column is `timestamp`, not `created_at`)
           const mRevRows = await db.select(
-            `SELECT COALESCE(SUM(amount),0) as total FROM revenue WHERE created_at >= $1`, [firstOfMonth.toISOString()]
+            `SELECT COALESCE(SUM(amount),0) as total FROM revenue WHERE timestamp >= $1`, [firstOfMonth.toISOString()]
           );
           const monthlyRevenue = Number(mRevRows?.[0]?.total || 0);
+          // Blueprint P2: monthly expenses for Net P&L on dashboard
+          let monthlyExpenses = 0;
+          try {
+            const mExpRows = await db.select(
+              `SELECT COALESCE(SUM(amount),0) as total FROM expenses WHERE spent_on >= $1`,
+              [firstOfMonth.toISOString().slice(0, 10)]
+            );
+            monthlyExpenses = Number(mExpRows?.[0]?.total || 0);
+          } catch (_) {}
           // Lead→Proposal: projects with blueprints / total leads
           const totalLeads = (await db.select('SELECT COUNT(*) as c FROM leads'))?.[0]?.c || 0;
           const withProposal = (await db.select("SELECT COUNT(*) as c FROM projects WHERE stage NOT IN ('Intake','Research')"))?.[0]?.c || 0;
@@ -265,7 +274,7 @@ export default function DashboardScreen({ onNavigate }) {
           // Proposal→Win: delivered projects / projects with proposals
           const delivered = (await db.select("SELECT COUNT(*) as c FROM projects WHERE stage = 'Delivered'"))?.[0]?.c || 0;
           const proposalToWin = withProposal > 0 ? Math.round((delivered / withProposal) * 100) : 0;
-          setVisionMetrics({ monthlyRevenue, leadToProposal, proposalToWin, projectsDelivered: Number(delivered) });
+          setVisionMetrics({ monthlyRevenue, monthlyExpenses, leadToProposal, proposalToWin, projectsDelivered: Number(delivered) });
         } catch (_) {}
 
         // Live counts for summary cards
@@ -648,10 +657,11 @@ Reference URL or notes: ${planUrl || "None"}
           {
             label: 'Revenue MTD',
             value: `₹${visionMetrics.monthlyRevenue.toLocaleString('en-IN')}`,
-            sub: `${Math.min(100, Math.round((visionMetrics.monthlyRevenue / 100000) * 100))}% of ₹1L target`,
+            // Blueprint P2: reflect Net P&L (revenue − expenses) on the dashboard
+            sub: `Net P&L: ${visionMetrics.monthlyRevenue - visionMetrics.monthlyExpenses < 0 ? '−' : ''}₹${Math.abs(visionMetrics.monthlyRevenue - visionMetrics.monthlyExpenses).toLocaleString('en-IN')} after expenses`,
             icon: 'currency',
             pct: Math.min(100, Math.round((visionMetrics.monthlyRevenue / 100000) * 100)),
-            barColor: visionMetrics.monthlyRevenue >= 100000 ? '#10B981' : '#6366F1',
+            barColor: visionMetrics.monthlyRevenue - visionMetrics.monthlyExpenses < 0 ? '#EF4444' : visionMetrics.monthlyRevenue >= 100000 ? '#10B981' : '#6366F1',
           },
           {
             label: 'Active Projects',

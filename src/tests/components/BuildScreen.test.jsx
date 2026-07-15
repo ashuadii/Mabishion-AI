@@ -127,8 +127,8 @@ describe('BuildScreen — Service Portfolio', () => {
     const addBtn = screen.getByTestId('icon-add').closest('button');
     fireEvent.click(addBtn);
     await waitFor(() => {
-      expect(screen.getAllByText('AI & Automation').length).toBeGreaterThan(0);
-      expect(screen.getAllByText('Software Development').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('AI Development').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Website Development').length).toBeGreaterThan(0);
       expect(screen.getAllByText('Digital Marketing').length).toBeGreaterThan(0);
     });
   });
@@ -137,10 +137,10 @@ describe('BuildScreen — Service Portfolio', () => {
     render(<BuildScreen onNavigate={() => {}} />);
     const addBtn = screen.getByTestId('icon-add').closest('button');
     fireEvent.click(addBtn);
-    await waitFor(() => screen.getAllByText('Software Development'));
-    fireEvent.click(screen.getAllByText('Software Development')[0]);
+    await waitFor(() => screen.getAllByText('Website Development'));
+    fireEvent.click(screen.getAllByText('Website Development')[0]);
     await waitFor(() => {
-      expect(screen.getAllByText('Website / Landing Page').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Landing Pages').length).toBeGreaterThan(0);
       expect(screen.getAllByText('SaaS Application').length).toBeGreaterThan(0);
     });
   });
@@ -156,10 +156,10 @@ describe('BuildScreen — Intake Form', () => {
     render(<BuildScreen onNavigate={() => {}} />);
     const addBtn = screen.getByTestId('icon-add').closest('button');
     fireEvent.click(addBtn);
-    await waitFor(() => screen.getAllByText('Software Development'));
-    fireEvent.click(screen.getAllByText('Software Development')[0]);
-    await waitFor(() => screen.getAllByText('Website / Landing Page'));
-    fireEvent.click(screen.getAllByText('Website / Landing Page')[0]);
+    await waitFor(() => screen.getAllByText('Website Development'));
+    fireEvent.click(screen.getAllByText('Website Development')[0]);
+    await waitFor(() => screen.getAllByText('Landing Pages'));
+    fireEvent.click(screen.getAllByText('Landing Pages')[0]);
     await waitFor(() => {
       expect(screen.getAllByText(/Client Name/i).length).toBeGreaterThan(0);
     });
@@ -169,10 +169,10 @@ describe('BuildScreen — Intake Form', () => {
     render(<BuildScreen onNavigate={() => {}} />);
     const addBtn = screen.getByTestId('icon-add').closest('button');
     fireEvent.click(addBtn);
-    await waitFor(() => screen.getAllByText('Software Development'));
-    fireEvent.click(screen.getAllByText('Software Development')[0]);
-    await waitFor(() => screen.getAllByText('Website / Landing Page'));
-    fireEvent.click(screen.getAllByText('Website / Landing Page')[0]);
+    await waitFor(() => screen.getAllByText('Website Development'));
+    fireEvent.click(screen.getAllByText('Website Development')[0]);
+    await waitFor(() => screen.getAllByText('Landing Pages'));
+    fireEvent.click(screen.getAllByText('Landing Pages')[0]);
     await waitFor(() => {
       expect(screen.getAllByText(/Client Name/i).length).toBeGreaterThan(0);
       expect(screen.getByPlaceholderText(/Urban Cafe Delhi/)).toBeInTheDocument();
@@ -183,10 +183,10 @@ describe('BuildScreen — Intake Form', () => {
     render(<BuildScreen onNavigate={() => {}} />);
     const addBtn = screen.getByTestId('icon-add').closest('button');
     fireEvent.click(addBtn);
-    await waitFor(() => screen.getAllByText('Software Development'));
-    fireEvent.click(screen.getAllByText('Software Development')[0]);
-    await waitFor(() => screen.getAllByText('Website / Landing Page'));
-    fireEvent.click(screen.getAllByText('Website / Landing Page')[0]);
+    await waitFor(() => screen.getAllByText('Website Development'));
+    fireEvent.click(screen.getAllByText('Website Development')[0]);
+    await waitFor(() => screen.getAllByText('Landing Pages'));
+    fireEvent.click(screen.getAllByText('Landing Pages')[0]);
     await waitFor(() => {
       const pipelineBtn = screen.getByText(/to start$/i);
       expect(pipelineBtn.closest('button')).toBeDisabled();

@@ -4,7 +4,7 @@
  * Creates tables if they do not exist. No destructive changes.
  */
 
-export const SCHEMA_VERSION = 20;
+export const SCHEMA_VERSION = 22;
 
 export const CREATE_TABLES_SQL = [
   `CREATE TABLE IF NOT EXISTS clients (
@@ -527,6 +527,39 @@ export async function upgradeDatabase(db) {
       `).catch(() => {});
       await db.execute('CREATE INDEX IF NOT EXISTS idx_events_type ON events(event_type)').catch(() => {});
       await db.execute('CREATE INDEX IF NOT EXISTS idx_events_created ON events(created_at)').catch(() => {});
+    }
+
+    // ── v21: Blueprint adoption P1 — LLM response cache (BLUEPRINT_GAP_ANALYSIS §2) ──
+    if (currentVersion < 21) {
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS llm_cache (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          prompt_hash TEXT UNIQUE NOT NULL,
+          provider TEXT,
+          model TEXT,
+          response TEXT NOT NULL,
+          hits INTEGER DEFAULT 0,
+          created_at TEXT DEFAULT (datetime('now')),
+          last_hit_at TEXT
+        )
+      `).catch(() => {});
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_llm_cache_created ON llm_cache(created_at)').catch(() => {});
+    }
+
+    // ── v22: Blueprint adoption P2 — expenses tracking for P&L (BLUEPRINT_GAP_ANALYSIS §2) ──
+    if (currentVersion < 22) {
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS expenses (
+          id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          category TEXT DEFAULT 'Other',
+          amount REAL NOT NULL,
+          spent_on TEXT,
+          notes TEXT,
+          created_at TEXT DEFAULT (datetime('now'))
+        )
+      `).catch(() => {});
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_expenses_spent_on ON expenses(spent_on)').catch(() => {});
     }
 
     // Insert or update version

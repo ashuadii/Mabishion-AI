@@ -1,4 +1,4 @@
-import { getSetting, logLlmUsage, logAudit } from '../data/db';
+import { getSetting, logLlmUsage, logAudit, getLlmCacheEntry, saveLlmCacheEntry } from '../data/db';
 import { logLLMProvider } from '../engine/utils/runtimeHealth.js';
 import { invoke } from '@tauri-apps/api/core';
 
@@ -294,7 +294,42 @@ async function callOllama(_apiKey, prompt, systemInstruction) {
  * @param {string} systemInstruction Optional system directives
  * @returns {Promise<string>} LLM text completion
  */
+/**
+ * SHA-256 hex digest for cache keys. Returns null if WebCrypto is unavailable
+ * so callers can silently skip caching instead of failing the LLM call.
+ */
+async function hashPrompt(text) {
+  try {
+    const data = new TextEncoder().encode(text);
+    const digest = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+  } catch {
+    return null;
+  }
+}
+
 export async function executeLlmWithFallback(prompt, systemInstruction = '') {
+  // Blueprint adoption P1: exact-prompt response cache (24h TTL).
+  // Opt-out via settings key llm_cache_enabled = 'off'. Cache failures never block the call.
+  let promptHash = null;
+  try {
+    const cacheSetting = await getSetting('llm_cache_enabled').catch(() => null);
+    if (cacheSetting !== 'off') {
+      promptHash = await hashPrompt(`${systemInstruction}\n---\n${prompt}`);
+      if (promptHash) {
+        const cached = await getLlmCacheEntry(promptHash);
+        if (cached && cached.response) {
+          console.log(`[LLM Cache] HIT (${cached.provider}/${cached.model}) — 0 tokens spent.`);
+          await logAudit('INFO', 'LLM_CACHE_HIT', JSON.stringify({ provider: cached.provider, model: cached.model })).catch(() => {});
+          return cached.response;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('[LLM Cache] Lookup failed, proceeding with live call:', e);
+    promptHash = null;
+  }
+
   const fallbackChain = [
     { provider: 'gemini', keyName: 'gemini_api_key', runner: callGemini },
     { provider: 'groq', keyName: 'groq_api_key', runner: callGroq },
@@ -334,6 +369,12 @@ export async function executeLlmWithFallback(prompt, systemInstruction = '') {
         result.totalTokens,
         'SUCCESS'
       );
+
+      if (promptHash && result.text) {
+        await saveLlmCacheEntry(promptHash, step.provider, result.model, result.text).catch((e) =>
+          console.warn('[LLM Cache] Store failed (non-fatal):', e)
+        );
+      }
 
       return result.text;
     } catch (e) {
