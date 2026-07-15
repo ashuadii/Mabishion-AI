@@ -1219,3 +1219,9 @@ What changed: Auto-push automation per owner directive. (1) Agent rule: Workflow
 Why changed: Owner: "make it automate... automatic autopush ho jaye."
 Status: Working — Verified (test push succeeded, timer scheduled).
 Next step: OWNER URGENT: make repo private, audit collaborators, delete leaked token. Then P4 Campaigns when ready.
+
+[2026-07-15] [15:30] — [Claude Fable 5] — [Owner Decisions recorded — security flags closed]
+What changed: Owner decisions on the 3 open security flags: (1) Repo stays PUBLIC deliberately until production-ready — owner accepts risk; revisit at production/client-data stage. (2) Extra contributors (adiiweb, johndeon41, etc.) are the owner's own alternate accounts — not strangers. (3) Old classic tokens (leaked "MAbishion Token for Git" + expired "Tkn") deleted by owner — token-leak issue CLOSED. Standing consequence of public repo: secrets must NEVER land in commits; secret:// pattern is a hard blocker in review.
+Why changed: Owner responses 2026-07-15.
+Status: Working — security chapter closed for now.
+Next step: P4 Campaigns module awaiting owner go-ahead; revisit repo visibility before production.
