@@ -21,6 +21,12 @@ export PATH="$PATH:/usr/local/bin:/usr/bin:$HOME/.cargo/bin"
 export CHOKIDAR_USEPOLLING=true
 export WATCHPACK_POLLING=true
 
+# Wayland + WebKitGTK: the window is created and the webview loads, but the window never
+# appears on screen. Verified 2026-07-15: under GDK_BACKEND=x11 the window maps correctly
+# (1440x900, confirmed via xwininfo); without it, nothing reaches the display.
+export GDK_BACKEND=x11
+export WEBKIT_DISABLE_DMABUF_RENDERER=1
+
 # 2. Start Ollama in background (optional — skip if not installed)
 if command -v ollama &>/dev/null; then
     if ! pgrep -x "ollama" > /dev/null; then
