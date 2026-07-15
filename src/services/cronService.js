@@ -93,8 +93,51 @@ export const cronEngine = new BrowserCronEngine();
  * Format: JSON (plain SQLite is the accepted final state — Owner Decision 2026-07-04).
  * Interval: 24 hours (86,400,000 ms).
  */
+// Backups run hourly and each snapshot is the full DB, so they must be capped or they
+// fill the disk (Owner's machine sits near capacity). Keep the newest N and prune the rest.
+const BACKUP_RETENTION_COUNT = 24;
+
+/**
+ * Deletes all but the newest BACKUP_RETENTION_COUNT backup files.
+ * Filenames are ISO-timestamped, so lexical sort == chronological sort.
+ */
+async function pruneOldBackups(backupDir) {
+  try {
+    const { readDir, remove } = await import('@tauri-apps/plugin-fs');
+    const files = (await readDir(backupDir)) || [];
+    const backups = files
+      .filter(f => f.name && f.name.startsWith('mabishion_db_') && f.name.endsWith('.json'))
+      .map(f => f.name)
+      .sort();
+    const stale = backups.slice(0, Math.max(0, backups.length - BACKUP_RETENTION_COUNT));
+    for (const name of stale) {
+      await remove(`${backupDir}/${name}`).catch(() => {});
+    }
+    if (stale.length > 0) {
+      console.log(`[Cron DailyBackup] Pruned ${stale.length} old backup(s), kept newest ${BACKUP_RETENTION_COUNT}.`);
+    }
+  } catch (pruneErr) {
+    console.warn('[Cron DailyBackup] Backup prune skipped (non-blocking):', pruneErr?.message || pruneErr);
+  }
+}
+
+/**
+ * cron_logs grows unbounded (every task tick writes a row) and dominates DB size —
+ * it hit 21,480 rows / ~5 MB by 2026-07-16, bloating every backup. Keep 7 days.
+ */
+async function pruneCronLogs() {
+  try {
+    const db = await getDb();
+    await db.execute("DELETE FROM cron_logs WHERE timestamp < datetime('now', '-7 days')");
+  } catch (err) {
+    console.warn('[Cron DailyBackup] cron_logs prune skipped (non-blocking):', err?.message || err);
+  }
+}
+
 export async function runDailyBackupJob() {
   try {
+    // Trim log bloat BEFORE snapshotting so backups stay small.
+    await pruneCronLogs();
     const jsonData = await backupDatabase();
 
     // Write to disk only inside Tauri shell
@@ -103,7 +146,10 @@ export async function runDailyBackupJob() {
       const { writeTextFile, mkdir } = await import('@tauri-apps/plugin-fs');
 
       const dataDir = await appDataDir();
-      const backupDir = `${dataDir}backups`;
+      // BUGFIX 2026-07-16: appDataDir() has no trailing slash, so `${dataDir}backups`
+      // produced a sibling dir "com.mabishion.factorybackups" outside the appdata scope —
+      // every backup silently failed with "forbidden path". Join explicitly.
+      const backupDir = `${dataDir.replace(/\/$/, '')}/backups`;
 
       // Ensure backup directory exists
       try {
@@ -117,6 +163,7 @@ export async function runDailyBackupJob() {
       const filePath = `${backupDir}/mabishion_db_${stamp}.json`;
 
       await writeTextFile(filePath, jsonData);
+      await pruneOldBackups(backupDir);
 
       // B06: Write backup metadata to backups table
       try {
@@ -327,13 +374,17 @@ cronEngine.schedule('PendingApprovalReminder', 4 * 60 * 60 * 1000, runPendingApp
  */
 export async function runBackupValidationJob() {
   try {
-    // Read the latest backup from disk
-    const { readDir, readTextFile, BaseDirectory } = await import('@tauri-apps/plugin-fs');
-    const backupDir = 'mabishion_backups';
+    // Read the latest backup from disk.
+    // BUGFIX 2026-07-16: this read from '$APPLOCALDATA/mabishion_backups', but
+    // runDailyBackupJob writes to '$APPDATA/backups' — validation never found a file.
+    // Both now resolve the same path from appDataDir(), matching the writer.
+    const { readDir, readTextFile } = await import('@tauri-apps/plugin-fs');
+    const { appDataDir } = await import('@tauri-apps/api/path');
+    const backupDir = `${(await appDataDir()).replace(/\/$/, '')}/backups`;
 
     let files = [];
     try {
-      files = await readDir(backupDir, { baseDir: BaseDirectory.AppLocalData });
+      files = await readDir(backupDir);
     } catch {
       await logAudit('WARN', 'Backup validation: no backup directory found', '{}').catch(() => {});
       return;
@@ -350,7 +401,7 @@ export async function runBackupValidationJob() {
     }
 
     const latestFile = jsonFiles[0];
-    const content = await readTextFile(`${backupDir}/${latestFile.name}`, { baseDir: BaseDirectory.AppLocalData });
+    const content = await readTextFile(`${backupDir}/${latestFile.name}`);
 
     const { validateBackupIntegrity } = await import('../data/db.js');
     const result = validateBackupIntegrity(content);

@@ -1249,3 +1249,14 @@ What changed: SELF-REPORTED INCIDENT + fix. During the Wayland fix commit, a bla
 Why changed: Agent error caught during self-review; autopush authorization covers additions/edits, not removals.
 Status: Working — banner restored on disk and in origin/dev; README reference intact again.
 Next step: Owner decision — nexious-ai-banner.png stays deleted (unused)? Also still open: cron backup permission bug (fs.write_text_file not allowed).
+
+[2026-07-16] [00:20] — [Claude Opus 4.8] — [capabilities/default.json, cronService.js — BACKUPS FIXED (were never working)]
+What changed: Owner-prioritised fix. Backups had NEVER worked — zero backup files existed on disk. FOUR distinct bugs found and fixed:
+ (1) Missing Tauri fs permissions — capabilities had only "fs:default" (read-only). Added minimum needed: allow-write-text-file, read-text-file, write-file, mkdir, read-dir, exists, remove + scopes allow-appdata-write-recursive / read-recursive. Deliberately NOT fs:write-all (least privilege).
+ (2) ROOT CAUSE — malformed path: code did `${appDataDir()}backups`, but appDataDir() has no trailing slash, so it wrote to sibling dir "com.mabishion.factorybackups" (outside appdata scope) → "forbidden path" on every run. Now joins explicitly.
+ (3) Validation/writer path mismatch: runBackupValidationJob read $APPLOCALDATA/mabishion_backups while the writer wrote $APPDATA/backups — validation could never find a backup. Reader now resolves the same path as the writer.
+ (4) Unbounded growth (found during fix): no backup retention + cron_logs never pruned (21,486 rows, dominating DB size). Added BACKUP_RETENTION_COUNT=24 with pruneOldBackups(), and pruneCronLogs() keeping 7 days, run before each snapshot.
+Agent error during this work (self-reported): added dialog:default/dialog:allow-save to capabilities without verifying the dialog plugin was registered on the Rust side — it is not, which broke the build. Removed; cargo check clean.
+Why changed: Owner asked whether GitHub push replaces local backup. Answer: NO — GitHub holds code only; mabishion.db (4.9 MB of leads/clients/invoices/approvals) is gitignored and existed on ONE machine with a silently broken backup job.
+Status: Working — VERIFIED end-to-end in the real Tauri app: backup file written (mabishion_db_2026-07-15T18-49-27.json); retention test 30 dummy files → pruned to exactly 24; cron_logs 21,486 → 3,025; backup size dropped 5.1 MB → 869 KB. npm run build exit 0, 340/340 tests pass, cargo check clean.
+Next step: Brand guidelines application (owner decision: keep navy/gold + Marcellus, apply structural rules only; Section 07 indigo/Inter treated as outdated → guideline to be updated). Note: SQLite file still 5 MB until a VACUUM reclaims freed pages — cosmetic, backups are already small.
