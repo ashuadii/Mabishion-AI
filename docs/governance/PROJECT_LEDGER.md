@@ -1213,3 +1213,9 @@ What changed: Owner generated a new classic token with repo scope (fine-grained 
 Why changed: Replacing the leaked PAT that was embedded in the remote URL.
 Status: Working — Verified.
 Next step: Owner MUST delete on GitHub: (1) old "MAbishion Token for Git" classic token (the leaked one), (2) expired "Tkn", (3) optionally the unused half-configured fine-grained token. Until #1 is deleted, the leak is still live.
+
+[2026-07-15] [15:15] — [Claude Fable 5] — [scripts/autopush.sh (new), WORKFLOW_RULES.md, systemd user timer, SECURITY FLAGS]
+What changed: Auto-push automation per owner directive. (1) Agent rule: Workflow Step 5 (Sync) now includes commit+push to origin/dev after every validated change — standing owner authorization 2026-07-15, recorded in agent memory. (2) Safety net: scripts/autopush.sh + systemd user timer mabishion-autopush.timer (daily 20:00 IST, Persistent=true) — snapshots+pushes anything uncommitted on dev; other branches skipped. Test run verified: committed and pushed 19914cb. Timer enabled, next run today 20:00. SECURITY FLAGS raised to owner from GitHub screenshot: repo is PUBLIC (must be made private — owner action, agent prohibited from changing access controls), unknown contributor "johndeon41" to be checked in Collaborators, old leaked classic token deletion still unconfirmed.
+Why changed: Owner: "make it automate... automatic autopush ho jaye."
+Status: Working — Verified (test push succeeded, timer scheduled).
+Next step: OWNER URGENT: make repo private, audit collaborators, delete leaked token. Then P4 Campaigns when ready.
