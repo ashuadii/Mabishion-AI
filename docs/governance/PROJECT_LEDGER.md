@@ -1243,3 +1243,9 @@ What changed: Root-caused and fixed "app visible but not opening". TWO separate 
 Why changed: Owner reported desktop app not opening after workspace restructure.
 Status: Working — VERIFIED end-to-end: ran the exact launch.sh the desktop icon uses; xwininfo confirms window "Mabishion AI — Private Desktop Factory" mapped at 1440x900 with mutter frames; process alive. Without GDK_BACKEND=x11 no window reached the display.
 Next step: SEPARATE BUG FOUND (not fixed, needs owner go-ahead) — cron DailyBackup/HourlyBackup fail at runtime with "fs.write_text_file not allowed": the Tauri fs capability permissions do not grant write access for the backup path. Backups are silently failing. Recommend fixing src-tauri capabilities.
+
+[2026-07-15] [18:25] — [Claude Opus 4.8] — [assets/mabishion-ai-banner.png restored, WORKFLOW_RULES.md]
+What changed: SELF-REPORTED INCIDENT + fix. During the Wayland fix commit, a blanket `git add -A` silently swept in the deletion of assets/mabishion-ai-banner.png and assets/nexious-ai-banner.png (both already missing from disk — not deleted by the agent) and pushed it (df127c3). README.md line 297 references mabishion-ai-banner.png, so the pushed commit broke the README banner on GitHub. Detected on reviewing the commit output. Restored mabishion-ai-banner.png from history commit 11c8e0b and pushed (71e3010). nexious-ai-banner.png left deleted — unreferenced legacy Nexious branding. Root cause fixed: WORKFLOW_RULES Step 5 now mandates reading `git status` before committing and forbids committing deletions the agent did not make; same rule written to agent memory.
+Why changed: Agent error caught during self-review; autopush authorization covers additions/edits, not removals.
+Status: Working — banner restored on disk and in origin/dev; README reference intact again.
+Next step: Owner decision — nexious-ai-banner.png stays deleted (unused)? Also still open: cron backup permission bug (fs.write_text_file not allowed).
