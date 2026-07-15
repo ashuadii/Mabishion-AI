@@ -13,7 +13,7 @@ const TONES = {
 export default function Badge({ children, tone = 'gold' }) {
   const t = TONES[tone] || TONES.gold;
   return (
-    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wider"
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-eyebrow"
       style={{ color: t.color, backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
       {children}
     </span>

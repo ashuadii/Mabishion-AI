@@ -18,7 +18,7 @@ export default function HubTabs({ tabs, active, onNavigate }) {
           <button
             key={t.id}
             onClick={() => !isActive && onNavigate && onNavigate(t.id)}
-            className="px-3.5 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all"
+            className="px-3.5 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-eyebrow transition-all"
             style={
               isActive
                 ? { background: `linear-gradient(135deg, ${C.gold}, ${C.goldDeep})`, color: '#0B1120' }

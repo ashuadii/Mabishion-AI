@@ -257,8 +257,12 @@ export default function ScreenHeader({ title, pageTitle, subtitle, index, badgeL
             </span>
             {badgeLabel && <Badge tone="muted">{badgeLabel}</Badge>}
           </div>
-          <h1 className="text-4xl font-extrabold tracking-tight" style={{ color: '#FFFFFF' }}>{pageTitle || title}</h1>
-          <p className="mt-2 max-w-4xl text-sm leading-6" style={{ color: 'rgba(237,231,221,.70)' }}>{subtitle}</p>
+          {/* Brand Guidelines §04 — "Headline: Marcellus, ~34px, 0.03em" and
+              "a single serif carries the whole hierarchy — vary size, not weight".
+              Was Jost text-4xl font-extrabold tracking-tight: wrong face, weight and tracking. */}
+          <h1 className="font-heading text-[34px] tracking-[0.03em]" style={{ color: '#FFFFFF' }}>{pageTitle || title}</h1>
+          {/* §04 — body copy: 55–65 character measure, line-height ~1.7 */}
+          <p className="mt-2 max-w-[62ch] text-sm leading-body" style={{ color: 'rgba(237,231,221,.70)' }}>{subtitle}</p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-3">
           {secondaryAction && <Button variant="soft" icon={secondaryIcon || 'filter'} onClick={onSecondaryClick}>{secondaryAction}</Button>}

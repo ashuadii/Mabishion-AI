@@ -31,11 +31,14 @@ export function glassStyle({ strong = false, glow = 'none', borderColor } = {}) 
     primary: `0 24px 80px rgba(0,0,0,.40), 0 0 36px ${C.primary}18, inset 0 1px 0 rgba(255,255,255,.08)`,
     none: '0 24px 76px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.08)'
   };
+  // Glass surface per Brand Guidelines Edition 01 §07: 145deg gradient of
+  // rgba(255,255,255,.05) → .02 over the surface, 1px rgba(255,255,255,.1) border, 25px blur.
+  // The navy base stays (owner decision 2026-07-16: app keeps the navy/gold identity).
   return {
-    background: `linear-gradient(145deg, rgba(255,255,255,.07), rgba(255,255,255,.025)), ${strong ? 'rgba(27,46,58,.92)' : 'rgba(27,46,58,.78)'}`,
-    border: `1px solid ${borderColor || 'rgba(255,255,255,.12)'}`,
+    background: `linear-gradient(145deg, rgba(255,255,255,.05), rgba(255,255,255,.02)), ${strong ? 'rgba(27,46,58,.92)' : 'rgba(27,46,58,.78)'}`,
+    border: `1px solid ${borderColor || 'rgba(255,255,255,.1)'}`,
     borderRadius: C.radius,
-    backdropFilter: 'blur(22px)',
+    backdropFilter: 'blur(25px)',
     boxShadow: glowMap[glow] || glowMap.none
   };
 }
@@ -43,11 +46,17 @@ export function glassStyle({ strong = false, glow = 'none', borderColor } = {}) 
 
 // ── DESIGN TOKENS — fixed sizes, whole app (ARCHITECTURE v1.1; owner rule: ek size, har jagah) ──
 // Standard screens use these. Exception: Playground/Research dense workspace uses the micro scale.
+// Values follow Brand Guidelines Edition 01 §04 (Typography):
+//   Marcellus carries the hierarchy — vary size, not weight; caps at 0.10–0.20em.
+//   Jost for body/UI; taglines and micro-labels uppercase at 0.28–0.30em.
+//   Eyebrow = Jost 11px / 0.28em uppercase. Body line-height ~1.7.
 export const TYPE = {
   statValue: 'font-heading text-3xl',                          // bade numbers (revenue, counts)
-  sectionLabel: 'text-[10px] font-black uppercase tracking-widest', // panel/section headings
+  headline: 'font-heading text-[34px] uppercase tracking-display', // §04 headline — Marcellus caps
+  eyebrow: 'text-[11px] font-medium uppercase tracking-eyebrow',   // §04 eyebrow — Jost 11px / 0.28em
+  sectionLabel: 'text-[10px] font-black uppercase tracking-eyebrow', // panel/section headings
   cardTitle: 'text-sm font-bold',                              // card ke andar ka title
-  body: 'text-sm',                                             // normal text
+  body: 'text-sm leading-body',                                // normal text — 1.7 line-height
   caption: 'text-[11px]',                                      // secondary/meta text
   micro: 'text-[10px]',                                        // chips, timestamps
 };

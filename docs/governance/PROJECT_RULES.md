@@ -187,3 +187,28 @@ that constant + updating this section.
 - Daily AI cap ₹150, monthly ₹1,500 — enforced by `cronService.js` cost hard-stop (logs CRITICAL audit + blocks further spend). *(Partially Verified: code path read; runtime trigger not exercised this session)*
 - Free-tier providers always attempted before any paid call; Ollama is the unlimited local floor.
 - RAM budget < 12 GB; max 2 concurrent workers (policy — concurrency limiter not yet found in code; treat as Not Yet Verified).
+
+## 13. Brand System (Owner Decision 2026-07-16 — Verified in code)
+
+Canonical guideline: `docs/brand/BRAND_GUIDELINES.md` (Edition 01). The earlier agent-derived
+copy under `src/assets/Design System/` was deleted — one source of truth only.
+
+**Owner decision:** the app carries the **master brand** (navy + gold + Marcellus/Jost).
+Guideline §07's indigo/slate/Inter sub-theme was never built and is retired; indigo/violet
+survive only as status and data-viz accents.
+
+**Enforced tokens (`tailwind.config.js` + `src/components/consts.js`):**
+- `tracking-eyebrow` = `0.28em` — every uppercase micro-label, badge, tab, stat label (§04).
+- `tracking-display` = `0.15em` — Marcellus caps headings (§04: 0.10–0.20em).
+- `leading-body` = `1.7`, body measure `max-w-[62ch]` (§04: 55–65 characters).
+- Headline = `font-heading text-[34px] tracking-[0.03em]`, weight 400 — §04: "a single serif
+  carries the whole hierarchy — vary size, not weight". Never bold Marcellus.
+- Glass = 145deg `rgba(255,255,255,.05)`→`.02` over navy, 1px `rgba(255,255,255,.1)`, blur 25px.
+- Icons: 24px grid, 1.9px stroke, round caps/joins, no fill — already compliant in `Icon.jsx`.
+- Colour balance ~60% navy / 30% cream / 10% gold. **Gold stays scarce** — accents only, never
+  large fields, never small body text on cream.
+
+**Applied so far:** shared components only — `ScreenHeader` (16 screens), `Badge` (22),
+`HubTabs` (15), `StatCard` (4), plus the global tokens. **Not yet swept:** ~119 hardcoded
+`tracking-wider`/`tracking-widest` instances inside individual screens still sit at 0.05–0.1em
+instead of 0.28em. Migrate them to `TYPE.eyebrow` / `tracking-eyebrow` when touching a screen.

@@ -18,7 +18,7 @@ export default function StatCard({
   return (
     <div className="p-4 rounded-2xl min-h-[116px] flex flex-col" style={glassStyle({ glow })}>
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'rgba(237,231,221,0.62)' }}>
+        <span className="text-[10px] font-bold uppercase tracking-eyebrow" style={{ color: 'rgba(237,231,221,0.62)' }}>
           {label}
         </span>
         {badge ? <Badge tone={badgeTone}>{badge}</Badge> : icon ? <Icon name={icon} size={14} className="text-slate-600" /> : null}
