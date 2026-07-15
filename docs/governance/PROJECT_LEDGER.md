@@ -1231,3 +1231,9 @@ What changed: Blueprint adoption P4 Phase 1 — Ad Campaigns (SIMULATION MODE ON
 Why changed: Owner go-ahead for P4.
 Status: Working — npm run build 5.14s exit 0 (full suite); simulation math + budget cap verified on real SQLite (7 days, ₹3000 cap respected, CPL ₹107, CTR 1.39%); UI render verified live on 1420. Tauri persistence Partially Verified (same plugin-sql path as P2).
 Next step: P4 Phase 2 candidates — LLM ad-variant generation via service_promo worker, daily metrics chart (Recharts), auto-simulate active campaigns via cron. Owner to test in desktop app.
+
+[2026-07-15] [17:10] — [Claude Opus 4.8] — [package.json, package-lock.json, PROJECT_RULES.md — Dependabot deps]
+What changed: Merged 2 Dependabot updates locally with full testing. (1) @babel/core 7.29.0→7.29.7 (transitive patch, separate commit 27dabe7). (2) MAJOR: vite 5.4.21→8.1.4 + @vitejs/plugin-react 4.7.0→6.0.3; esbuild removed as direct dep (vite 8 uses rolldown/oxc bundler). vitest stayed 4.1.9 (compatible). Node v20.20.2 satisfies vite 8's 20.19+ requirement.
+Why changed: Owner approved both Dependabot PRs ("babel safe; esbuild+vite do carefully").
+Status: Working — Verified thoroughly: npm run build exit 0 (1.35s, faster than vite 5's ~5s), full vitest suite 340/340 pass across 24 files, dev server on 1420 loads (Dashboard + Campaigns tab, zero console errors). Pre-existing INEFFECTIVE_DYNAMIC_IMPORT warnings unchanged (code-structure, not errors). PROJECT_RULES.md updated Vite 5→8.
+Next step: Dependabot PRs #9 (vite) and #10 (babel) will auto-close on next dep graph sync since deps now match. Owner may run desktop `npm run tauri-dev` to confirm Tauri shell still boots under vite 8. 4 npm-audit vulns remain (3 moderate/1 high) — separate triage.

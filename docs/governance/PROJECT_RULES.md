@@ -23,7 +23,7 @@
 | Layer | Technology | Evidence |
 | --- | --- | --- |
 | Shell | Tauri v2 (Rust core) | `src-tauri/`, `@tauri-apps/api ^2.0.0` |
-| Frontend | React 18 + Vite 5 + Tailwind CSS 3 | `package.json`, `vite.config.js` (port 1420, strictPort) |
+| Frontend | React 18 + Vite 8 + Tailwind CSS 3 | `package.json`, `vite.config.js` (port 1420, strictPort). Vite 8 uses the rolldown/oxc bundler; esbuild removed as a direct dep (2026-07-15). |
 | State | **React Context only** (`src/context/BuildContext.jsx`) — Zustand is NOT installed | `package.json` has no zustand |
 | Routing | React Router v6 (~30 routes in `src/App.jsx`) | `App.jsx` |
 | Database | SQLite `mabishion.db` via `@tauri-apps/plugin-sql`; plain (SQLCipher NOT yet applied) | `src/data/db.js`, `core.js`, `db_schema_upgrade.js` |
