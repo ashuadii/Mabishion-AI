@@ -1,6 +1,6 @@
 #!/bin/bash
 # Mabishion AI — Desktop Launcher
-APP_DIR="/home/admin-ubuntu/Desktop/Mabishion-AI/Mickii/Mabishion Software"
+APP_DIR="/home/admin-ubuntu/Desktop/Mabishion-AI/Mabishion Software"
 LOGFILE="$APP_DIR/launcher_error.log"
 
 exec > "$LOGFILE" 2>&1

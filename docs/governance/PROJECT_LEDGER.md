@@ -1201,3 +1201,15 @@ What changed: Governance docs moved INTO the repo per owner approval: PROJECT_LE
 Why changed: Owner: "Yes Governance docs repo mein daal do" — docs were unversioned (zero backup) at workspace root.
 Status: Working — docs now GitHub-backed.
 Next step: Token hygiene (delete leaked classic token after new fine-grained one is wired); diagnose invisible desktop app.
+
+[2026-07-15] [14:40] — [Claude Fable 5] — [launch.sh, ~/.local/share/applications/mabishion-ai.desktop, git remote config]
+What changed: (1) Desktop app fix: launcher .desktop file and launch.sh still pointed to deleted Mickii path — updated both to "Mabishion-AI/Mabishion Software"; icon path verified to exist; desktop database refreshed. (2) Git token hygiene: removed embedded PAT from remote URL (now clean https://github.com/ashuadii/Mabishion-AI.git) and set credential.helper=store — next push will prompt once for the new fine-grained token and remember it.
+Why changed: Owner reported desktop app invisible/not opening after workspace restructure; owner created new fine-grained token.
+Status: Working — launcher paths verified clean (0 Mickii refs); app launch itself pending owner double-click test. Git pushes will require one-time token entry by owner.
+Next step: Owner double-clicks app to confirm launch; owner does one `git push` entering new fine-grained token; then deletes BOTH classic tokens on GitHub (leaked no-expiry one + expired Tkn).
+
+[2026-07-15] [14:50] — [Claude Fable 5] — [git auth migration complete]
+What changed: Owner generated a new classic token with repo scope (fine-grained flow abandoned), pushed successfully ("Everything up-to-date" — auth pass). Verified: credential saved in ~/.git-credentials (0600 perms), non-interactive git ls-remote works, remote URL clean (no embedded token). Git auth migration COMPLETE.
+Why changed: Replacing the leaked PAT that was embedded in the remote URL.
+Status: Working — Verified.
+Next step: Owner MUST delete on GitHub: (1) old "MAbishion Token for Git" classic token (the leaked one), (2) expired "Tkn", (3) optionally the unused half-configured fine-grained token. Until #1 is deleted, the leak is still live.
