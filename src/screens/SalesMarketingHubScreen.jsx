@@ -8,6 +8,7 @@ import Badge from '../components/Badge';
 import Icon from '../components/Icon';
 import MickiiOrb from '../components/MickiiOrb';
 import CampaignTracker from '../components/marketing/CampaignTracker';
+import CampaignSimulator from '../components/marketing/CampaignSimulator';
 import { getLeads } from '../data/db.js';
 import { useBuild } from '../context/BuildContext';
 
@@ -141,7 +142,9 @@ export default function SalesMarketingHubScreen({ onNavigate }) {
 
         {/* Tab 1: Acquisition & Campaigns */}
         {activeTab === 'campaigns' && (
-          <div className="animate-in fade-in duration-300">
+          <div className="animate-in fade-in duration-300 space-y-5">
+            {/* Blueprint P4: budget/scenario planner — simulation only, no live ad APIs */}
+            <CampaignSimulator />
             {isLoadingLeads ? (
               <div className="flex flex-col items-center justify-center py-20 gap-3">
                 <div className="w-8 h-8 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />

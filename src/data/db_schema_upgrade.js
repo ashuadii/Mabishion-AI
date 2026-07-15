@@ -4,7 +4,7 @@
  * Creates tables if they do not exist. No destructive changes.
  */
 
-export const SCHEMA_VERSION = 22;
+export const SCHEMA_VERSION = 23;
 
 export const CREATE_TABLES_SQL = [
   `CREATE TABLE IF NOT EXISTS clients (
@@ -560,6 +560,52 @@ export async function upgradeDatabase(db) {
         )
       `).catch(() => {});
       await db.execute('CREATE INDEX IF NOT EXISTS idx_expenses_spent_on ON expenses(spent_on)').catch(() => {});
+    }
+
+    // ── v23: Blueprint adoption P4 — ad campaigns, SIMULATION mode only (no external APIs) ──
+    if (currentVersion < 23) {
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS campaigns (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          platform TEXT DEFAULT 'meta',
+          objective TEXT DEFAULT 'leads',
+          status TEXT DEFAULT 'draft',
+          mode TEXT DEFAULT 'simulation',
+          daily_budget REAL DEFAULT 0,
+          total_budget REAL DEFAULT 0,
+          spent REAL DEFAULT 0,
+          target_audience TEXT,
+          notes TEXT,
+          start_date TEXT,
+          end_date TEXT,
+          created_at TEXT DEFAULT (datetime('now'))
+        )
+      `).catch(() => {});
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS campaign_ads (
+          id TEXT PRIMARY KEY,
+          campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+          headline TEXT NOT NULL,
+          body TEXT,
+          cta TEXT,
+          status TEXT DEFAULT 'draft',
+          created_at TEXT DEFAULT (datetime('now'))
+        )
+      `).catch(() => {});
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS campaign_metrics (
+          id TEXT PRIMARY KEY,
+          campaign_id TEXT NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+          date TEXT NOT NULL,
+          impressions INTEGER DEFAULT 0,
+          clicks INTEGER DEFAULT 0,
+          leads INTEGER DEFAULT 0,
+          spend REAL DEFAULT 0,
+          UNIQUE(campaign_id, date)
+        )
+      `).catch(() => {});
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_campaign_metrics_campaign ON campaign_metrics(campaign_id)').catch(() => {});
     }
 
     // Insert or update version

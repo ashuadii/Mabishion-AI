@@ -1225,3 +1225,9 @@ What changed: Owner decisions on the 3 open security flags: (1) Repo stays PUBLI
 Why changed: Owner responses 2026-07-15.
 Status: Working — security chapter closed for now.
 Next step: P4 Campaigns module awaiting owner go-ahead; revisit repo visibility before production.
+
+[2026-07-15] [16:20] — [Claude Fable 5] — [db_schema_upgrade.js, marketing.js, CampaignSimulator.jsx (new), SalesMarketingHubScreen.jsx, BLUEPRINT_GAP_ANALYSIS.md]
+What changed: Blueprint adoption P4 Phase 1 — Ad Campaigns (SIMULATION MODE ONLY, no external APIs). (1) Schema v22→v23: campaigns, campaign_ads, campaign_metrics (UNIQUE campaign_id+date). (2) marketing.js: addCampaign/getCampaigns/updateCampaignStatus/deleteCampaign/addCampaignAd/getCampaignAds/simulateCampaignDay/getCampaignMetrics/getCampaignSummary. Simulation uses Indian-market benchmarks (Meta: CPM ₹90-140, CTR 1-1.8%, conv 6-10%; Google: CPC ₹18-35, CTR 3-5%, conv 8-12%); budget cap enforced — campaign auto-completes at total_budget; audit-logged. (3) New CampaignSimulator.jsx in Sales & Marketing Hub Campaigns tab (above existing CampaignTracker — nothing removed): create form, Activate/Pause/Resume, Simulate Day/+7 Days, per-campaign Impressions/Clicks/Leads/CPL/CTR tiles, budget progress, confirm-gated delete, prominent SIMULATION MODE badge. Live Meta/Google APIs remain future phase behind CRITICAL approval gate.
+Why changed: Owner go-ahead for P4.
+Status: Working — npm run build 5.14s exit 0 (full suite); simulation math + budget cap verified on real SQLite (7 days, ₹3000 cap respected, CPL ₹107, CTR 1.39%); UI render verified live on 1420. Tauri persistence Partially Verified (same plugin-sql path as P2).
+Next step: P4 Phase 2 candidates — LLM ad-variant generation via service_promo worker, daily metrics chart (Recharts), auto-simulate active campaigns via cron. Owner to test in desktop app.
