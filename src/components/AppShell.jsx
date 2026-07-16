@@ -112,8 +112,11 @@ export default function AppShell({ activeNavId, onNavigate, commandBar, children
     <div className="h-screen overflow-hidden antialiased" style={{ background: 'linear-gradient(135deg, #0F172A 0%, #111827 48%, #1B2E3A 100%)' }}>
       <Sidebar activeNavId={activeNavId} onNavigate={onNavigate} />
 
+      {/* scroll-smooth eases keyboard / anchor / programmatic scrolls. Mouse-wheel smoothness
+          is native to WebKit and unaffected by it — that is addressed by removing the
+          per-frame backdrop-filter cost (see glassStyle in consts.js). */}
       <main
-        className={`relative z-10 flex h-screen flex-col overflow-y-auto ${commandBar ? 'pb-0' : 'pb-28'}`}
+        className={`relative z-10 flex h-screen flex-col overflow-y-auto scroll-smooth ${commandBar ? 'pb-0' : 'pb-28'}`}
         style={{ marginLeft: sidebarExpanded ? C.sidebarExpand : C.sidebarW, transition: 'margin-left 0.3s' }}
       >
         <div className="flex-1 p-8">

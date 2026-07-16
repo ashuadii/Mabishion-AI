@@ -77,7 +77,7 @@ export default function CriticalApprovalModal({
     >
       <div
         className="w-full max-w-lg p-8 rounded-2xl border border-white/10 flex flex-col relative text-left select-none animate-in zoom-in duration-300"
-        style={glassStyle({ glow: "red", strong: true })}
+        style={glassStyle({ glow: "red", strong: true, blur: true })}
         onClick={handleOverlayClick}
       >
         {/* Glow Header Alert */}

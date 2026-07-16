@@ -486,7 +486,7 @@ export default function ApprovalDetailDrawer({ approval, onClose, onResolve, onU
         >
           <div 
             className="w-full max-w-4xl max-h-[85vh] p-8 rounded-2xl border border-white/10 flex flex-col relative text-left select-text animate-in zoom-in duration-300 overflow-hidden"
-            style={glassStyle({ glow: 'primary', strong: true })}
+            style={glassStyle({ glow: 'primary', strong: true, blur: true })}
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-5 flex-shrink-0">

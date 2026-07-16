@@ -24,21 +24,32 @@ export const C = {
   sidebarExpand: 268
 };
 
-export function glassStyle({ strong = false, glow = 'none', borderColor } = {}) {
+/**
+ * Glass surface per Brand Guidelines Edition 01 §07: 145deg gradient of
+ * rgba(255,255,255,.05) → .02 over the surface, 1px rgba(255,255,255,.1) border.
+ * The navy base stays (owner decision 2026-07-16: app keeps the navy/gold identity).
+ *
+ * PERFORMANCE (owner decision 2026-07-16 — scroll jank):
+ * `backdrop-filter` is OFF by default. Panels sit on AppShell's smooth navy gradient, and
+ * blurring a smooth gradient returns the same smooth gradient — the effect was invisible but
+ * cost a full re-blur of every one of ~90 panels on every scroll frame. Translucency alone
+ * (the .78 alpha) still gives the glass read.
+ *
+ * Pass `blur: true` ONLY for surfaces floating over real, detailed content — modals, drawers
+ * and sticky bars — where the blur actually does visual work.
+ */
+export function glassStyle({ strong = false, glow = 'none', borderColor, blur = false } = {}) {
   const glowMap = {
     warning: `0 24px 80px rgba(0,0,0,.40), 0 0 44px ${C.warning}24, inset 0 1px 0 rgba(255,255,255,.08)`,
     info: `0 24px 80px rgba(0,0,0,.40), 0 0 36px ${C.info}18, inset 0 1px 0 rgba(255,255,255,.08)`,
     primary: `0 24px 80px rgba(0,0,0,.40), 0 0 36px ${C.primary}18, inset 0 1px 0 rgba(255,255,255,.08)`,
     none: '0 24px 76px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.08)'
   };
-  // Glass surface per Brand Guidelines Edition 01 §07: 145deg gradient of
-  // rgba(255,255,255,.05) → .02 over the surface, 1px rgba(255,255,255,.1) border, 25px blur.
-  // The navy base stays (owner decision 2026-07-16: app keeps the navy/gold identity).
   return {
     background: `linear-gradient(145deg, rgba(255,255,255,.05), rgba(255,255,255,.02)), ${strong ? 'rgba(27,46,58,.92)' : 'rgba(27,46,58,.78)'}`,
     border: `1px solid ${borderColor || 'rgba(255,255,255,.1)'}`,
     borderRadius: C.radius,
-    backdropFilter: 'blur(25px)',
+    ...(blur ? { backdropFilter: 'blur(25px)' } : {}),
     boxShadow: glowMap[glow] || glowMap.none
   };
 }
