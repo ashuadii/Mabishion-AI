@@ -34,8 +34,13 @@ export default function WorkerMonitorScreen({ onNavigate }) {
   const [queueCount, setQueueCount] = useState(0);
   const [liveRuns, setLiveRuns] = useState([]);
 
-  const load = async () => {
-    setLoading(true);
+  // BUGFIX 2026-07-16 (owner: "scroller jumping back to top"): this ran setLoading(true) on
+  // every 5s poll. Because the content is rendered as `{!loading && ...}`, each poll unmounted
+  // the whole screen, collapsed its height, and the scroll container clamped to top — so the
+  // page jumped to the top every 5 seconds. The spinner now shows only on the first load;
+  // background refreshes swap data in silently and keep scroll position.
+  const load = async ({ initial = false } = {}) => {
+    if (initial) setLoading(true);
     try {
       const [wLogs, lUsage, daily] = await Promise.all([
         getWorkerLogs(), getLlmUsage(), getDailyCostTotal()
@@ -49,7 +54,7 @@ export default function WorkerMonitorScreen({ onNavigate }) {
     } catch (e) {
       console.error('[WorkerMonitorScreen]', e);
     } finally {
-      setLoading(false);
+      if (initial) setLoading(false);
     }
   };
 
@@ -59,9 +64,9 @@ export default function WorkerMonitorScreen({ onNavigate }) {
   };
 
   useEffect(() => {
-    load();
+    load({ initial: true });
     const timer = setInterval(() => {
-      load();
+      load(); // silent background refresh — no unmount, scroll position preserved
       setLiveRuns(getActiveRuns()); // poll live runs every 5s
     }, 5000);
     return () => clearInterval(timer);
