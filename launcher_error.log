@@ -1,7 +1,6 @@
---- Launching Nexious AI at Thursday 02 July 2026 04:51:28 PM IST ---
+--- Launching Mabishion AI at Thursday 16 July 2026 01:44:00 PM IST ---
 Clearing port 1420...
-Starting Ollama...
-/home/admin-ubuntu/Desktop/Nexious-AI/Mickii/nexious-ai-starter/launch.sh: line 24: ollama: command not found
+Ollama not installed — skipping (cloud LLMs will be used)
 Starting Tauri App...
 
 > mabishion-ai@0.1.0 tauri
@@ -12,17 +11,13 @@ Starting Tauri App...
 > mabishion-ai@0.1.0 dev
 > vite
 
+1:44:02 PM [vite] (client) Re-optimizing dependencies because vite config has changed
 
-  VITE v5.4.21  ready in 137 ms
+  VITE v8.1.4  ready in 242 ms
 
   ➜  Local:   http://localhost:1420/
   ➜  Network: use --host to expose
      Running DevCommand (`cargo  run --no-default-features --color always --`)
-        Info Watching /home/admin-ubuntu/Desktop/Nexious-AI/Nexious Mickii/nexious-ai-starter/src-tauri for changes...
-[1m[92m   Compiling[0m mabishion-ai v0.1.0 (/home/admin-ubuntu/Desktop/Nexious-AI/Nexious Mickii/nexious-ai-starter/src-tauri)
-[1m[96m    Building[0m [=======================> ] 562/564: mabishion-ai(build)         [1m[96m    Building[0m [=======================> ] 563/564: mabishion-ai(bin)           [K[1m[92m    Finished[0m `dev` profile [unoptimized + debuginfo] target(s) in 5.93s
+        Info Watching /home/admin-ubuntu/Desktop/Mabishion-AI/Mabishion Software/src-tauri for changes...
+[1m[92m    Finished[0m `dev` profile [unoptimized + debuginfo] target(s) in 0.41s
 [1m[92m     Running[0m `target/debug/mabishion-ai`
-6:47:21 PM [vite] hmr update /src/screens/DashboardScreen.jsx, /src/index.css
-[Rust] Gemini Proxy -> https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
-7:04:15 PM [vite] hmr update /src/components/Sidebar.jsx, /src/index.css
-7:05:22 PM [vite] page reload src/services/fileOperationService.js

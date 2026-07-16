@@ -4,6 +4,11 @@ on:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+# Least privilege: without this the workflow token gets broad default permissions.
+# Fixes GitHub code-scanning alert #3; rescued from the adiiweb-patch-1 branch before it
+# was deleted in the 2026-07-16 single-branch consolidation.
+permissions:
+  contents: read
 jobs:
   build:
     strategy:
