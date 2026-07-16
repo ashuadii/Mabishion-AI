@@ -2,318 +2,213 @@
   <img src="assets/nex-banner.png?v=2" alt="Mabishion AI Studio Banner" width="100%">
 </p>
 
-<h1 align="center">Mabishion AI Studio v4.0</h1>
+<h1 align="center">Mabishion AI Studio</h1>
 
 <p align="center">
-  <strong>The First Fully Autonomous AI Agency Operating System</strong><br>
-  Built for Digital Marketing Agencies, Freelancers, and AI-Native Service Businesses.
+  <strong>Architects of Ambition</strong><br>
+  A private, local-first desktop OS for running a solo digital agency.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/version-0.1.0-C9A24B" alt="version">
+  <img src="https://img.shields.io/badge/Tauri-v2-243B4A" alt="Tauri v2">
+  <img src="https://img.shields.io/badge/React-18-243B4A" alt="React 18">
+  <img src="https://img.shields.io/badge/workers-24-10B981" alt="24 workers">
+  <img src="https://img.shields.io/badge/status-in%20development-F59E0B" alt="in development">
 </p>
 
 ---
 
-## 🎯 Vision
+## What this is
 
-**Mabishion AI Studio** was born from a single belief: *A solo operator should be able to run a full-service digital agency without hiring a team.*
+Mabishion AI Studio is the **owner's private revenue engine** — not a SaaS product, not a
+public service, and not accepting sign-ups. One operator runs it on one machine.
 
-In 2025, digital marketing agencies spend 60-70% of revenue on payroll, project management overhead, and coordination chaos. **Mabishion eliminates that.** It is not just a CRM, not just a project tracker, and not just an AI chatbot. It is a **complete operating system** where 22 specialized AI workers handle everything from lead generation to website delivery — under one local-first, privacy-focused desktop application.
+It replaces a stack of subscriptions with a single desktop app: leads, projects, marketing,
+finance, documents and delivery all live in one local SQLite database, with 24 specialist AI
+workers doing the production work behind human approval gates.
 
-**Why it was built:**
-- To remove dependency on 10+ SaaS subscriptions (Zapier, Notion, HubSpot, Figma, Canva, Buffer, etc.)
-- To keep client data **local and encrypted** (SQLite + Tauri), not on someone else's cloud
-- To let a single person execute like a 20-person agency
-- To prove that **open-weight models + API orchestration** can outperform expensive enterprise stacks
-
----
-
-## 🚀 What Makes It Different
-
-| Traditional Stack | Mabishion AI Studio |
-|-------------------|-------------------|
-| 10+ SaaS tools ($500+/mo) | **One desktop app (FREE)** |
-| 5-10 employees | **22 AI Workers** |
-| Cloud data risk | **Local SQLite + Tauri binary** |
-| Manual copy-paste between apps | **Autonomous pipeline: Lead → Project → Delivery** |
-| Generic AI (ChatGPT web) | **Specialized workers with memory + context** |
+> **AI suggests. The human decides.**
+> Nothing client-facing and nothing involving money leaves this machine without an explicit approval.
 
 ---
 
-## ✨ Core Features
+## Core ideas
 
-### 🏢 Digital Marketing Command Center
-- **Lead CRM** with pipeline stages, budget tracking (₹ support), and approval workflows
-- **Campaign Tracker** for multi-channel marketing execution
-- **Social Scheduler** with auto-content generation
-- **SEO & Research** engine with SERP + deep research APIs
-- **Finance Dashboard** with proposal → invoice → payment tracking
-
-### 🤖 22 Autonomous AI Workers
-Every worker is a specialized LLM agent with:
-- **Role-specific system prompts**
-- **SQLite memory** (context persists across sessions)
-- **Approval gates** (critical actions need human sign-off)
-- **Fallback chains** (Gemini → Groq → OpenRouter)
-
-### 🖥️ Native Desktop App
-- **Tauri v2** — Rust backend, React frontend
-- **Cross-platform**: Linux `.deb`/`.AppImage`, Windows `.msi`, macOS `.dmg`
-- **Lightweight** — <100MB install, runs on 8GB RAM laptops
-- **Offline-first** — SQLite runs locally; only LLM calls need internet
+| Principle | What it means in practice |
+|---|---|
+| **Local-first** | All data lives in a local SQLite file. Cloud is a fallback, never the source of truth. |
+| **Human-gated** | Every client-facing or money action routes through a 3-tier approval system. |
+| **₹0 by default** | Free LLM tiers first; local Ollama as the zero-cost floor. Hard spend caps in code. |
+| **Zero-server** | No Docker, no Postgres, no Redis, no Python backend. A Rust binary and a database file. |
 
 ---
 
-## 🏗️ Architecture
+## The approval system
 
+Every worker declares an approval tier. The tiers are enforced, not advisory.
 
----
-
-## 🎯 Vision
-
-**Mabishion AI Studio** was born from a single belief: *A solo operator should be able to run a full-service digital agency without hiring a team.*
-
-In 2025, digital marketing agencies spend 60-70% of revenue on payroll, project management overhead, and coordination chaos. **Mabishion eliminates that.** It is not just a CRM, not just a project tracker, and not just an AI chatbot. It is a **complete operating system** where 22 specialized AI workers handle everything from lead generation to website delivery — under one local-first, privacy-focused desktop application.
-
-**Why it was built:**
-- To remove dependency on 10+ SaaS subscriptions (Zapier, Notion, HubSpot, Figma, Canva, Buffer, etc.)
-- To keep client data **local and encrypted** (SQLite + Tauri), not on someone else's cloud
-- To let a single person execute like a 20-person agency
-- To prove that **open-weight models + API orchestration** can outperform expensive enterprise stacks
+| Tier | Behaviour |
+|---|---|
+| **CRITICAL** | Popup + WhatsApp alert + sound. **Never expires** — it waits for the owner indefinitely. Used for proposals, payments, code, websites, deliverables. |
+| **STANDARD** | Sidebar queue. After 24h with no answer it **escalates to CRITICAL** — it never auto-approves. |
+| **AUTO** | Log-only. Reserved for system workers with no external effect (QA, notifications, quota tracking). |
 
 ---
 
-## 🚀 What Makes It Different
+## The 24 workers
 
-| Traditional Stack | Mabishion AI Studio |
-|-------------------|-------------------|
-| 10+ SaaS tools ($500+/mo) | **One desktop app (FREE)** |
-| 5-10 employees | **22 AI Workers** |
-| Cloud data risk | **Local SQLite + Tauri binary** |
-| Manual copy-paste between apps | **Autonomous pipeline: Lead → Project → Delivery** |
-| Generic AI (ChatGPT web) | **Specialized workers with memory + context** |
+Every worker extends `BaseWorker`, has a role-specific prompt, reads and writes SQLite, and
+carries an explicit approval policy in `src/engine/workers/index.js`.
 
----
-
-## ✨ Core Features
-
-### 🏢 Digital Marketing Command Center
-- **Lead CRM** with pipeline stages, budget tracking (₹ support), and approval workflows
-- **Campaign Tracker** for multi-channel marketing execution
-- **Social Scheduler** with auto-content generation
-- **SEO & Research** engine with SERP + deep research APIs
-- **Finance Dashboard** with proposal → invoice → payment tracking
-
-### 🤖 22 Autonomous AI Workers
-Every worker is a specialized LLM agent with:
-- **Role-specific system prompts**
-- **SQLite memory** (context persists across sessions)
-- **Approval gates** (critical actions need human sign-off)
-- **Fallback chains** (Gemini → Groq → OpenRouter)
-
-### 🖥️ Native Desktop App
-- **Tauri v2** — Rust backend, React frontend
-- **Cross-platform**: Linux `.deb`/`.AppImage`, Windows `.msi`, macOS `.dmg`
-- **Lightweight** — &lt;100MB install, runs on 8GB RAM laptops
-- **Offline-first** — SQLite runs locally; only LLM calls need internet
+| Area | Workers |
+|---|---|
+| **Development** | Developer · Website Builder · Documentor |
+| **Content** | Content Writer · Proposal Maker · Self Promo · Service Promo · Showcaser |
+| **Sales** | Lead Manager · Lead Copysmith · Client Intake |
+| **Planning** | Blueprint Maker · Social Scheduler · Packager |
+| **Finance** | Payment Handler |
+| **Operations** | Compliance · Security Auditor |
+| **System** | QA Validator · Notification · LLM Manager · MCP Hub · AI Call Product · Image Generator |
 
 ---
 
-## 🏗️ Architecture
+## AI engine
 
-┌─────────────────────────────────────────────┐
-│           Tauri Desktop App                 │
-│  (React 18 + Tailwind + Vite + Glassmorphism)│
-├─────────────────────────────────────────────┤
-│              Bridge Layer                     │
-│     (Rust ↔ JavaScript via Tauri Commands)   │
-├─────────────────────────────────────────────┤
-│              Mickii Core                      │
-│  • Intent Router  • Decision Engine           │
-│  • Workflow Engine • Response Engine          │
-├─────────────────────────────────────────────┤
-│              22 AI Workers                    │
-│  LeadGen → Writer → ImageGen → WebsiteBuilder │
-│  SEO → Social → Ads → Finance → Legal         │
-├─────────────────────────────────────────────┤
-│              Cortex Engine                  │
-│  LLM Router: Gemini → Groq → OpenRouter      │
-├─────────────────────────────────────────────┤
-│              SQLite Database                │
-│  30+ Tables • 44KB • Backup/Restore         │
-└─────────────────────────────────────────────┘
+`src/engine/cortex.js` runs a ReAct reasoning loop with six executive personas
+(CEO, CTO, CMO, CLO, COO, CFO-advisory).
 
-✨ Core Features
-🏢 Digital Marketing Command Center
+**Provider fallback chain** — each step is tried only if the previous one fails or has no key:
 
-    Lead CRM with pipeline stages, budget tracking (₹ support), and approval workflows
-    Campaign Tracker for multi-channel marketing execution
-    Social Scheduler with auto-content generation
-    SEO & Research engine with SERP + deep research APIs
-    Finance Dashboard with proposal → invoice → payment tracking
+```
+Gemini 2.5 Flash → Groq → OpenAI → NVIDIA NIM → Cerebras → Ollama (local, ₹0)
+```
 
-## 📋 22 AI Workers Detail
+Every call is logged with provider, model, tokens and cost. Repeat prompts are served from a
+24-hour response cache, so re-running the same generation costs nothing.
 
-| # | Worker | Role | Digital Marketing Relevance |
-|---|--------|------|----------------------------|
-| 1 | **leadGenWorker** | Ad copy, headlines, lead magnets | 🔥 Core — generates FB/Google ad copy |
-| 2 | **leadManagerWorker** | Lead scoring & CRM updates | 🔥 Core — manages pipeline |
-| 3 | **writerWorker** | Blogs, emails, landing pages, WhatsApp copy | 🔥 Core — all content generation |
-| 4 | **imageGenWorker** | AI image generation (Pollinations.AI → SDXL) | 🔥 Core — creatives, banners, social posts |
-| 5 | **websiteBuilderWorker** | Full website code (HTML/CSS/JS) | 🔥 Core — client delivery |
-| 6 | **socialSchedulerWorker** | Social media calendar & posting | 🔥 Core — automation |
-| 7 | **selfPromoWorker** | Social media posts for agency brand | 🔥 Core — agency marketing |
-| 8 | **servicePromoWorker** | Service descriptions & marketing copy | 🔥 Core — package sales |
-| 9 | **showcaserWorker** | Portfolio & case study generation | 🔥 Core — social proof |
-| 10 | **documentorWorker** | User manuals, API docs, SOPs | Support — client handoff |
-| 11 | **proposalMakerWorker** | Client proposals & contracts | Support — sales docs |
-| 12 | **blueprintMakerWorker** | Technical architecture docs | Support — project planning |
-| 13 | **businessAnalystWorker** | Requirements & gap analysis | Support — discovery |
-| 14 | **clientIntakeWorker** | Onboarding forms & welcome kits | Support — client experience |
-| 15 | **developerWorker** | Code generation & debugging | Support — custom dev |
-| 16 | **packagerWorker** | ZIP bundling & delivery prep | Support — final delivery |
-| 17 | **paymentHandlerWorker** | Invoice & payment tracking | Support — finance |
-| 18 | **complianceWorker** | T&C, privacy policy, legal checks | Support — risk management |
-| 19 | **notificationWorker** | Alerts, emails, WhatsApp alerts | Support — communication |
-| 20 | **approvalEngine** | Human-in-the-loop gates | Governance — nothing ships without sign-off |
-| 21 | **llmManagerWorker** | API key rotation & fallback | Infrastructure — keeps AI running |
-| 22 | **mcpHubWorker** | External tool integration | Infrastructure — connects to 3rd party APIs |
+**Spend caps are enforced in code:** ₹150/day and ₹1,500/month, with a hard stop — not a warning.
 
 ---
 
-## 🖥️ Screens (17 Active)
+## The build pipeline
 
-| Screen | Purpose |
-|--------|---------|
-| **DashboardScreen** | Agency overview, KPIs, quick actions |
-| **LeadsScreen** | Full CRM — table, form, pipeline, detail drawer |
-| **ProjectsScreen** | Project management with worker assignment |
-| **ApprovalCenterScreen** | Human approval queue for critical actions |
-| **SalesMarketingHubScreen** | Campaigns, ads, promotions unified view |
-| **FinanceScreen** | Proposals, invoices, payments, P&L |
-| **ReportsScreen** | Analytics, worker performance, revenue |
-| **ResearchScreen** | SERP, deep web, competitor analysis |
-| **AutomationsScreen** | Workflow builder, cron jobs, triggers |
-| **SkillLibraryScreen** | Worker registry, skill cards, status |
-| **SettingsScreen** | LLM keys, theme, database backup/restore |
-| **WebsiteBuilderScreen** | Visual site builder (Phase 4) |
-| **ClientPortalScreen** | Client-facing project view |
-| **SEOConsoleScreen** | Rank tracking, audit, keyword research |
-| **ContentStudioScreen** | Blog, email, social content calendar |
-| **AdManagerScreen** | Meta/Google ad campaign manager |
-| **WhatsAppHubScreen** | W Business API integration, broadcasts |
+Work flows through a 16-tier pipeline, each tier owned by a worker:
+
+```
+T1  Discovery      T5  Planning      T9   Integration    T13  Preview
+T2  Research       T6  Design        T10  QA & Testing   T14  Revision
+T3  Proposal       T7  Development   T11  Compliance     T15  Deployment
+T4  Blueprint      T8  Content       T12  Packaging      T16  Sign-Off
+```
 
 ---
 
-## 🛠️ Tech Stack
+## Services
+
+**Client-facing (4 lines):**
+
+| Service | Includes |
+|---|---|
+| **Digital Marketing** | Brand guidelines, ad creatives, monthly social packs, Google Ads, funnels, analytics, content marketing |
+| **Website Development** | Landing pages, full websites, SaaS apps, PWAs, logo & brand kits |
+| **Custom Software** | Desktop and mobile applications |
+| **AI Development** | Multi-agent systems, custom agents, chatbots, workflow automation, consulting |
+
+**Internal Tools** — 11 automations for running Mabishion itself (CRM, leads, sales, HR,
+finance, documents, workflow, website/social/SEM management). Founder-only; never sold.
+
+---
+
+## Tech stack
 
 | Layer | Technology |
-|-------|-----------|
-| **Frontend** | React 18, Tailwind CSS, Vite, Framer Motion |
-| **Backend** | Tauri v2 (Rust), SQLite via `tauri-plugin-sql` |
-| **AI Engine** | Cortex.js — Multi-provider router |
-| **LLM Providers** | Google Gemini, Groq (Llama3), OpenRouter |
-| **Image Gen** | Pollinations.AI (free) → Hugging Face SDXL |
-| **Build Tool** | Vite + Rollup |
-| **Package** | Tauri Bundler → `.deb`, `.msi`, `.dmg`, `.AppImage` |
+|---|---|
+| **Shell** | Tauri v2 (Rust) |
+| **Frontend** | React 18 · Vite 8 (rolldown) · Tailwind CSS 3 |
+| **State / Routing** | React Context · React Router v6 |
+| **Database** | SQLite via `@tauri-apps/plugin-sql` |
+| **Reasoning** | `cortex.js` — ReAct loop, multi-provider router |
+| **Visual flows** | React Flow · **Charts** Recharts |
+| **File generation** | jsPDF · JSZip |
+| **Image generation** | Pollinations.AI (free) → Hugging Face |
+| **Type** | Marcellus (display) · Jost (UI) |
+| **Testing** | Vitest (340 tests) · Playwright |
 
 ---
 
-## ⚡ Installation
+## Screens
 
-### Linux (Ubuntu/Debian)
+Dashboard · Playground (build cockpit) · Marketing Studio · Leads · Projects · Clients ·
+Money (finance, invoices, products, retainers, reports) · Workers · Internal Tools ·
+Approvals · Settings — plus Knowledge Base, Documents, Tasks and Automations.
+
+---
+
+## Security posture — stated honestly
+
+- **API keys** are never stored in plain text in the database. They are held as `secret://`
+  references and resolved through Rust-side Tauri commands, with environment-variable fallback.
+- **Filesystem access** is scoped to the app's own data directory — the app cannot write
+  elsewhere on the machine.
+- **SQL** is parameterised everywhere; a unit test guards against regressions.
+- **The database file itself is not yet encrypted.** SQLCipher / AES-256-at-rest is planned,
+  not shipped. Anyone with access to the machine can read `mabishion.db`. This is documented
+  rather than glossed over.
+- **Backups** are written locally on an hourly schedule, with the newest 24 retained.
+
+---
+
+## Development
+
 ```bash
-sudo dpkg -i mabishion-ai_0.1.0_amd64.deb
-# Or portable:
-chmod +x mabishion-ai_0.1.0_amd64.AppImage
-./mabishion-ai_0.1.0_amd64.AppImage
+npm install
+npm run dev          # Vite dev server on :1420
+npm run tauri dev    # full desktop app
+npm run build        # runs the test suite, then builds
+npm test             # 340 tests across 24 files
+```
 
-Windows
-Download .msi from Releases → Double click → Install
-macOS
-Download .dmg → Drag to Applications
-🎮 Usage Flow
-plain
-Copy
+**Linux note:** on Wayland the WebKitGTK window will not appear. `launch.sh` forces
+`GDK_BACKEND=x11` to work around it — use that script rather than calling `tauri dev` directly.
 
-1. Open App → Dashboard loads
-2. Add Lead → LeadForm (₹ budget input, debounced save)
-3. Approve Lead → ApprovalCenter → Status: Approved
-4. Build Project → Auto-assign workers (Writer + ImageGen + WebsiteBuilder)
-5. Generate Content → Writer creates copy → ImageGen creates banners
-6. Build Website → WebsiteBuilder generates HTML/CSS/JS
-7. Review & Approve → ApprovalCenter → Client preview
-8. Package & Deliver → PackagerWorker → ZIP → Email/CPanel deploy
-9. Invoice → PaymentHandler → Stripe integration
+---
 
-🗄️ Database Schema (SQLite)
-30+ tables including:
+## Project status
 
-    leads — Full CRM with custom fields
-    projects — Project lifecycle tracking
-    workers — 22 worker registry with status
-    documents — Generated content storage
-    approvals — Human-in-the-loop audit trail
-    campaigns — Marketing campaign data
-    invoices — Finance tracking
-    settings — App configuration & API keys
+**Version 0.1.0 — in active development. Not production, not released, no installers published yet.**
 
-Features:
+| Area | State |
+|---|---|
+| Local SQLite foundation | Working |
+| 24 workers + registry | Working |
+| Approval system (3 tiers) | Working |
+| Multi-LLM fallback + cost caps + cache | Working |
+| Playground / 16-tier pipeline | Working |
+| Lead CRM · Projects · Finance · P&L | Working |
+| Ad campaigns | Simulation mode only — no live ad APIs |
+| Database encryption at rest | Planned |
+| App lock (master password / PIN) | Planned |
+| Packaged installers | Not yet published |
 
-    Auto-backup on every major action
-    JSON export/import for migration
-    Encrypted at rest (Tauri secure storage for keys)
+---
 
-🧠 The Effort Behind This
+## Governance
 
-    This project represents 6+ months of iterative development across 4 major versions.
+This repository carries its own rules. Before contributing anything, read
+[`docs/governance/`](docs/governance/):
 
-    v1.0 — Concept & SQLite schema design
-    v2.0 — Tauri integration + first 10 workers
-    v3.0 — CRM, Approval Engine, Finance module
-    v4.0 — 22 workers, ImageGen, Writer, full pipeline
+- **`PROJECT_RULES.md`** — verified architecture reference
+- **`WORKFLOW_RULES.md`** — how work gets executed and validated
+- **`PROJECT_LEDGER.md`** — every change, with evidence
+- **`docs/brand/BRAND_GUIDELINES.md`** — the identity system
 
-What went into v4.0 alone:
+---
 
-    20,000+ lines of JavaScript/React code
-    3,000+ lines of Rust (Tauri backend)
-    22 specialized LLM prompt systems
-    30+ SQLite table designs
-    17 screen components with glassmorphism UI
-    6 critical bug fixes (column mapping, debounce, budget input, Ollama removal, dead imports)
-    Cross-platform build pipeline (Linux .deb confirmed, Windows & macOS via CI/CD)
-    Complete uninstall of legacy dependencies (Antigravity 2.0 removed due to instability)
-
-Philosophy: Build once, own forever. No SaaS rent. No vendor lock-in. Your data, your workers, your agency.
-🚧 Roadmap
-Table
-Phase	Feature	Status
-✅ v4.0	22 Workers, SQLite, Tauri, CRM	COMPLETE
-✅ v4.1	Visual Workflow Editor (React Flow)	COMPLETE
-⏳ v4.2	WhatsApp Business API Integration	Pending Meta verification
-⏳ v4.3	Stripe Live + Invoice Automation	Pending
-⏳ v4.4	CPanel/FTP Auto-Deploy Tool	Pending
-⏳ v4.5	Cloud Backend (Vercel/Render)	Future — reduce local load
-⏳ v5.0	Multi-tenant Client Portal	Future
-🎨 Branding
 <p align="center">
-  <img src="assets/mabishion-ai-banner.png?v=2" alt="Mabishion AI Logo" width="60%">
+  <img src="assets/mabishion-ai-banner.png?v=2" alt="Mabishion AI" width="60%">
 </p>
-🤝 Contributing
-This is a private project currently. For access or collaboration inquiries:
 
-    Contact: adii.webg@gmail.com
-    GitHub: @adiiweb
-
-📜 License
-Private / Proprietary — All rights reserved.
-This software is not open-source. The codebase, worker prompts, and architecture are proprietary intellectual property of the author.
-🙏 Acknowledgments
-
-    Google Gemini — Primary reasoning engine
-    Groq — Ultra-fast Llama3 inference
-    Tauri — The framework that made desktop possible
-    React + Tailwind — UI velocity
-    SQLite — Zero-config local database
-
-    "One human. Twenty-two workers. Infinite scale."
-    — Mabishion AI Studio
-
-Built with 🔥 in India. Powered by AI. Owned by you.
+<p align="center">
+  <sub>Mabishion — Architects of Ambition · Private software, not for redistribution.</sub>
+</p>
