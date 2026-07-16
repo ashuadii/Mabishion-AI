@@ -1,0 +1,21 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'cd \"/home/admin-ubuntu/Desktop/Nexious-AI\" && git add -A && git diff --cached --quiet || git commit -m \"Auto-commit [docs]: $(date \"+%Y-%m-%d %H:%M\")\" --quiet && git push origin main --quiet 2>/dev/null; cd \"/home/admin-ubuntu/Desktop/Nexious-AI/Nexious Mickii/nexious-ai-starter\" && git add -A && git diff --cached --quiet || git commit -m \"Auto-commit [app]: $(date \"+%Y-%m-%d %H:%M\")\" --quiet && git push origin dev --quiet 2>/dev/null' &",
+            "async": true,
+            "statusMessage": "Auto-committing changes to GitHub..."
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(git *)"
+    ]
+  }
+}

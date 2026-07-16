@@ -1,0 +1,391 @@
+# AI PRODUCT STUDIO — TECHNICAL BLUEPRINT (MABISHION AI)
+## FINAL ARCHITECTURE REFERENCE (VERIFIED LOCAL STACK)
+
+---
+
+## DOCUMENT INFO
+- Version: 4.1.0-ALIGNED
+- Date: 2026-06-03
+- Status: Production Ready (Tauri + SQLite Stack)
+- Author: MABISHIONAI AI Team & Mickii Cortex
+
+---
+
+## TABLE OF CONTENTS
+
+1. Executive Summary
+2. Product Requirements (PRD)
+3. Technical Requirements (TRD)
+4. UI/UX Design
+5. Application Flows
+6. Database Schema (SQLite)
+7. Data Access & IPC Specifications
+8. Worker Architecture (Cortex JS)
+9. Implementation Plan
+10. Build & Deployment Guide
+11. Service Catalog
+12. Future Roadmap
+
+---
+
+# 1. EXECUTIVE SUMMARY
+
+AI Product Studio v4.0 is a private agency automation platform that transforms client ideas into revenue-generating digital products. Built for a single owner-operator, it handles end-to-end workflow: lead capture → business analysis → development → delivery — with mandatory human approval at every critical step.
+
+Core Philosophy: "AI Suggests, Human Decides"
+
+Key Differentiators:
+- Rs. 0 cost for first 2-3 months (free-tier LLMs)
+- 20 specialized workers across marketing, sales, research, planning, development, delivery
+- Multi-LLM fallback (Gemini, Groq, Cerebras, OpenRouter, Ollama)
+- MCP server integrations (Figma, Canva, Supabase, etc.)
+- WhatsApp alerts for critical decisions
+- Desktop app (Tauri) for local-first operation (Zero Server Cost)
+- Private cloud sync for cross-device access
+
+---
+
+# 2. PRD — PRODUCT REQUIREMENTS
+
+## 2.1 Target Users
+
+| User | Role | Access Level |
+|------|------|--------------|
+| Agency Owner | Admin | Full system control |
+| Internal Team | Operator | Monitor + exceptions |
+| End Clients | Customer | Forms, proposals, payments only |
+
+## 2.2 Feature Matrix
+
+| ID | Feature | Priority | Worker |
+|----|---------|----------|--------|
+| F-001 | Multi-LLM Management | P0 | llm_manager |
+| F-002 | MCP Server Hub | P0 | mcp_hub |
+| F-003 | Approval Queue System | P0 | notification |
+| F-004 | WhatsApp Notifications | P0 | notification |
+| F-005 | Self-Promotion Engine | P0 | self_promo |
+| F-006 | Social Media Scheduler | P0 | social_scheduler |
+| F-007 | Lead Generation | P0 | lead_gen |
+| F-008 | Lead CRM Management | P0 | lead_manager |
+| F-009 | Client Intake Forms | P0 | client_intake |
+| F-010 | Business Analysis (SWOT) | P0 | business_analyst |
+| F-011 | Technical Blueprint | P0 | blueprint_maker |
+| F-012 | Document Generator | P0 | documentor |
+| F-013 | Code Generation | P0 | developer |
+| F-014 | Website Builder | P0 | website_builder |
+| F-015 | Portfolio Showcase | P0 | showcaser |
+| F-016 | Payment Processing | P0 | payment_handler |
+| F-017 | ZIP Packaging | P0 | packager |
+| F-018 | Compliance Documents | P0 | compliance |
+| F-019 | AI Call Product | P1 | ai_call_product |
+| F-020 | Master Director Agent | P2 | Future Phase |
+
+## 2.3 Approval Rules
+
+| Worker | Approval Required | Severity | Auto-Reject |
+|--------|-------------------|----------|-------------|
+| proposal_maker | YES | CRITICAL | 24h |
+| payment_handler | YES | CRITICAL | 24h |
+| packager | YES | CRITICAL | 24h |
+| business_analyst | YES | STANDARD | 48h |
+| blueprint_maker | YES | STANDARD | 48h |
+| documentor | YES | STANDARD | 48h |
+| developer | YES | STANDARD | 48h |
+| showcaser | YES | STANDARD | 48h |
+| self_promo | YES | STANDARD | 48h |
+| service_promo | YES | STANDARD | 48h |
+| social_scheduler | YES | STANDARD | 48h |
+| lead_gen | YES | STANDARD | 48h |
+| website_builder | YES | STANDARD | 48h |
+| ai_call_product | YES | STANDARD | 48h |
+| compliance | YES | STANDARD | 48h |
+| lead_manager | NO | - | - |
+| client_intake | NO | - | - |
+| llm_manager | NO | - | - |
+| mcp_hub | NO | - | - |
+| notification | NO | - | - |
+
+---
+
+# 3. TRD — TECHNICAL REQUIREMENTS
+
+## 3.1 Technology Stack
+
+Desktop Shell (Host):
+| Component | Technology | Version |
+|-----------|------------|---------|
+| Shell Framework | Tauri | v2.0+ |
+| Core Language | Rust | 1.70+ |
+| Build Tool | Cargo | latest |
+| Data Layer | @tauri-apps/plugin-sql | latest |
+
+Frontend & Engine:
+| Component | Technology | Version |
+|-----------|------------|---------|
+| Framework | React | 18.2+ |
+| Build | Vite | 5.0+ |
+| Language | JavaScript / JSX | ES2022+ |
+| Styling | Tailwind CSS | 3.4+ |
+| State | Zustand | 4.5+ |
+| Routing | React Router | 6.20+ |
+| Logic Engine | Cortex Engine (cortex.js) | v1 |
+| HTTP Client | native fetch / axios | latest |
+| PDF | jsPDF | latest |
+| ZIP Generation| JSZip | latest |
+
+Database:
+| Component | Technology | Version |
+|-----------|------------|---------|
+| Primary | SQLite | local |
+| ORM/Queries | Raw SQL queries | db.js |
+
+AI/LLM:
+| Provider | Model | Daily Limit | Use Case |
+|----------|-------|-------------|----------|
+| Google AI Studio | Gemini 2.5 Flash | 1,500 | General |
+| Groq | Llama 3.3 70B | ~1,000 | Coding |
+| Cerebras | Llama 3.3 70B | ~1,700 | Volume |
+| OpenRouter | 11+ Free Models | 200 | Backup |
+| Ollama (Local) | Gemma 3 4B | Unlimited | Emergency |
+
+## 3.2 System Architecture
+
+DESKTOP LAYER
+└── Tauri v2 Shell (OS Windows, macOS, Linux)
+
+FRONTEND LAYER
+├── React Application (Browser/Webview)
+└── Screens (Dashboard, Leads, Projects, etc.)
+
+ENGINE LAYER (ReAct Loop)
+├── src/engine/cortex.js (Reasoning Engine)
+├── src/engine/runtime.js (Tool Dispatcher)
+└── src/engine/workers/ (23 Worker Scripts)
+
+DATA LAYER
+└── SQLite Database (mabishion.db)
+    └── src/data/db.js (Query Manager)
+
+EXTERNAL APIS
+├── LLM Providers (Gemini, Groq, OpenRouter)
+├── WhatsApp / Communications API
+└── Web Scraping / Research Utilities
+
+---
+
+# 4. UI/UX DESIGN
+
+## 4.1 Design System (Glassmorphic)
+
+Colors:
+| Token | Hex | Usage |
+|-------|-----|-------|
+| --color-primary | #6366F1 | Buttons, links, active |
+| --color-primary-dark | #4F46E5 | Hover |
+| --color-secondary | #10B981 | Success, approve |
+| --color-danger | #EF4444 | Reject, delete, errors |
+| --color-warning | #F59E0B | Pending, warnings |
+| --color-info | #3B82F6 | Information |
+| --color-bg | #0F172A | Main background (Dark mode) |
+| --color-surface | #1E293B | Cards, panels (Glassmorphic) |
+| --color-border | #334155 | Dividers (White/10) |
+| --color-text | #F8FAFC | Primary text |
+| --color-text-muted | #94A3B8 | Secondary text |
+
+Typography: Inter (Google Fonts)
+
+## 4.2 Key Screen Mockups
+
+Dashboard Overview:
+[Top Bar] Dashboard [+ New Project]
+[Stats Cards] Active: 5 | Pending: 3 | Revenue: Rs.1,25,000 | New Leads: 12
+[Recent Approvals] business_analyst: "SWOT for ABC" [View] [Approve]
+[Worker Status] self_promo: Running | lead_gen: Running | developer: Idle | documentor: Busy
+
+Critical Approval Popup:
+[Header] APPROVAL REQUIRED
+Worker: proposal_maker | Client: ABC Corporation | Type: Client Proposal
+
+[Actions] [APPROVE] [REJECT] [REQUEST CHANGES]
+Auto-reject in 24 hours if no response
+
+---
+
+# 5. APPFLOWS
+
+## 5.1 Main Workflow
+
+START → Self-Promo → Social Scheduler → Lead Gen → Lead Manager → Client Intake → Business Analyst → [APPROVE] → Blueprint Maker → [APPROVE] → Documentor → [APPROVE] → Developer → [APPROVE] → Showcaser → [APPROVE] → Payment Handler → [APPROVE] → Packager → [APPROVE] → Delivery → Compliance → COMPLETE
+
+## 5.2 Multi-LLM Fallback (Local Cortex)
+
+Worker Request in `cortex.js`
+  │
+  ▼
+Primary: Gemini 2.5 Flash
+  ├─ SUCCESS → Return
+  └─ FAIL → Fallback 1: Groq Llama 3.3
+              ├─ SUCCESS → Return
+              └─ FAIL → Fallback 2: Cerebras Llama 3.3
+                          ├─ SUCCESS → Return
+                          └─ FAIL → Emergency: Local Ollama
+
+---
+
+# 6. DATABASE SCHEMA (SQLite)
+
+Tables implemented in `src/data/db.js`:
+
+`projects`: id, name, client_name, type, stage, progress, health, due_date, data, created_at, mega_link
+`blueprints`: id, project_id, prd_text, trd_text, architecture_diagram, tech_stack_json, database_schema, api_endpoints_json, security_checklist, deployment_steps, version, changes, created_at
+`leads`: id, name, email, phone, source, status, score, budget, notes, created_at, last_contacted
+`approvals`: id, title, type, project_id, worker_name, request_data, status, created_at, expires_at, owner_notified, whatsapp_sent, owner_notes
+`whatsapp_logs`: id, phone, message, status, attempt, timestamp
+`action_ledger`: id, action_type, decision, risk_level, timestamp, rollback_data
+`skills`: id, name, category, description, source, created_at
+`knowledge_sources`: id, title, source_type, source_url, status, notes, created_at
+`analyst_reports`: id, project_id, brief, report_data, risk_score, go_no_go, created_at
+`settings`: key (PRIMARY KEY), value, updated_at
+`revenue`: id, project_id, amount, source, timestamp
+`llm_usage`: id, provider, model, prompt_tokens, completion_tokens, total_tokens, status, timestamp
+`cron_logs`: id, task_name, status, message, timestamp
+`worker_logs`: id, worker_name, status, input_data, output_data, error_message, timestamp, provider_used
+`client_context`: id, project_id, client_name, business_profile, constraints, custom_preferences, created_at, updated_at
+`workflows`: id, name, status, risk, trigger, description, last_run, created_at
+`workflow_nodes`: id, workflow_id, label, node_type, worker_name, x_pct, y_pct, config_json, created_at
+`workflow_connections`: id, workflow_id, from_node_id, to_node_id, condition_label, created_at
+
+---
+
+# 7. DATA ACCESS & IPC SPECIFICATIONS
+
+All data interactions occur natively inside the React frontend via SQLite SQL commands executed through the Tauri IPC plugin (`@tauri-apps/plugin-sql`).
+
+Instead of REST API endpoints, the application uses:
+1. `getDb().execute(query, params)` for INSERT, UPDATE, DELETE.
+2. `getDb().select(query, params)` for GET requests.
+3. Local state (Zustand / React Context) for real-time reactivity.
+4. Settings (`getSetting`, `saveSetting`) for API Keys.
+
+Tauri IPC Commands (`invoke`):
+- `invoke("gemini_proxy")`: Secure local proxy for LLM calls bypassing CORS.
+- `invoke("llm_proxy")`: Secure local proxy for other LLM providers.
+- Custom Rust functions mapped to frontend commands.
+
+---
+
+# 8. WORKER ARCHITECTURE (Cortex JS)
+
+## 8.1 Worker Configuration
+
+Workers live in `src/engine/workers/`. They are executed by the local `CronService` or `Cortex`.
+
+| Worker | Queue | Approval | Severity | Priority |
+|--------|-------|----------|----------|----------|
+| self_promo | marketing | Yes | standard | 5 |
+| lead_gen | sales | Yes | standard | 5 |
+| business_analyst | research | Yes | standard | 5 |
+| blueprint_maker | planning | Yes | standard | 5 |
+| documentor | planning | Yes | standard | 5 |
+| developer | development | Yes | standard | 5 |
+| website_builder | development | Yes | standard | 5 |
+| packager | delivery | Yes | CRITICAL | 10 |
+... (And 15 more workers mapped to local JS classes).
+
+## 8.2 Base Worker Structure (JavaScript)
+
+```javascript
+import { Cortex } from "../cortex.js";
+import { getDb } from "../../data/db.js";
+
+export default class BaseWorker {
+  constructor(name, queue, requiresApproval = false, approvalSeverity = 'standard') {
+    this.name = name;
+    this.queue = queue;
+    this.requiresApproval = requiresApproval;
+    this.approvalSeverity = approvalSeverity;
+    this.cortex = new Cortex();
+  }
+
+  async run(projectId, payload) {
+    try {
+      this.logStart(projectId, payload);
+      const result = await this.execute(projectId, payload);
+
+      if (this.requiresApproval) {
+        await this.requestApproval(projectId, result);
+      }
+      this.logComplete(projectId, result);
+      return result;
+    } catch (err) {
+      this.logError(projectId, err);
+      throw err;
+    }
+  }
+
+  async execute(projectId, payload) {
+    throw new Error("execute() must be implemented by subclass");
+  }
+}
+```
+
+---
+
+# 9. IMPLEMENTATION PLAN
+
+## Phase 1: Local Environment & Shell (Completed)
+- Tauri v2 + React + Vite + Tailwind setup.
+- SQLite Database schema and queries established (`db.js`).
+
+## Phase 2: Engine & Cortex (Completed)
+- Cortex Agent engine (`cortex.js`) with Multi-LLM provider fallback.
+- `runtime.js` tool dispatcher.
+
+## Phase 3: Workers & Business Logic (In Progress)
+- Local JS classes for all 23 workers.
+- Workflows and approval queue routing.
+
+## Phase 4: UI/UX Glassmorphism (In Progress)
+- Dashboard, Approvals, Settings views.
+- Glassmorphic panels, dynamic animations.
+
+---
+
+# 10. BUILD & DEPLOYMENT GUIDE
+
+Since this is a Local-First Desktop App, there is no cloud server infrastructure to deploy (Rs. 0 hosting cost).
+
+## Development
+1. Install dependencies: `npm install`
+2. Run development server (Browser): `npm run dev`
+3. Run desktop shell (Tauri): `npm run tauri dev`
+
+## Production Build
+To create native executables (.exe, .dmg, .AppImage):
+1. `npm run tauri build`
+2. Distribute the generated binaries to the Owner.
+
+## Data Archival (Cloud Sync)
+- SQLite database holds active data locally.
+- Data > 6 months is archived to the private cloud to keep the SQLite database fast.
+
+---
+
+# 11. SERVICE CATALOG
+- SaaS Product Development
+- Website/Landing Page
+- Mobile App
+- AI Chatbot/Agent
+- Digital Marketing Strategy
+- Custom AI Worker
+
+---
+
+# 12. FUTURE ROADMAP
+- Master Director Agent (voice commands)
+- Real-Time Analytics Dashboard
+- Multi-Tenant (multiple agencies)
+- White-Label (reseller platform)
+
+---
+END OF ALIGNED BLUEPRINT

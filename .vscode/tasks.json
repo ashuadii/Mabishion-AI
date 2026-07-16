@@ -1,0 +1,27 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Install dependencies",
+      "type": "shell",
+      "command": "npm install",
+      "cwd": "${workspaceFolder}/Nexious Mickii/nexious-ai-starter",
+      "inAgents": true,
+      "runOptions": { "runOn": "worktreeCreated" }
+    },
+    {
+      "label": "Start Tauri dev",
+      "type": "shell",
+      "command": "npm run tauri-dev",
+      "cwd": "${workspaceFolder}/Nexious Mickii/nexious-ai-starter",
+      "inAgents": true
+    },
+    {
+      "label": "Build project",
+      "type": "shell",
+      "command": "npm run build",
+      "cwd": "${workspaceFolder}/Nexious Mickii/nexious-ai-starter",
+      "inAgents": true
+    }
+  ]
+}
