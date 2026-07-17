@@ -11,6 +11,16 @@ export async function getWorkflows() {
   return await db.select('SELECT * FROM workflows ORDER BY created_at DESC');
 }
 
+export async function addWorkflow(name, description = '', trigger = 'manual') {
+  const db = await getDb();
+  const id = crypto.randomUUID();
+  await db.execute(
+    'INSERT INTO workflows (id, name, status, risk, trigger, description) VALUES ($1, $2, $3, $4, $5, $6)',
+    [id, name, 'Draft', 'Medium', trigger, description]
+  );
+  return id;
+}
+
 export async function getWorkflowGraph(workflowId) {
   const db = await getDb();
   const nodes = await db.select('SELECT * FROM workflow_nodes WHERE workflow_id = $1 ORDER BY created_at ASC', [workflowId]);

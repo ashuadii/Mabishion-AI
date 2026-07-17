@@ -24,11 +24,8 @@ window.addEventListener('keydown', (e) => {
     currentZoom = 1;
     document.body.style.zoom = currentZoom;
 
-  // Ctrl+K → focus QuickCommandBar (if visible)
-  } else if (e.ctrlKey && e.key === 'k') {
-    e.preventDefault();
-    const qBar = document.querySelector('[data-quickbar-input]');
-    if (qBar) { qBar.focus(); }
+  // Ctrl+K is handled in App.jsx (CommandPalette toggle) — do not bind here,
+  // a second listener caused palette-open + focus-steal firing together.
 
   // Ctrl+Shift+A → navigate to Approvals
   } else if (e.ctrlKey && e.shiftKey && e.key === 'A') {

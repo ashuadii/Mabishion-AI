@@ -81,24 +81,9 @@ Generate a professional proposal tailored for this client.
       [JSON.stringify(parsedResult), projectId]
     );
 
-    // Create 1h CRITICAL approval
-    const expiresAt = new Date(Date.now() + 1 * 60 * 60 * 1000).toISOString();
-    const approvalId = crypto.randomUUID();
-    
-    await db.execute(
-      `INSERT INTO approvals (id, title, type, project_id, worker_name, request_data, status, expires_at, created_at, owner_notified, whatsapp_sent)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, 0, 0)`,
-      [
-        approvalId,
-        `Commercial Proposal for "${projectName}"`,
-        'critical',
-        projectId,
-        'proposal_maker',
-        JSON.stringify(parsedResult),
-        'pending',
-        expiresAt
-      ]
-    );
+    // Approval is enforced by the runWorker CRITICAL gate before execute() runs
+    // (P0-2). The 1-hour expires_at this block used to set also violated C1 —
+    // critical approvals never expire.
 
     // Auto-export PDF (non-blocking — worker result is returned regardless)
     let pdfPath = null;
@@ -118,7 +103,6 @@ Generate a professional proposal tailored for this client.
 
     return {
       proposal: parsedResult,
-      approvalId,
       pdfPath
     };
   }

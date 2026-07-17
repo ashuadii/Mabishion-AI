@@ -29,10 +29,10 @@ test.describe('P0: Login → Dashboard Journey', () => {
     await page.goto('/');
     await page.waitForTimeout(1500);
 
-    // Sidebar nav items
-    await expect(page.getByText('Home')).toBeVisible();
-    await expect(page.getByText('Build New')).toBeVisible();
-    await expect(page.getByText('Settings')).toBeVisible();
+    // Sidebar nav items (current labels — old Home/Build New predated a rename)
+    await expect(page.locator('nav').getByRole('button', { name: 'Dashboard' })).toBeVisible();
+    await expect(page.locator('nav').getByRole('button', { name: 'Playground' })).toBeVisible();
+    await expect(page.locator('nav').getByRole('button', { name: 'Settings' })).toBeVisible();
 
     // Main content area has some rendered content
     const root = page.locator('#root');
@@ -44,13 +44,13 @@ test.describe('P0: Login → Dashboard Journey', () => {
     await page.goto('/');
     await page.waitForTimeout(1500);
 
-    // Click Lead CRM
-    await page.getByText('Lead CRM').click();
+    // Click Leads (sidebar label; the screen heading is still "Lead CRM Console")
+    await page.locator('nav').getByRole('button', { name: 'Leads' }).click();
     await expect(page).toHaveURL(/leads/, { timeout: 3000 });
     await expect(page.getByRole('heading', { name: 'Lead CRM Console' }).first()).toBeVisible({ timeout: 3000 });
 
     // Click Settings
-    await page.getByText('Settings').click();
+    await page.locator('nav').getByRole('button', { name: 'Settings' }).click();
     await expect(page).toHaveURL(/settings/, { timeout: 3000 });
   });
 

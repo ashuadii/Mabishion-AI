@@ -107,6 +107,33 @@ export const ApprovalEngine = {
   },
 
   /**
+   * P0-2 fix: suspend until the owner resolves an approval.
+   * No timeout by design — CRITICAL approvals wait forever (governance C1).
+   * Cancellation happens through the worker's AbortSignal, and the STANDARD→CRITICAL
+   * 24h escalation scanner keeps running independently while this polls.
+   */
+  async waitForResolution(approvalId, { abortSignal = null, pollMs = 2500 } = {}) {
+    for (;;) {
+      if (abortSignal?.aborted) {
+        throw new Error('Worker cancelled while waiting for owner approval.');
+      }
+      const approval = await getApprovalById(approvalId);
+      if (!approval) {
+        // Fail closed: a vanished record is not permission.
+        throw new Error(`Approval ${approvalId} not found — refusing to proceed without an owner decision.`);
+      }
+      const status = normalizeApprovalStatus(approval.status);
+      if (status === 'approved' || status === 'auto_approved') return approval;
+      if (status === 'rejected') {
+        const err = new Error('Owner rejected this action.');
+        err.code = 'APPROVAL_REJECTED';
+        throw err;
+      }
+      await new Promise(r => setTimeout(r, pollMs));
+    }
+  },
+
+  /**
    * Inbound WhatsApp Webhook Processor
    */
   async handleIncomingWhatsAppMessage(message) {

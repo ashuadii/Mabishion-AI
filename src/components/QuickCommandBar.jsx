@@ -113,10 +113,12 @@ export default function QuickCommandBar({ contextLabel, placeholder, onNavigate 
           onKeyDown={(e) => e.key === 'Enter' && handleSend()}
           disabled={isProcessing}
         />
-        <Button 
-          variant={isListening ? 'danger' : 'soft'} 
+        <Button
+          variant={isListening ? 'danger' : 'soft'}
           className="px-3"
           onClick={isListening ? stopListening : startListening}
+          aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
+          title={isListening ? 'Stop voice input' : 'Voice input'}
         >
           <Icon name={isListening ? 'stop' : 'mic'} size={17} className={isListening ? 'animate-pulse' : ''} />
         </Button>

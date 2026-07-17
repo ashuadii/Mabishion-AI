@@ -97,7 +97,7 @@ export default function SalesMarketingHubScreen({ onNavigate }) {
           badgeLabel="Growth & Conversion Engine"
           primaryAction="Refresh Data"
           primaryIcon="refresh"
-          onActionClick={fetchLeads}
+          onPrimaryClick={fetchLeads}
         />
       <HubTabs tabs={[{ id: 'marketing-studio', label: 'Studio' }, { id: 'sales-marketing', label: 'Campaigns' }]} active="sales-marketing" onNavigate={onNavigate} />
 

@@ -489,6 +489,7 @@ export default function ProjectsScreen({ onNavigate }) {
                 </p>
               </div>
               <div className="flex gap-2">
+                <Button onClick={() => onNavigate(`projects/${selectedProject.id}`)} icon="project">Open full view</Button>
                 <Button variant="soft" onClick={() => setSelectedProject(null)} icon="conflict">Deselect</Button>
               </div>
             </div>

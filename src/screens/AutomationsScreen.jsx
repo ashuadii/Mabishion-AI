@@ -18,7 +18,7 @@ import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
 import QuickCommandBar from '../components/QuickCommandBar';
-import { getWorkflows } from '../data/db.js';
+import { getWorkflows, addWorkflow } from '../data/db.js';
 
 // Custom CSS to style React Flow glassmorphic nodes
 const flowStyles = {
@@ -144,10 +144,41 @@ export default function AutomationsScreen({ onNavigate }) {
   const [isSimulating, setIsSimulating] = useState(false);
   const [simStep, setSimStep] = useState('');
   const [dbWorkflows, setDbWorkflows] = useState([]);
+  const [showNewWorkflow, setShowNewWorkflow] = useState(false);
+  const [newWorkflowName, setNewWorkflowName] = useState('');
+  const [creatingWorkflow, setCreatingWorkflow] = useState(false);
 
   useEffect(() => {
     getWorkflows().then(rows => setDbWorkflows(rows || [])).catch(() => {});
   }, []);
+
+  // "New Workflow" header CTA — was rendered with no handler at all (UI audit #3).
+  const handleCreateWorkflow = async () => {
+    const name = newWorkflowName.trim();
+    if (!name || creatingWorkflow) return;
+    setCreatingWorkflow(true);
+    try {
+      await addWorkflow(name, 'Created from Visual Flow Builder');
+      const rows = await getWorkflows();
+      setDbWorkflows(rows || []);
+      setActiveWorkflow(name);
+      setNodes(initialNodes);
+      setEdges(initialEdges);
+      setShowNewWorkflow(false);
+      setNewWorkflowName('');
+    } catch (err) {
+      console.error('[Automations] Workflow create failed:', err);
+      alert(`Workflow create failed: ${err.message || err}`);
+    } finally {
+      setCreatingWorkflow(false);
+    }
+  };
+
+  // "Reset Layout" header CTA — restores the canvas to its default node positions.
+  const handleResetLayout = () => {
+    setNodes(initialNodes);
+    setEdges(initialEdges);
+  };
 
   const onConnect = useCallback(
     (params) => setEdges((eds) => addEdge({ ...params, animated: true }, eds)),
@@ -232,8 +263,10 @@ export default function AutomationsScreen({ onNavigate }) {
         badgeLabel="Vite v5 · React Flow Engine"
         primaryAction="New Workflow"
         primaryIcon="plus"
+        onPrimaryClick={() => setShowNewWorkflow(true)}
         secondaryAction="Reset Layout"
         secondaryIcon="refresh"
+        onSecondaryClick={handleResetLayout}
         extraBadges={
           <>
             <Badge tone="cyan">React Flow v11</Badge>
@@ -243,6 +276,30 @@ export default function AutomationsScreen({ onNavigate }) {
         }
       />
       <HubTabs tabs={[{ id: 'build-new', label: 'Playground' }, { id: 'automations', label: 'Automations' }]} active="automations" onNavigate={onNavigate} />
+
+      {showNewWorkflow && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowNewWorkflow(false)}>
+          <div className="w-full max-w-md rounded-2xl border border-white/10 p-6" style={glassStyle({ strong: true })} onClick={e => e.stopPropagation()}>
+            <h3 className="mb-1 font-black text-white">New Workflow</h3>
+            <p className="mb-4 text-xs" style={{ color: C.textMuted }}>Creates a Draft workflow you can shape on the canvas.</p>
+            <input
+              autoFocus
+              type="text"
+              value={newWorkflowName}
+              onChange={e => setNewWorkflowName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleCreateWorkflow(); if (e.key === 'Escape') setShowNewWorkflow(false); }}
+              placeholder="e.g. Invoice Chase Loop"
+              className="mb-4 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="soft" onClick={() => setShowNewWorkflow(false)}>Cancel</Button>
+              <Button onClick={handleCreateWorkflow} disabled={!newWorkflowName.trim() || creatingWorkflow}>
+                {creatingWorkflow ? 'Creating...' : 'Create Workflow'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <section className="grid grid-cols-12 gap-5">
         {/* Drag & Drop Tool Box */}

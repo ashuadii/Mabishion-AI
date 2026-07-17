@@ -689,8 +689,11 @@ export class LLMProvider {
     if (isKeyIssue) hint = 'API key invalid or expired. Settings → refresh Gemini/Groq key.';
     if (isParseIssue) hint = 'Provider returned a bad response (likely NVIDIA NIM). Go to Settings and test each key — disable NIM if it keeps failing.';
 
+    // Raw provider internals go to the console for debugging; the thrown message
+    // stays owner-readable because it surfaces directly in the chat UI.
+    console.error('[Cortex] All providers failed. Last provider error:', lastMsg);
     throw new Error(
-      `All LLM providers failed. ${hint} (Details: ${lastMsg})`
+      `All LLM providers failed. ${hint}`
     );
   }
 }

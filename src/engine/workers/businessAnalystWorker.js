@@ -83,28 +83,12 @@ Perform SWOT analysis and output strategic market gaps.
       [JSON.stringify(parsedResult), projectId]
     );
 
-    // Create 24h STANDARD approval
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-    const approvalId = crypto.randomUUID();
-    
-    await db.execute(
-      `INSERT INTO approvals (id, title, type, project_id, worker_name, request_data, status, expires_at, created_at, owner_notified, whatsapp_sent)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, 0, 0)`,
-      [
-        approvalId,
-        `Market SWOT Analysis for "${projectName}"`,
-        'standard',
-        projectId,
-        'business_analyst',
-        JSON.stringify(parsedResult),
-        'pending',
-        expiresAt
-      ]
-    );
+    // Approval record is created by the runWorker gate (single enforcement point,
+    // P0-2). The direct INSERT that lived here bypassed the ApprovalEngine —
+    // no WhatsApp/popup/rate-limit — and produced duplicates once the gate landed.
 
     return {
-      report: parsedResult,
-      approvalId
+      report: parsedResult
     };
   }
 }

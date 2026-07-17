@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import CommandPalette from './components/CommandPalette';
+import RequireUnlock from './components/RequireUnlock';
+import GlobalApprovalWatcher from './components/approvals/GlobalApprovalWatcher';
 
 // Import all active screens
 import DashboardScreen from './screens/DashboardScreen';
@@ -50,6 +52,8 @@ export default function App() {
 
   return (
     <BuildProvider>
+      <RequireUnlock>
+      <GlobalApprovalWatcher />
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
       <Routes>
         <Route path="/" element={<DashboardScreen onNavigate={handleNavigate} />} />
@@ -92,7 +96,11 @@ export default function App() {
         <Route path="/documents" element={<DocumentsScreen onNavigate={handleNavigate} />} />
         <Route path="/knowledge" element={<KnowledgeBaseScreen onNavigate={handleNavigate} />} />
         <Route path="/products" element={<ProductsScreen onNavigate={handleNavigate} />} />
+
+        {/* Unknown paths previously rendered a blank page (no catch-all) */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
+      </RequireUnlock>
     </BuildProvider>
   );
 }

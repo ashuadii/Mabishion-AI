@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { C, glassStyle } from '../components/consts';
 import AppShell from '../components/AppShell';
 import ScreenHeader from '../components/ScreenHeader';
@@ -10,6 +10,7 @@ import MickiiOrb from '../components/MickiiOrb';
 import ProgressBar from '../components/ProgressBar';
 import QuickCommandBar from '../components/QuickCommandBar';
 import { getProjects, getLeads, getInvoices, getTotalRevenue, getDailyCostTotal, getWeeklyTrendData, getTopOpportunities } from '../data/db.js';
+import { saveFileToUserDirectory } from '../services/fileOperationService.js';
 
 function Sparkline({ points, tone = "gold" }) {
   const color = tone === "success" ? C.success : tone === 'info' ? C.info : tone === "danger" ? C.danger : C.warning;
@@ -40,8 +41,9 @@ export default function ReportsScreen({ onNavigate }) {
   const [rawLeads, setRawLeads] = useState([]);
   const [rawProjects, setRawProjects] = useState([]);
 
-  useEffect(() => {
-    const load = async () => {
+  // "Generate Report" recomputes every KPI and the weekly verdict from the live DB —
+  // extracted from the mount effect so the header CTA (previously unwired) can call it.
+  const loadReportData = useCallback(async () => {
       setLoadingKpi(true);
       try {
         const [projects, leads, invoices, totalRev, dailyCost, trend, opps] = await Promise.all([
@@ -101,9 +103,50 @@ export default function ReportsScreen({ onNavigate }) {
       } finally {
         setLoadingKpi(false);
       }
-    };
-    load();
   }, []);
+
+  useEffect(() => { loadReportData(); }, [loadReportData]);
+
+  // "Export PDF" — one-page reality-check summary via jsPDF, saved through the
+  // shared Tauri/browser file service (same path the proposal PDF uses).
+  const handleExportPdf = async () => {
+    try {
+      const { jsPDF } = await import('jspdf');
+      const doc = new jsPDF();
+      const today = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
+      let y = 18;
+      doc.setFontSize(18); doc.text('Mabishion AI — Weekly Reality Check', 14, y); y += 8;
+      doc.setFontSize(10); doc.text(`Generated: ${today}`, 14, y); y += 10;
+      doc.setFontSize(13); doc.text('KPI Snapshot', 14, y); y += 7;
+      doc.setFontSize(10);
+      kpiCards.forEach(k => { doc.text(`• ${k.label}: ${k.value} (${k.change})`, 16, y); y += 6; });
+      if (weeklyVerdict) {
+        y += 4; doc.setFontSize(13); doc.text('Weekly Verdict', 14, y); y += 7; doc.setFontSize(10);
+        const sections = [
+          ['Verdict', weeklyVerdict.verdict], ['What worked', weeklyVerdict.worked],
+          ['What failed', weeklyVerdict.failed], ['Root cause', weeklyVerdict.rootCause],
+          ['Next action', weeklyVerdict.nextAction],
+        ];
+        sections.forEach(([label, text]) => {
+          const lines = doc.splitTextToSize(`${label}: ${text}`, 180);
+          if (y + lines.length * 5 > 280) { doc.addPage(); y = 18; }
+          doc.text(lines, 16, y); y += lines.length * 5 + 2;
+        });
+      }
+      if (opportunities.length > 0) {
+        y += 4; doc.setFontSize(13); doc.text('Top Opportunities', 14, y); y += 7; doc.setFontSize(10);
+        opportunities.slice(0, 5).forEach(o => {
+          if (y > 280) { doc.addPage(); y = 18; }
+          doc.text(`• ${o.name || o.title || 'Opportunity'} (score: ${o.score ?? 'N/A'})`, 16, y); y += 6;
+        });
+      }
+      const blob = doc.output('blob');
+      await saveFileToUserDirectory(`Mabishion_Report_${new Date().toISOString().split('T')[0]}.pdf`, blob);
+    } catch (err) {
+      console.error('[ReportsScreen] PDF export failed:', err);
+      alert(`PDF export failed: ${err.message || err}`);
+    }
+  };
 
   // FR-076: Filtered CSV export
   const handleExportCsv = (type) => {
@@ -138,7 +181,9 @@ export default function ReportsScreen({ onNavigate }) {
         subtitle="Weekly reality check and analytics room. No sugar-coating: revenue, leads, projects, marketing ROI, post-mortems, and opportunity spotlight."
         badgeLabel="Analytics · weekly reality check"
         primaryAction="Generate Report" primaryIcon="chart"
+        onPrimaryClick={loadReportData}
         secondaryAction="Export PDF" secondaryIcon="export"
+        onSecondaryClick={handleExportPdf}
         extraBadges={
           <>
             <Badge tone="gold">Reality Check</Badge>

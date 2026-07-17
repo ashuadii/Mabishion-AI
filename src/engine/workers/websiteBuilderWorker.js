@@ -330,29 +330,7 @@ document.querySelectorAll('.card, .stat-card').forEach(el => {
 
     await db.execute("UPDATE projects SET stage = 'Build' WHERE id = $1", [projectId]).catch(() => {});
 
-    // Create 24h STANDARD approval gate request
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-    const approvalId = crypto.randomUUID();
-    
-    await db.execute(
-      `INSERT INTO approvals (id, title, type, project_id, worker_name, request_data, status, expires_at, created_at, owner_notified, whatsapp_sent)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, 0, 0)`,
-      [
-        approvalId,
-        `Draft Website Layout for "${projectName}"`,
-        'standard',
-        projectId,
-        'website_builder',
-        JSON.stringify({
-          websiteId,
-          projectName,
-          clientName,
-          summary: `${(siteData.pagesJson || []).length} pages | HTML: ${(siteData.htmlContent || '').split('\n').length} lines | CSS: ${(siteData.cssContent || '').split('\n').length} lines`
-        }),
-        'pending',
-        expiresAt
-      ]
-    ).catch(err => console.error('[WebsiteBuilderWorker Approval Insert Err]', err));
+    // Approval record is created by the runWorker gate (single enforcement point, P0-2).
 
     return {
       websiteId,
@@ -365,8 +343,7 @@ document.querySelectorAll('.card, .stat-card').forEach(el => {
       deployConfig: siteData.deployConfig,
       seoMeta:      siteData.seoMeta,
       formAction:   siteData.formAction,
-      summary: `Website built for ${projectName} | ${(siteData.pagesJson || []).length} pages | HTML: ${(siteData.htmlContent || '').split('\n').length} lines | Ready for Netlify deploy`,
-      approvalId
+      summary: `Website built for ${projectName} | ${(siteData.pagesJson || []).length} pages | HTML: ${(siteData.htmlContent || '').split('\n').length} lines | Ready for Netlify deploy`
     };
   }
 }

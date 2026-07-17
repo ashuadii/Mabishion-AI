@@ -17,9 +17,11 @@ test.describe('Smoke — App Bootstrap', () => {
 
   test('sidebar navigation is visible', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText('Home')).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText('Build New')).toBeVisible();
-    await expect(page.getByText('Lead CRM')).toBeVisible();
+    // Labels updated to the current sidebar naming (Dashboard/Playground/Leads);
+    // the old Home/Build New/Lead CRM assertions predated a sidebar rename.
+    await expect(page.locator('nav').getByRole('button', { name: 'Dashboard' })).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('nav').getByRole('button', { name: 'Playground' })).toBeVisible();
+    await expect(page.locator('nav').getByRole('button', { name: 'Leads' })).toBeVisible();
   });
 
   test('Ctrl+K opens command palette', async ({ page }) => {

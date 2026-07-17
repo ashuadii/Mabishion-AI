@@ -5,7 +5,7 @@ test.describe('P0: Approval Center Journey', () => {
     await page.goto('/');
     await page.waitForTimeout(1500);
 
-    await page.getByText('Approval Center').click();
+    await page.locator('nav').getByRole('button', { name: /Approvals/ }).click();
     await expect(page).toHaveURL(/approvals/, { timeout: 3000 });
     await expect(page.getByText('Human-in-the-Loop SafeGates')).toBeVisible({ timeout: 5000 });
   });
@@ -44,16 +44,31 @@ test.describe('P1: Build Pipeline Journey', () => {
     await page.goto('/');
     await page.waitForTimeout(1500);
 
-    await page.getByText('Build New').click();
+    await page.locator('nav').getByRole('button', { name: 'Playground' }).click();
     await expect(page).toHaveURL(/build-new/, { timeout: 3000 });
   });
 
-  test('Build screen shows tier pipeline labels', async ({ page }) => {
+  test('Build screen shows tier pipeline labels after starting a build', async ({ page }) => {
+    // The tier rail only renders once a pipeline starts (the screen now opens on
+    // the service portfolio) — drive the real intake flow to reach it. This also
+    // regression-tests the P0-2 gate semantics: T1 client_intake is STANDARD
+    // tier, so it queues an approval record and proceeds without blocking.
     await page.goto('/build-new');
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(1000);
 
-    // T1-T16 tier labels should be visible
-    await expect(page.getByText('Discovery').first()).toBeVisible({ timeout: 5000 });
+    await page.getByRole('button', { name: /Website Development/ }).click();
+    await page.getByRole('button', { name: 'Landing Pages' }).click();
+
+    await page.getByPlaceholder(/Urban Cafe/).fill('E2E Test Cafe');
+    const textareas = page.locator('main textarea');
+    await textareas.nth(0).fill('Simple landing page');
+    await textareas.nth(1).fill('Contact form');
+
+    await page.getByRole('button', { name: /Start Build Pipeline/ }).click();
+
+    // T1-T16 tier labels render, and the STANDARD-tier T1 completes unblocked
+    await expect(page.getByText('Discovery').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('T1 Discovery completed!')).toBeVisible({ timeout: 20000 });
   });
 
   test('Build screen opens service portfolio on + click', async ({ page }) => {

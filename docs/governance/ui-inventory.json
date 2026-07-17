@@ -1,0 +1,166 @@
+{
+  "app": "Mabishion AI — Private Desktop Factory",
+  "generatedAt": "2026-07-17",
+  "appType": "tauri",
+  "baseUrl": "http://localhost:1421 (E2E harness) / 1420 (dev)",
+  "notes": "Built from the 2026-07-16/17 click audit (137 interactions) + source sweep. Status values reflect the state AFTER the fix campaign of 2026-07-17. Findings marked FIXED cite the fix; DEFERRED items need an owner decision.",
+  "screens": [
+    {
+      "id": "dashboard", "name": "Dashboard", "route": "/ and /dashboard", "component": "src/screens/DashboardScreen.jsx",
+      "auth": "PIN gate when configured (RequireUnlock)", "linkedFrom": ["sidebar:Dashboard", "logo"], "orphan": false,
+      "elements": [
+        { "id": "dashboard.refresh-approvals", "type": "button", "label": "Refresh approvals", "expected": "Reloads pending approvals list", "status": "pass" },
+        { "id": "dashboard.quick-actions", "type": "button-group", "label": "New Lead / New Project / New Invoice / Approval / Reports", "expected": "Navigate to /leads, /build-new, /invoices, /approvals, /analytics", "status": "pass" },
+        { "id": "dashboard.mickii-send", "type": "button", "label": "Send", "expected": "Sends chat to Cortex; graceful owner-readable error when all LLM providers fail", "status": "pass", "finding": "FIXED: raw JS internals no longer leak into the chat error (cortex.js)" },
+        { "id": "dashboard.mic", "type": "button", "label": "Voice input", "expected": "Toggles speech capture; accessible name present", "status": "pass", "finding": "FIXED: aria-label added" }
+      ]
+    },
+    {
+      "id": "login", "name": "Login / PIN", "route": "/login + rendered by RequireUnlock gate", "component": "src/screens/LoginScreen.jsx",
+      "elements": [
+        { "id": "login.pin-flow", "type": "form", "label": "PIN setup/confirm/unlock", "expected": "Setup persists; reload locks app; wrong PIN errors; correct PIN unlocks", "status": "pass", "finding": "FIXED P0-1: RequireUnlock gate now enforces the PIN on every load once configured (was: /dashboard rendered with no auth check anywhere)" }
+      ]
+    },
+    {
+      "id": "leads", "name": "Lead CRM Console", "route": "/leads", "component": "src/screens/LeadsScreen.jsx",
+      "elements": [
+        { "id": "leads.add-form", "type": "form", "label": "Add New Lead (10 fields)", "expected": "Validation blocks empty; Calculate Score works; Save adds row with correct columns", "status": "pass", "finding": "FIXED: dev-preview store legacy 11-param branch shifted email→Source, phone→Budget, score→0 (core.js)" },
+        { "id": "leads.kanban-tab", "type": "tab", "label": "Kanban Pipeline", "expected": "Leads appear as cards bucketed by status", "status": "pass", "finding": "FIXED via store column repair — statuses were corrupted so no card matched any column" },
+        { "id": "leads.archive", "type": "button", "label": "Archive lead", "expected": "Lead hidden from active list, visible in archived view, flag persisted", "status": "pass", "finding": "FIXED: store had no UPDATE archived handler and ignored WHERE archived filters" },
+        { "id": "leads.fts-search", "type": "input", "label": "FTS5 search", "expected": "Matches visible leads by name/email", "status": "untested", "finding": "DEFERRED: needs desktop verification (leads_fts virtual table absent in harness)" },
+        { "id": "leads.drawer", "type": "drawer", "label": "Lead detail drawer", "expected": "Tabs, note add, status change, Lead Magnet, delete all work", "status": "pass" },
+        { "id": "leads.dial-phone", "type": "button", "label": "Dial Phone", "expected": "Opens tel: link to the lead's phone", "status": "pass", "finding": "FIXED: was an alert() stub faking the dial" },
+        { "id": "leads.csv-import", "type": "file-input", "label": "CSV Import", "expected": "Imports rows via addLead", "status": "untested", "finding": "File injection not possible in harness" }
+      ]
+    },
+    {
+      "id": "build", "name": "Playground (Build)", "route": "/build-new, /build-new alias /new-build, /internal-tools (internalMode), /research (alias)", "component": "src/screens/BuildScreen.jsx",
+      "elements": [
+        { "id": "build.pipeline", "type": "flow", "label": "Category → Service → 3-field gate → 16-tier pipeline", "expected": "Gate enables CTA at 3 fields; tiers run via runWorker with approval gating", "status": "pass", "finding": "FIXED P0-2: critical tiers now suspend on owner approval; standard tiers queue a record (was: label-only, workers always ran)" },
+        { "id": "build.log-keys", "type": "list", "label": "System log", "expected": "No duplicate React keys under same-ms writes", "status": "pass", "finding": "FIXED: Date.now() key → crypto.randomUUID()" },
+        { "id": "build.attach-menu", "type": "menu", "label": "+ menu Attach group", "expected": "Visibly disabled with 'Soon' tag until implemented", "status": "pass", "finding": "FIXED: stubs looked enabled, revealed 'coming soon' only after click" }
+      ]
+    },
+    {
+      "id": "approvals", "name": "Approval Center", "route": "/approvals", "component": "src/screens/ApprovalCenterScreen.jsx",
+      "elements": [
+        { "id": "approvals.critical-modal", "type": "modal", "label": "CriticalApprovalModal", "expected": "Auto-opens on pending critical; approve/reject/changes resolve; NO fabricated countdown when expires_at is null", "status": "pass", "finding": "FIXED: countdown replaced with 'No Timeout — waits for your decision' for critical (C1)" },
+        { "id": "approvals.global-popup", "type": "modal", "label": "GlobalApprovalWatcher", "expected": "Pending critical approvals pop up on ANY screen, not just /approvals", "status": "pass", "finding": "FIXED P0-2 companion: new app-level watcher, e2e-covered (global-approval.spec.js)" },
+        { "id": "approvals.filters", "type": "tabs", "label": "pending/approved/rejected/all", "expected": "Counts filter correctly", "status": "pass" },
+        { "id": "approvals.whatsapp", "type": "panel", "label": "Simulate Message / templates", "expected": "APPROVE/REJECT <id> round-trip resolves the right record", "status": "pass", "finding": "FIXED: store WHERE-by-id now honored (was: any ID matched the first row)" },
+        { "id": "approvals.badge", "type": "badge", "label": "Sidebar Approvals count", "expected": "Updates within one 4s poll of resolution", "status": "pass", "finding": "FIXED: store ignored WHERE status='pending' so the count never changed in browser mode" }
+      ]
+    },
+    {
+      "id": "marketing-studio", "name": "Marketing Studio", "route": "/marketing-studio", "component": "src/screens/MarketingStudioScreen.jsx",
+      "elements": [
+        { "id": "mstudio.add-to-calendar", "type": "button", "label": "Add to Calendar", "expected": "Creates draft content item; success/error message shows either way", "status": "pass", "finding": "FIXED: silent no-op → store handler added + role=status feedback message" },
+        { "id": "mstudio.tabs", "type": "tabs", "label": "Studio / Campaigns", "expected": "Swap content", "status": "pass" }
+      ]
+    },
+    {
+      "id": "sales-hub", "name": "Sales & Marketing Hub", "route": "/marketing, /sales, /promotion, /sales-marketing", "component": "src/screens/SalesMarketingHubScreen.jsx",
+      "elements": [
+        { "id": "hub.refresh-data", "type": "button", "label": "Refresh Data", "expected": "Re-fetches leads/campaign data", "status": "pass", "finding": "FIXED: was wired to a prop name ScreenHeader never reads (onActionClick vs onPrimaryClick)" }
+      ]
+    },
+    {
+      "id": "projects", "name": "Projects / Production Floor", "route": "/projects", "component": "src/screens/ProjectsScreen.jsx",
+      "elements": [
+        { "id": "projects.new-project", "type": "modal-form", "label": "New Project → Launch Build", "expected": "Creates project, appears on board", "status": "pass" },
+        { "id": "projects.card-click", "type": "card", "label": "Project card", "expected": "Selects inline control panel; 'Open full view' navigates to /projects/:id", "status": "pass", "finding": "FIXED: no path to the detail screen existed anywhere in the app" },
+        { "id": "projects.kanban-dnd", "type": "drag-drop", "label": "Stage columns", "expected": "Drag moves project between stages", "status": "untested", "finding": "DnD unreliable in harness without full CSS; verify on desktop" }
+      ]
+    },
+    {
+      "id": "project-detail", "name": "Project Detail", "route": "/projects/:id", "component": "src/screens/ProjectDetailScreen.jsx",
+      "orphan": false,
+      "elements": [
+        { "id": "pdetail.real-data", "type": "view", "label": "Project header/progress", "expected": "Loads the real project by :id; demo content only as labeled fallback", "status": "pass", "finding": "FIXED: screen ignored :id and always rendered 'Orion Labs' demo; now DB-backed with an explicit 'Demo data' badge on fallback" }
+      ]
+    },
+    {
+      "id": "finance", "name": "Money / Finance", "route": "/finance, /revenue", "component": "src/screens/FinanceScreen.jsx",
+      "elements": [
+        { "id": "finance.hub-tabs", "type": "tabs", "label": "Finance/Invoices/Products/Reports/Retainers", "expected": "Navigate to respective routes", "status": "pass" },
+        { "id": "finance.add-expense", "type": "form", "label": "Add expense", "expected": "Expense appears in list", "status": "pass", "finding": "FIXED: store had no expenses handlers (silent loss in browser mode)" }
+      ]
+    },
+    {
+      "id": "invoices", "name": "Invoices", "route": "/invoices, /finance/invoices", "component": "src/screens/InvoicesScreen.jsx",
+      "elements": [ { "id": "invoices.new-modal", "type": "modal-form", "label": "New Invoice", "expected": "Opens, Cancel closes", "status": "pass" } ]
+    },
+    {
+      "id": "retainers", "name": "Retainers", "route": "/retainers", "component": "src/screens/RetainersScreen.jsx",
+      "elements": [ { "id": "retainers.add", "type": "form", "label": "Add Retainer", "expected": "Retainer appears; MRR updates", "status": "pass", "finding": "FIXED: store handlers added" } ]
+    },
+    {
+      "id": "products", "name": "Products", "route": "/products", "component": "src/screens/ProductsScreen.jsx",
+      "elements": [ { "id": "products.add-modal", "type": "modal-form", "label": "Add Product", "expected": "Opens/saves", "status": "pass" } ]
+    },
+    {
+      "id": "reports", "name": "Reports", "route": "/analytics", "component": "src/screens/ReportsScreen.jsx",
+      "elements": [
+        { "id": "reports.generate", "type": "button", "label": "Generate Report", "expected": "Recomputes KPIs + weekly verdict from live DB", "status": "pass", "finding": "FIXED: had no handler at all" },
+        { "id": "reports.export-pdf", "type": "button", "label": "Export PDF", "expected": "Saves a jsPDF reality-check summary via the shared file service", "status": "pass", "finding": "FIXED: had no handler at all" },
+        { "id": "reports.csv", "type": "button-group", "label": "Leads CSV / Projects CSV", "expected": "Download CSVs", "status": "pass" }
+      ]
+    },
+    {
+      "id": "automations", "name": "Visual Flow Builder", "route": "/automations", "component": "src/screens/AutomationsScreen.jsx",
+      "elements": [
+        { "id": "automations.new-workflow", "type": "button", "label": "New Workflow", "expected": "Opens name modal; creates Draft workflow via addWorkflow", "status": "pass", "finding": "FIXED: primary CTA was wired to undefined — workflows could not be created from the UI" },
+        { "id": "automations.reset-layout", "type": "button", "label": "Reset Layout", "expected": "Restores default node positions", "status": "pass", "finding": "FIXED: had no handler" },
+        { "id": "automations.canvas", "type": "react-flow", "label": "Node canvas", "expected": "Workflow select renders nodes/edges; connect works", "status": "pass" }
+      ]
+    },
+    {
+      "id": "workers", "name": "Worker Monitor", "route": "/worker-monitor, /workers", "component": "src/screens/WorkerMonitorScreen.jsx",
+      "elements": [ { "id": "workers.view-tabs", "type": "tabs", "label": "Worker Logs / LLM Usage / System Health", "expected": "Swap views", "status": "pass" } ]
+    },
+    {
+      "id": "skill-library", "name": "Skill Library", "route": "/mickii-status, /system-monitor", "component": "src/screens/SkillLibraryScreen.jsx",
+      "elements": [
+        { "id": "skills.expert-consult", "type": "button", "label": "Expert Consult", "expected": "Focuses the Ask-Mickii input", "status": "pass", "finding": "FIXED: had no handler; footer mic/send remain feature-undefined (DEFERRED)" },
+        { "id": "skills.filter-category", "type": "button", "label": "Filter Category", "expected": "Scrolls to the category chips", "status": "pass", "finding": "FIXED: had no handler" }
+      ]
+    },
+    {
+      "id": "clients", "name": "Clients", "route": "/clients", "component": "src/screens/ClientsScreen.jsx",
+      "elements": [ { "id": "clients.add", "type": "modal-form", "label": "Add Client (9 fields)", "expected": "Client appears in list", "status": "pass", "finding": "FIXED: store had no clients handlers (modal closed as success while data vanished)" } ]
+    },
+    { "id": "documents", "name": "Documents", "route": "/documents", "component": "src/screens/DocumentsScreen.jsx", "elements": [ { "id": "docs.filters", "type": "tabs", "label": "All/Proposals/Blueprints/Contracts/Reports", "expected": "Filter list", "status": "pass" } ] },
+    { "id": "knowledge", "name": "Knowledge Base", "route": "/knowledge", "component": "src/screens/KnowledgeBaseScreen.jsx", "elements": [ { "id": "kb.add-source", "type": "modal-form", "label": "Add Source", "expected": "Source appears", "status": "pass" } ] },
+    { "id": "tasks", "name": "Tasks", "route": "/tasks", "component": "src/screens/TasksScreen.jsx", "elements": [ { "id": "tasks.board", "type": "view", "label": "Task command board", "expected": "Renders", "status": "pass" } ] },
+    { "id": "settings", "name": "Settings", "route": "/settings", "component": "src/screens/SettingsScreen.jsx",
+      "elements": [
+        { "id": "settings.tabs", "type": "tabs", "label": "API Credentials / MCP Hub / DB Maintenance / cPanel / Ops", "expected": "Distinct content per tab", "status": "pass" },
+        { "id": "settings.test-keys", "type": "button-group", "label": "Test Gemini/Groq/...", "expected": "Validation alert without key", "status": "pass" },
+        { "id": "settings.set-up-lock", "type": "button", "label": "Set Up Lock", "expected": "Intentionally disabled — 'Coming soon (Blueprint adoption P3)'", "status": "pass", "finding": "Expected behaviour, not a defect" }
+      ]
+    },
+    { "id": "research", "name": "ResearchScreen", "route": "NONE — /research renders BuildScreen", "component": "src/screens/ResearchScreen.jsx", "orphan": true,
+      "elements": [ { "id": "research.whole-screen", "type": "screen", "label": "1,294-line screen", "expected": "OWNER DECISION: route it (and fix hardcoded localhost:5173 preview + alert-stub deploy) or remove it", "status": "untested", "finding": "DEFERRED — per 'never cut features' rule, not removed without owner sign-off" } ]
+    }
+  ],
+  "navigation": [
+    { "id": "sidebar", "label": "11 items: Dashboard, Playground, Marketing Studio, Leads, Projects, Clients, Money, Workers, Internal Tools, Approvals(badge), Settings", "status": "pass" },
+    { "id": "catch-all", "label": "Unknown route", "expectedRoute": "/dashboard redirect", "status": "pass", "finding": "FIXED: previously a fully blank page" },
+    { "id": "shortcuts", "label": "Ctrl+K palette (single handler), Ctrl+Shift+A/D/I, Ctrl +/-/0 zoom", "status": "pass", "finding": "FIXED: dual Ctrl+K binding removed" }
+  ],
+  "flows": [
+    { "id": "pin-gate", "name": "PIN setup → relock on reload → unlock", "criticality": "critical", "status": "pass", "coveredBy": "e2e/pin-gate.spec.js + components/RequireUnlock.test.jsx" },
+    { "id": "critical-approval", "name": "Pending critical approval pops up anywhere → approve persists", "criticality": "critical", "status": "pass", "coveredBy": "e2e/global-approval.spec.js + unit/approvalGateWait.test.js" },
+    { "id": "build-pipeline", "name": "Service intake → T1 standard tier runs unblocked", "criticality": "critical", "status": "pass", "coveredBy": "e2e/approval-flow.spec.js" },
+    { "id": "lead-lifecycle", "name": "Add → score → drawer → archive → delete", "criticality": "critical", "status": "pass", "coveredBy": "e2e/lead-intake.spec.js + manual audit" }
+  ],
+  "coverage": {
+    "screensInventoried": 23,
+    "screensAudited": 22,
+    "elementsInventoried": 137,
+    "elementsVerified": 133,
+    "flowsPassing": 4,
+    "vitest": "349 passing (24+2 files)",
+    "playwright": "26 passing (6 spec files)"
+  }
+}

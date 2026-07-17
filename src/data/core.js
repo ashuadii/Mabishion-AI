@@ -172,19 +172,26 @@ function createDevelopmentPreviewDb() {
         return { rowsAffected: 1 };
       }
 
-      // Leads
+      // Leads — every live caller uses the canonical column order
+      // (id, name, email, phone, source, status, score, budget, notes, created_at[, last_contacted]).
+      // The old 11-param branch assumed a legacy shape no caller uses anymore and
+      // shifted every field one column over (email landed in source, phone in budget).
       if (normalized.startsWith('insert into leads')) {
-        let leadObj = {};
-        if (params.length === 12) {
-          const [id, name, email, phone, source, status, score, budget, notes, created_at, last_contacted] = params;
-          leadObj = { id, name, email, phone, source, status, score: Number(score || 0), budget, notes, created_at, last_contacted };
-        } else if (params.length === 11) {
-          const [id, name, source, value, score, heat, mood, stage, requirement, next_action, ghosting] = params;
-          leadObj = { id, name, email: '', phone: '', source, status: stage, score: Number(score || 0), budget: value, notes: requirement, created_at: new Date().toISOString(), last_contacted: new Date().toISOString() };
-        } else {
-          const [id, name, email, phone, source, status, score, budget, notes, created_at, last_contacted] = params;
-          leadObj = { id, name, email, phone, source, status, score: Number(score || 0), budget, notes, created_at, last_contacted };
-        }
+        const [id, name, email, phone, source, status, score, budget, notes, created_at, last_contacted] = params;
+        const now = new Date().toISOString();
+        const leadObj = {
+          id, name,
+          email: email || '',
+          phone: phone || '',
+          source: source || 'Manual',
+          status: status || 'New',
+          score: Number(score || 0),
+          budget: budget || '',
+          notes: notes || '',
+          created_at: created_at || now,
+          last_contacted: last_contacted || created_at || now,
+          archived: 0
+        };
         developmentPreviewStore.leads.unshift(leadObj);
         saveDevelopmentPreviewDb();
         return { rowsAffected: 1 };
@@ -304,6 +311,14 @@ function createDevelopmentPreviewDb() {
           const [notes, id] = params;
           const lead = developmentPreviewStore.leads.find(l => l.id === id);
           if (lead) lead.notes = notes;
+        } else if (normalized.includes('archived=1') || normalized.includes('archived = 1')) {
+          const id = params[0];
+          const lead = developmentPreviewStore.leads.find(l => l.id === id);
+          if (lead) { lead.archived = 1; lead.archived_at = new Date().toISOString(); }
+        } else if (normalized.includes('archived=0') || normalized.includes('archived = 0')) {
+          const id = params[0];
+          const lead = developmentPreviewStore.leads.find(l => l.id === id);
+          if (lead) { lead.archived = 0; lead.archived_at = null; }
         }
         saveDevelopmentPreviewDb();
         return { rowsAffected: 1 };
@@ -317,6 +332,11 @@ function createDevelopmentPreviewDb() {
             app.status = status;
             app.owner_notes = notes;
           }
+        } else if (normalized.includes("type = 'critical'")) {
+          // Standard→critical escalation from the ApprovalEngine expiry scanner
+          const id = params[0];
+          const app = developmentPreviewStore.approvals.find(a => a.id === id);
+          if (app) { app.type = 'critical'; app.expires_at = null; }
         }
         saveDevelopmentPreviewDb();
         return { rowsAffected: 1 };
@@ -377,6 +397,88 @@ function createDevelopmentPreviewDb() {
         return { rowsAffected: 1 };
       }
 
+      // Users / PIN auth — without these, PIN setup silently failed to persist in
+      // browser/E2E mode, which made the RequireUnlock gate untestable there.
+      if (normalized.startsWith('insert into users')) {
+        const [id, name, pin_hash, created_at] = params;
+        developmentPreviewStore.users = developmentPreviewStore.users || [];
+        developmentPreviewStore.users.push({ id, name, pin_hash, is_setup: 1, created_at });
+        saveDevelopmentPreviewDb();
+        return { rowsAffected: 1 };
+      }
+      if (normalized.startsWith('update users')) {
+        const users = developmentPreviewStore.users || [];
+        const id = params[params.length - 1];
+        const user = users.find(u => u.id === id);
+        if (user) {
+          if (normalized.includes('pin_hash')) { user.pin_hash = params[0]; user.is_setup = 1; }
+          if (normalized.includes('last_login')) user.last_login = params[0];
+        }
+        saveDevelopmentPreviewDb();
+        return { rowsAffected: user ? 1 : 0 };
+      }
+
+      // ── Domains previously unhandled: writes silently vanished in browser/E2E mode ──
+      if (normalized.startsWith('insert into marketing_content')) {
+        const [id, title, content_type, channel, body, scheduled_for, now] = params;
+        developmentPreviewStore.marketing_content = developmentPreviewStore.marketing_content || [];
+        developmentPreviewStore.marketing_content.push({ id, title, content_type, channel, body, status: 'draft', scheduled_for, created_at: now, updated_at: now });
+        saveDevelopmentPreviewDb();
+        return { rowsAffected: 1 };
+      }
+      if (normalized.startsWith('update marketing_content')) {
+        const list = developmentPreviewStore.marketing_content || [];
+        const id = params[params.length - 1];
+        const item = list.find(i => i.id === id);
+        if (item && normalized.includes('status')) { item.status = params[0]; item.updated_at = new Date().toISOString(); }
+        saveDevelopmentPreviewDb();
+        return { rowsAffected: item ? 1 : 0 };
+      }
+      if (normalized.startsWith('delete from marketing_content')) {
+        developmentPreviewStore.marketing_content = (developmentPreviewStore.marketing_content || []).filter(i => i.id !== params[0]);
+        saveDevelopmentPreviewDb();
+        return { rowsAffected: 1 };
+      }
+      if (normalized.startsWith('insert into clients')) {
+        const [id, name, business, budget, preferences, history, email, phone, gstin, contact_person, city, state, pincode, tier, status, consent_given, consent_at, created_at, updated_at] = params;
+        developmentPreviewStore.clients = developmentPreviewStore.clients || [];
+        developmentPreviewStore.clients.unshift({ id, name, business, budget, preferences, history, email, phone, gstin, contact_person, city, state, pincode, tier, status, consent_given, consent_at, created_at, updated_at });
+        saveDevelopmentPreviewDb();
+        return { rowsAffected: 1 };
+      }
+      if (normalized.startsWith('delete from clients')) {
+        developmentPreviewStore.clients = (developmentPreviewStore.clients || []).filter(c => c.id !== params[0]);
+        saveDevelopmentPreviewDb();
+        return { rowsAffected: 1 };
+      }
+      if (normalized.startsWith('insert into expenses')) {
+        const [id, title, category, amount, spent_on, notes] = params;
+        developmentPreviewStore.expenses = developmentPreviewStore.expenses || [];
+        developmentPreviewStore.expenses.unshift({ id, title, category, amount: Number(amount || 0), spent_on, notes, created_at: new Date().toISOString() });
+        saveDevelopmentPreviewDb();
+        return { rowsAffected: 1 };
+      }
+      if (normalized.startsWith('delete from expenses')) {
+        developmentPreviewStore.expenses = (developmentPreviewStore.expenses || []).filter(e => e.id !== params[0]);
+        saveDevelopmentPreviewDb();
+        return { rowsAffected: 1 };
+      }
+      if (normalized.startsWith('insert into retainers')) {
+        const [id, client_name, service, amount_inr, billing_day, started_at, notes] = params;
+        developmentPreviewStore.retainers = developmentPreviewStore.retainers || [];
+        developmentPreviewStore.retainers.unshift({ id, client_name, service, amount_inr: Number(amount_inr || 0), billing_day, status: 'active', started_at, notes });
+        saveDevelopmentPreviewDb();
+        return { rowsAffected: 1 };
+      }
+      if (normalized.startsWith('update retainers')) {
+        const list = developmentPreviewStore.retainers || [];
+        const id = params[params.length - 1];
+        const item = list.find(r => r.id === id);
+        if (item && normalized.includes('status')) item.status = params[0];
+        saveDevelopmentPreviewDb();
+        return { rowsAffected: item ? 1 : 0 };
+      }
+
       return { rowsAffected: 0 };
     },
     select: async (query, params = []) => {
@@ -393,7 +495,17 @@ function createDevelopmentPreviewDb() {
         const lead = developmentPreviewStore.leads.find(l => l.id === params[0]);
         return lead ? [lead] : [];
       }
-      if (normalized.startsWith('select * from leads')) return [...developmentPreviewStore.leads].sort((a, b) => (b.score || 0) - (a.score || 0));
+      if (normalized.startsWith('select * from leads')) {
+        // Honor the archived filter — the generic passthrough previously ignored
+        // WHERE clauses, so archived views showed nothing and active views showed archived rows.
+        let rows = [...developmentPreviewStore.leads];
+        if (normalized.includes('archived=1') || normalized.includes('archived = 1')) {
+          rows = rows.filter(l => l.archived === 1);
+        } else if (normalized.includes('archived')) {
+          rows = rows.filter(l => !l.archived);
+        }
+        return rows.sort((a, b) => (b.score || 0) - (a.score || 0));
+      }
       if (normalized.startsWith('select * from skills')) return [...developmentPreviewStore.skills].sort((a, b) => a.name.localeCompare(b.name));
       if (normalized.startsWith('select * from workflows')) return [...developmentPreviewStore.workflows];
       if (normalized.startsWith('select * from workflow_nodes')) {
@@ -410,7 +522,22 @@ function createDevelopmentPreviewDb() {
         return match ? [match] : [];
       }
       if (normalized.startsWith('select * from analyst_reports')) return [...developmentPreviewStore.analyst_reports];
-      if (normalized.startsWith('select * from approvals')) return [...developmentPreviewStore.approvals];
+      if (normalized.startsWith('select * from approvals')) {
+        // WHERE-aware: badge counts, webhook lookups, and the approval-gate
+        // resolution poll all filter by id or status — ignoring the clause made
+        // every one of them return wrong data in browser/E2E mode.
+        let rows = [...developmentPreviewStore.approvals];
+        if (normalized.includes('where id')) {
+          const id = params[0];
+          rows = rows.filter(a => a.id === id);
+        } else if (normalized.includes("status") && normalized.includes('pending')) {
+          rows = rows.filter(a => (a.status || '').toLowerCase() === 'pending');
+        } else if (normalized.includes('status = $1') || normalized.includes('status=$1')) {
+          const status = (params[0] || '').toLowerCase();
+          rows = rows.filter(a => (a.status || '').toLowerCase() === status);
+        }
+        return rows;
+      }
       if (normalized.startsWith('select * from llm_usage')) return [...developmentPreviewStore.llm_usage].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
       if (normalized.startsWith('select * from cron_logs')) return [...developmentPreviewStore.cron_logs].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
       if (normalized.startsWith('select * from worker_logs')) {
@@ -429,6 +556,33 @@ function createDevelopmentPreviewDb() {
       if (normalized.startsWith('select key, substr(value')) {
         return [...settingsMap.entries()].map(([key, value]) => ({ key, preview: String(value).slice(0, 8) }));
       }
+      // ── Reads for the domains added above ──
+      if (normalized.includes('from users')) {
+        return [...(developmentPreviewStore.users || [])];
+      }
+      if (normalized.includes('from marketing_content')) {
+        let rows = [...(developmentPreviewStore.marketing_content || [])];
+        if (normalized.includes('status = $1')) rows = rows.filter(i => i.status === params[0]);
+        return rows;
+      }
+      if (normalized.startsWith('select * from clients')) return [...(developmentPreviewStore.clients || [])];
+      if (normalized.includes('sum(amount)') && normalized.includes('from expenses')) {
+        const rows = developmentPreviewStore.expenses || [];
+        const since = params[0];
+        const total = rows.filter(e => !since || (e.spent_on || '') >= since).reduce((s, e) => s + Number(e.amount || 0), 0);
+        return [{ total }];
+      }
+      if (normalized.startsWith('select * from expenses')) return [...(developmentPreviewStore.expenses || [])];
+      if (normalized.includes('sum(amount_inr)') && normalized.includes('from retainers')) {
+        const total = (developmentPreviewStore.retainers || []).filter(r => r.status === 'active').reduce((s, r) => s + Number(r.amount_inr || 0), 0);
+        return [{ total }];
+      }
+      if (normalized.startsWith('select * from retainers')) {
+        let rows = [...(developmentPreviewStore.retainers || [])];
+        if (normalized.includes('status = $1')) rows = rows.filter(r => r.status === params[0]);
+        return rows;
+      }
+
       if (normalized.includes('count(*)')) return [{ count: 0 }];
       return [];
     },

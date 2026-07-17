@@ -94,14 +94,19 @@ export default function SkillLibraryScreen({ onNavigate }) {
         subtitle="Master Skills — Blueprints for deterministic execution. No thinking, only doing. Every skill is a stored, tested, repeatable workflow."
         badgeLabel="Deterministic Engine · NO LLM"
         primaryAction="Expert Consult" primaryIcon="brain"
+        onPrimaryClick={() => {
+          const mickiiInput = document.querySelector('input[placeholder*="Ask Mickii"]');
+          if (mickiiInput) { mickiiInput.focus(); mickiiInput.select(); }
+        }}
         secondaryAction="Filter Category" secondaryIcon="filter"
+        onSecondaryClick={() => document.getElementById('skill-category-filter')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
         extraBadges={<><Badge tone="gold">{skills.length} Skills</Badge><Badge tone="success">{templates.length} Templates</Badge><Badge tone="violet">100% Local</Badge></>}
       />
       <HubTabs tabs={[{ id: 'worker-monitor', label: 'Workers' }, { id: 'mickii-status', label: 'Skill Library' }]} active="mickii-status" onNavigate={onNavigate} />
 
       <section className="grid grid-cols-12 gap-5">
         {/* Category Filter */}
-        <div className="col-span-12 flex gap-3 overflow-x-auto pb-2">
+        <div id="skill-category-filter" className="col-span-12 flex gap-3 overflow-x-auto pb-2">
           {SKILL_CATEGORIES.map(cat => (
             <button key={cat.id}
               onClick={() => setActiveCategory(cat.id)}

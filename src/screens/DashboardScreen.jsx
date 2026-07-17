@@ -629,6 +629,8 @@ Reference URL or notes: ${planUrl || "None"}
           {isListening && <span className="text-[10px] text-red-400 font-bold animate-pulse">● REC</span>}
           <button
             onClick={isListening ? stopListening : startListening}
+            aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
+            title={isListening ? 'Stop voice input' : 'Voice input'}
             className={`p-2 rounded-xl transition-all ${isListening ? 'bg-red-500/20 text-red-400' : 'text-slate-500 hover:text-white hover:bg-white/10'}`}
           >
             <Icon name="mic" size={16} />

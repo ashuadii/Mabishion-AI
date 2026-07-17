@@ -276,7 +276,7 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
 
   // ─── Handlers ────────────────────────────────────────────────────────────
   const addSystemMsg = (text, type = 'info') => {
-    setSystemMessages(prev => [...prev, { id: Date.now(), text, type, time: new Date().toLocaleTimeString() }]);
+    setSystemMessages(prev => [...prev, { id: crypto.randomUUID(), text, type, time: new Date().toLocaleTimeString() }]);
   };
 
   const handleSend = async () => {
@@ -1036,10 +1036,12 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
                   { icon: 'description', label: 'Use a template' },
                 ].map(opt => (
                   <button key={opt.label}
-                    onClick={() => { setShowPlusMenu(false); addSystemMsg(`${opt.label} (coming soon)`, 'info'); }}
-                    className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[10px] font-medium text-slate-300 hover:bg-white/5 hover:text-white transition-colors">
-                    <Icon name={opt.icon} size={12} className="text-slate-500" />
+                    disabled
+                    title="Coming soon"
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[10px] font-medium text-slate-500 cursor-not-allowed opacity-50">
+                    <Icon name={opt.icon} size={12} className="text-slate-600" />
                     {opt.label}
+                    <span className="ml-auto text-[7px] font-black uppercase tracking-wider text-slate-600">Soon</span>
                   </button>
                 ))}
               </div>

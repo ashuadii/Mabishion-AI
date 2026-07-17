@@ -1,6 +1,5 @@
 import { BaseWorker } from './baseWorker.js';
 import { getSetting, getDb } from '../../data/db.js';
-import { ApprovalEngine } from '../../services/approvalEngine.js';
 
 const PLACEHOLDER_PATTERNS = [
   'PASTE_YOUR', 'YOUR_KEY', 'YOUR_API', 'ENTER_KEY',
@@ -98,14 +97,10 @@ export class SecurityAuditorWorker extends BaseWorker {
       [crypto.randomUUID(), action, overallStatus, criticalCount, warningCount, JSON.stringify(report)]
     ).catch(err => console.warn('[SecurityAuditor] Audit save failed (non-blocking):', err));
 
-    // Request CRITICAL approval so owner reviews the findings
-    await ApprovalEngine.requestApproval(
-      `Security Audit Report — ${overallStatus} (${criticalCount} critical, ${warningCount} warnings)`,
-      'critical',
-      targetId || 'system',
-      'security_auditor',
-      { report, criticalCount, warningCount, overallStatus }
-    );
+    // The runWorker CRITICAL gate already required owner approval before this
+    // execute() started (P0-2 single enforcement point); a second request here
+    // would re-trigger popup/WhatsApp for the same run. Findings are persisted
+    // to security_audits above for review.
 
     return report;
   }

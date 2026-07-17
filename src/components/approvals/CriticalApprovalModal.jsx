@@ -95,16 +95,31 @@ export default function CriticalApprovalModal({
           </div>
         </div>
 
-        {/* Dynamic Countdown Timer Widget */}
+        {/* Countdown only when the approval genuinely expires. Critical approvals
+            have expires_at = null (C1: no timeout) — show the waiting rule instead
+            of a fabricated deadline. */}
         <div className="bg-red-950/20 border border-red-500/20 p-4 rounded-2xl flex items-center justify-between mb-6">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-            Time Limit Remaining
-          </span>
-          <span
-            className={`text-2xl font-black font-mono tracking-wider ${isPulse ? "text-red-500 animate-pulse scale-110 duration-500" : "text-yellow-500"}`}
-          >
-            {formatTime(timeLeft)}
-          </span>
+          {approval.expires_at ? (
+            <>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                Time Limit Remaining
+              </span>
+              <span
+                className={`text-2xl font-black font-mono tracking-wider ${isPulse ? "text-red-500 animate-pulse scale-110 duration-500" : "text-yellow-500"}`}
+              >
+                {formatTime(timeLeft)}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                No Timeout
+              </span>
+              <span className="text-sm font-black text-yellow-500">
+                Waits for your decision
+              </span>
+            </>
+          )}
         </div>
 
         {/* Content details */}

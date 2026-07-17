@@ -33,6 +33,7 @@ export default function MarketingStudioScreen({ onNavigate }) {
   const [sources, setSources] = useState([]);
   const [form, setForm] = useState({ title: '', content_type: 'post', channel: 'instagram', scheduled_for: '', body: '' });
   const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState(null); // { tone: 'success'|'error', text }
 
   const refresh = useCallback(async () => {
     try {
@@ -50,11 +51,18 @@ export default function MarketingStudioScreen({ onNavigate }) {
   const handleCreate = async () => {
     if (!form.title.trim() || saving) return;
     setSaving(true);
+    setSaveMsg(null);
     try {
       await addMarketingContent(form);
       setForm({ title: '', content_type: 'post', channel: 'instagram', scheduled_for: '', body: '' });
       await refresh();
-    } finally { setSaving(false); }
+      setSaveMsg({ tone: 'success', text: 'Added to calendar as draft.' });
+    } catch (err) {
+      setSaveMsg({ tone: 'error', text: `Save failed: ${err.message || err}` });
+    } finally {
+      setSaving(false);
+      setTimeout(() => setSaveMsg(null), 5000);
+    }
   };
 
   const handleAdvance = async (item) => {
@@ -151,6 +159,11 @@ export default function MarketingStudioScreen({ onNavigate }) {
             <Button onClick={handleCreate} disabled={!form.title.trim() || saving}>
               <Icon name="add" size={15} /> {saving ? 'Saving...' : 'Add to Calendar'}
             </Button>
+            {saveMsg && (
+              <p role="status" className="text-xs font-bold" style={{ color: saveMsg.tone === 'success' ? '#34d399' : '#f87171' }}>
+                {saveMsg.text}
+              </p>
+            )}
           </div>
         </div>
 

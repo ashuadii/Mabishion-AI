@@ -488,14 +488,15 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
                   >
                     <Icon name="mail" size={14} /> Send Email
                   </a>
-                  <button 
-                    onClick={() => {
-                      alert(`Dialing phone channel: ${lead.phone || 'N/A'}`);
-                    }}
-                    className="p-3 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-300 flex items-center justify-center gap-2 hover:bg-violet-500/20 text-xs font-bold transition-all"
+                  <a
+                    href={lead.phone ? `tel:${lead.phone}` : undefined}
+                    aria-disabled={!lead.phone}
+                    onClick={(e) => { if (!lead.phone) e.preventDefault(); }}
+                    className={`p-3 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-300 flex items-center justify-center gap-2 hover:bg-violet-500/20 text-xs font-bold transition-all ${!lead.phone ? 'opacity-40 cursor-not-allowed' : ''}`}
+                    title={lead.phone ? `Call ${lead.phone}` : 'No phone number on this lead'}
                   >
                     <Icon name="call" size={14} /> Dial Phone
-                  </button>
+                  </a>
                 </div>
               </div>
             </div>

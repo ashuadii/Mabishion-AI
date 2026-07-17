@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AppShell from '../components/AppShell';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
 import Icon from '../components/Icon';
 import { C } from '../components/consts';
+import { getProjects } from '../data/db.js';
 
 const PROJECTS = {
   'orion-labs': {
@@ -56,7 +57,49 @@ const TASKS = [
 export default function ProjectDetailScreen({ onNavigate }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const project = PROJECTS[id] || PROJECTS['orion-labs'];
+  // Load the real project from SQLite first; the hardcoded PROJECTS entries are
+  // demo fallbacks only (previously this screen ignored :id entirely and always
+  // showed "Orion Labs" — UI audit #11).
+  const [dbProject, setDbProject] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    getProjects()
+      .then(rows => {
+        if (cancelled) return;
+        const found = (rows || []).find(p => p.id === id);
+        if (found) {
+          setDbProject({
+            name: found.name,
+            client: found.client_name || 'Internal',
+            stage: found.stage || 'Research',
+            type: found.type || 'Project',
+            budget: found.budget || '—',
+            due: found.due_date || 'Not set',
+            progress: Number(found.progress || 0),
+            owner: 'Mabishion Studio',
+            thesis: `${found.type || 'Project'} for ${found.client_name || 'internal use'} — live record from the production floor.`,
+            scope: [],
+            decisions: [],
+          });
+        }
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [id]);
+
+  const isDemo = !dbProject;
+  const project = dbProject || PROJECTS[id] || PROJECTS['orion-labs'];
+
+  if (loading) {
+    return (
+      <AppShell activeNavId="projects" onNavigate={(s) => (onNavigate ? onNavigate(s) : navigate(`/${s}`))}>
+        <p className="p-8 text-sm font-semibold" style={{ color: C.textMuted }}>Loading project...</p>
+      </AppShell>
+    );
+  }
 
   const handleNavigate = (screen) => {
     if (onNavigate) onNavigate(screen);
@@ -75,6 +118,7 @@ export default function ProjectDetailScreen({ onNavigate }) {
             <div className="mb-5 flex flex-wrap gap-2">
               <Badge tone="gold">{project.stage}</Badge>
               <Badge tone="cyan">{project.type}</Badge>
+              {isDemo && <Badge tone="danger">Demo data — project not found in database</Badge>}
             </div>
             <h1 className="font-heading text-4xl leading-tight" style={{ color: C.navyDeep }}>{project.name}</h1>
             <p className="mt-4 max-w-3xl text-lg leading-8" style={{ color: C.textMuted }}>{project.thesis}</p>
@@ -112,6 +156,9 @@ export default function ProjectDetailScreen({ onNavigate }) {
               <Icon name="architecture" style={{ color: C.goldDeep }} />
             </div>
             <div className="space-y-3">
+              {project.scope.length === 0 && (
+                <p className="text-sm" style={{ color: C.textMuted }}>No scope items recorded yet — they appear here as the blueprint worker defines them.</p>
+              )}
               {project.scope.map((item) => (
                 <div key={item} className="flex items-start gap-3 rounded-2xl border p-4" style={{ borderColor: C.glassBorder, background: 'rgba(255,255,255,.54)' }}>
                   <Icon name="check" size={18} style={{ color: C.success }} />
@@ -142,6 +189,9 @@ export default function ProjectDetailScreen({ onNavigate }) {
           <div className="rounded-[24px] border bg-white/68 p-6" style={{ borderColor: C.glassBorder }}>
             <h2 className="font-heading text-2xl" style={{ color: C.primary }}>Open decisions</h2>
             <div className="mt-5 space-y-3">
+              {project.decisions.length === 0 && (
+                <p className="text-sm" style={{ color: C.textMuted }}>No open decisions.</p>
+              )}
               {project.decisions.map((decision) => <Badge key={decision} tone="danger">{decision}</Badge>)}
             </div>
           </div>

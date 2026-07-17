@@ -516,31 +516,7 @@ ${riskFlags.map(f => `- ${f}`).join('\n')}
       [projectType, projectId]
     ).catch(() => {});
 
-    // Create 24h STANDARD approval gate request with version indicator
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-    const approvalId = crypto.randomUUID();
-    
-    await db.execute(
-      `INSERT INTO approvals (id, title, type, project_id, worker_name, request_data, status, expires_at, created_at, owner_notified, whatsapp_sent)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, 0, 0)`,
-      [
-        approvalId,
-        `Technical Architecture Blueprint for "${projectName}" (v${nextVersion.toFixed(1)})`,
-        'standard',
-        projectId,
-        'blueprint_maker',
-        JSON.stringify({
-          blueprintId,
-          projectName,
-          clientName,
-          version: nextVersion.toFixed(1),
-          summary: `PRD: ${prdTextWithWidgets.split('\n').length} lines | TRD: ${(techData.trdMarkdown || '').split('\n').length} lines | Schema: ${(techData.databaseSchema || '').split('\n').length} lines`,
-          validationIssues
-        }),
-        'pending',
-        expiresAt
-      ]
-    ).catch(err => console.error('[BlueprintWorker Approval Insert Err]', err));
+    // Approval record is created by the runWorker gate (single enforcement point, P0-2).
 
     return {
       blueprintId,
@@ -555,8 +531,7 @@ ${riskFlags.map(f => `- ${f}`).join('\n')}
       securityChecklist:   techData.securityChecklist,
       deploymentSteps:     techData.deploymentSteps,
       version: nextVersion.toFixed(1),
-      summary: `Blueprint created for ${projectName} (v${nextVersion.toFixed(1)}) | PRD: ${prdTextWithWidgets.split('\n').length} lines | ${(techData.apiEndpoints || []).length} API endpoints | ${(techData.securityChecklist || []).length} security checks`,
-      approvalId
+      summary: `Blueprint created for ${projectName} (v${nextVersion.toFixed(1)}) | PRD: ${prdTextWithWidgets.split('\n').length} lines | ${(techData.apiEndpoints || []).length} API endpoints | ${(techData.securityChecklist || []).length} security checks`
     };
   }
 }

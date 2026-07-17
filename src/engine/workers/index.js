@@ -359,6 +359,41 @@ export async function runWorker(workerName, input, config = {}, hooks = {}) {
   const controller = new AbortController();
   _activeRuns.set(runId, { controller, workerName: actualWorkerName, startedAt: new Date().toISOString() });
 
+  // ── Approval gate (P0-2) — the single enforcement point for registry policy. ──
+  // CRITICAL: request via ApprovalEngine (popup/WhatsApp/sound) and SUSPEND until the
+  //   owner decides — no timeout, cancellable via cancelWorker().
+  // STANDARD: create the sidebar-queue record and proceed (per governance: queue,
+  //   24h no-response escalates to CRITICAL — never blocks, never auto-approves).
+  // Placed before acquireSlot() so a waiting gate can never deadlock the
+  // 2-slot concurrency semaphore, and outside BaseWorker's 5-minute timeout race.
+  // Vitest bypass: unit/integration suites exercise worker logic, not owner presence.
+  const isVitest = typeof process !== 'undefined' && !!process.env?.VITEST;
+  if (registry.policy.requiresApproval && !isVitest) {
+    const { ApprovalEngine } = await import('../../services/approvalEngine.js');
+    const requestPreview = typeof input === 'string'
+      ? input.slice(0, 300)
+      : JSON.stringify(input || {}).slice(0, 300);
+    const projectRef = (input && typeof input === 'object' && (input.projectId || input.project_id))
+      || config?.projectName || (typeof input === 'string' ? input : 'system');
+    try {
+      const approvalId = await ApprovalEngine.requestApproval(
+        `Run ${registry.name} (${registry.wkId})`,
+        registry.policy.approvalSeverity,
+        projectRef,
+        actualWorkerName,
+        { request_preview: requestPreview, tier: config?.tier || null, phase: config?.phase || null }
+      );
+      if (registry.policy.approvalSeverity === 'critical') {
+        if (hooks.onStatus) hooks.onStatus(`⏳ CRITICAL gate — waiting for owner approval: ${registry.name}`);
+        await ApprovalEngine.waitForResolution(approvalId, { abortSignal: controller.signal });
+        if (hooks.onStatus) hooks.onStatus(`✅ Owner approved — ${registry.name} starting.`);
+      }
+    } catch (gateErr) {
+      _activeRuns.delete(runId);
+      throw gateErr;
+    }
+  }
+
   // Per-worker daily cost cap: ₹50/day (5000 paise) — BRD v1.4 §14.2
   try {
     const { getDb } = await import('../../data/db.js');
