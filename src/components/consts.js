@@ -39,11 +39,14 @@ export const C = {
  * and sticky bars — where the blur actually does visual work.
  */
 export function glassStyle({ strong = false, glow = 'none', borderColor, blur = false } = {}) {
+  // Scroll-perf 2026-07-17: shadow blur radii cut (80px → 28px). On WebKitGTK large
+  // blur radii are CPU-painted; ~90 panels × 80px blur dominated scroll paint cost.
+  // Visual depth is preserved with tighter falloff. Revert = restore 24px/80px values.
   const glowMap = {
-    warning: `0 24px 80px rgba(0,0,0,.40), 0 0 44px ${C.warning}24, inset 0 1px 0 rgba(255,255,255,.08)`,
-    info: `0 24px 80px rgba(0,0,0,.40), 0 0 36px ${C.info}18, inset 0 1px 0 rgba(255,255,255,.08)`,
-    primary: `0 24px 80px rgba(0,0,0,.40), 0 0 36px ${C.primary}18, inset 0 1px 0 rgba(255,255,255,.08)`,
-    none: '0 24px 76px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.08)'
+    warning: `0 10px 28px rgba(0,0,0,.38), 0 0 18px ${C.warning}20, inset 0 1px 0 rgba(255,255,255,.08)`,
+    info: `0 10px 28px rgba(0,0,0,.38), 0 0 16px ${C.info}16, inset 0 1px 0 rgba(255,255,255,.08)`,
+    primary: `0 10px 28px rgba(0,0,0,.38), 0 0 16px ${C.primary}16, inset 0 1px 0 rgba(255,255,255,.08)`,
+    none: '0 10px 26px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.08)'
   };
   return {
     background: `linear-gradient(145deg, rgba(255,255,255,.05), rgba(255,255,255,.02)), ${strong ? 'rgba(27,46,58,.92)' : 'rgba(27,46,58,.78)'}`,

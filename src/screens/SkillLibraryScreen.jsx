@@ -8,6 +8,7 @@ import Badge from '../components/Badge';
 import Button from '../components/Button';
 import Icon from '../components/Icon';
 import ProgressBar from '../components/ProgressBar';
+import QuickCommandBar from '../components/QuickCommandBar';
 
 const SKILL_CATEGORIES = [
   { id: 'all', label: 'All Skills', icon: 'brain' },
@@ -81,14 +82,14 @@ export default function SkillLibraryScreen({ onNavigate }) {
   return (
     <AppShell activeNavId="worker-monitor" onNavigate={onNavigate}
       commandBar={
-        <div className="fixed bottom-5 right-6 z-40 flex h-[64px] items-center gap-4 px-4"
-          style={{ left: C.sidebarW + 24, ...glassStyle({ strong: true, glow: 'warning' }) }}>
-          <Badge tone="gold">Skill Library</Badge>
-          <input className="min-w-0 flex-1 bg-transparent text-sm outline-none" style={{ color: C.text }}
-            placeholder="Ask Mickii: run website_build, create proposal, followup lead..." />
-          <Button variant="soft"><Icon name="mic" size={17} /></Button>
-          <Button><Icon name="send" size={17} /></Button>
-        </div>
+        // The bespoke bar here had an input + mic + send wired to nothing (UI audit).
+        // Owner decision 2026-07-17 ("define karo"): reuse the standard working
+        // Mickii bar — same chat/voice behavior as every other screen.
+        <QuickCommandBar
+          contextLabel="Skill Library"
+          placeholder="Ask Mickii: run website_build, create proposal, followup lead..."
+          onNavigate={onNavigate}
+        />
       }>
       <ScreenHeader title="Mickii Skill Library" index="03"
         subtitle="Master Skills — Blueprints for deterministic execution. No thinking, only doing. Every skill is a stored, tested, repeatable workflow."

@@ -666,14 +666,14 @@ const SettingsScreen = ({ onNavigate }) => {
                     <span className="text-[9px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full">Not Configured</span>
                   </h3>
                   <p className="text-xs text-gray-500 mt-1">
-                    Optional security layer: password/PIN on app launch + AES-256 encryption for stored API keys.
-                    Deferred by owner decision — set it up here when you need it.
+                    Optional security layer: operator PIN required on every app launch.
+                    Off by default (owner decision 2026-07-17) — set a PIN here to turn it on.
                   </p>
                 </div>
                 <button
-                  disabled
-                  title="Coming soon — planned as Blueprint adoption P3"
-                  className="text-xs px-4 py-2 rounded-xl bg-white/10 text-gray-500 cursor-not-allowed flex-shrink-0"
+                  onClick={() => onNavigate && onNavigate('login')}
+                  title="Set up an operator PIN — the app will then lock on every launch"
+                  className="text-xs px-4 py-2 rounded-xl bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white transition-all flex-shrink-0"
                 >
                   Set Up Lock
                 </button>
