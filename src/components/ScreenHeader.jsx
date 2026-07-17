@@ -207,8 +207,10 @@ export default function ScreenHeader({ title, pageTitle, subtitle, index, badgeL
             >
               <Icon name="bell" size={17} />
               {logs.length > 0 && (
+                // Static dot — the old animate-ping ran an infinite animation on
+                // every screen whenever any log existed, keeping the compositor
+                // permanently busy (part of the scroll-jank cleanup).
                 <span className="absolute top-1 right-1 flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                 </span>
               )}

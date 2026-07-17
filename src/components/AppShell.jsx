@@ -82,16 +82,26 @@ export default function AppShell({ activeNavId, onNavigate, commandBar, children
   });
 
   useEffect(() => {
+    // Cross-tab sync via the storage event; same-tab sync via the custom event
+    // Sidebar dispatches on toggle. The previous 5Hz localStorage poll kept the
+    // main thread ticking for no reason.
     const onStorage = (e) => { if (e.key === 'mabishion_sidebar') setSidebarExpanded(e.newValue === '1'); };
+    const onToggle = (e) => setSidebarExpanded(!!e.detail?.expanded);
     window.addEventListener('storage', onStorage);
-    const interval = setInterval(() => {
-      const v = localStorage.getItem('mabishion_sidebar');
-      setSidebarExpanded(v === null ? true : v === '1');
-    }, 200);
-    return () => { window.removeEventListener('storage', onStorage); clearInterval(interval); };
+    window.addEventListener('mabishion-sidebar-toggle', onToggle);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('mabishion-sidebar-toggle', onToggle);
+    };
   }, []);
 
+  const lastIdleReset = useRef(0);
   const resetIdleTimer = useCallback(() => {
+    // Throttled: scroll/mousemove fire continuously; re-arming a 10-minute timer
+    // more than twice a second is pure overhead during scrolling.
+    const now = Date.now();
+    if (now - lastIdleReset.current < 500) return;
+    lastIdleReset.current = now;
     if (idleTimer.current) clearTimeout(idleTimer.current);
     idleTimer.current = setTimeout(() => {
       if (onNavigate) onNavigate('login');

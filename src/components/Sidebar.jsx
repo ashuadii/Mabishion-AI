@@ -56,7 +56,13 @@ export default function Sidebar({ activeNavId, onNavigate }) {
       
       <div className="mb-6 flex items-center gap-2">
         <button
-          onClick={() => { const next = !expanded; setExpanded(next); localStorage.setItem('mabishion_sidebar', next ? '1' : '0'); }}
+          onClick={() => {
+            const next = !expanded;
+            setExpanded(next);
+            localStorage.setItem('mabishion_sidebar', next ? '1' : '0');
+            // Same-tab notification for AppShell's content margin — replaces its old 200ms poll
+            window.dispatchEvent(new CustomEvent('mabishion-sidebar-toggle', { detail: { expanded: next } }));
+          }}
           className="h-9 w-9 shrink-0 rounded-xl flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all"
           title={expanded ? 'Collapse sidebar' : 'Expand sidebar'}
         >

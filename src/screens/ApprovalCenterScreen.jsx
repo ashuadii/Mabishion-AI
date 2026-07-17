@@ -249,7 +249,7 @@ export default function ApprovalCenterScreen({ onNavigate }) {
           />
 
           {/* Incoming Simulated WhatsApp remote commands console */}
-          <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-5 space-y-4 text-left">
+          <div className="bg-white/5 rounded-2xl border border-white/10 p-5 space-y-4 text-left">
             <div>
               <h3 className="text-lg font-black text-white flex items-center gap-2">
                 <span className="material-icons text-cyan-400">terminal</span>
@@ -328,7 +328,7 @@ export default function ApprovalCenterScreen({ onNavigate }) {
         <div className="lg:col-span-4 space-y-8">
           
           {/* Outbound WhatsApp Web Session Manager panel */}
-          <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-5 space-y-6 text-left">
+          <div className="bg-white/5 rounded-2xl border border-white/10 p-5 space-y-6 text-left">
             <div>
               <h3 className="text-lg font-black text-white flex items-center gap-2">
                 <span className="material-icons text-green-400">chat</span>
@@ -455,7 +455,7 @@ export default function ApprovalCenterScreen({ onNavigate }) {
           </div>
 
           {/* Outbound Telegram/WhatsApp Logs telemetry array */}
-          <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-5 space-y-4 text-left">
+          <div className="bg-white/5 rounded-2xl border border-white/10 p-5 space-y-4 text-left">
             <div>
               <h3 className="text-lg font-black text-white flex items-center gap-2">
                 <span className="material-icons text-violet-400">history</span>

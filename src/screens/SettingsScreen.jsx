@@ -40,7 +40,7 @@ function CpanelDeployPanel() {
   };
 
   return (
-    <div className="bg-white/5 backdrop-blur-xl p-5 rounded-2xl border border-white/10 space-y-5">
+    <div className="bg-white/5 p-5 rounded-2xl border border-white/10 space-y-5">
       <div className="flex items-center gap-3">
         <h2 className="text-xl font-black text-white">🚀 cPanel FTP Deploy</h2>
         <Badge tone="warning">Requires Approval Gate</Badge>
@@ -471,7 +471,7 @@ const SettingsScreen = ({ onNavigate }) => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
               {/* Cloud keys */}
-              <div className="bg-white/5 backdrop-blur-xl p-5 rounded-2xl border border-white/10 relative overflow-hidden shadow-2xl">
+              <div className="bg-white/5 p-5 rounded-2xl border border-white/10 relative overflow-hidden shadow-2xl">
                 <h2 className="text-xl font-bold text-indigo-300 mb-2 flex items-center gap-2">
                   <Icon name="lock" />
                   Cloud Intelligence Keys
@@ -596,7 +596,7 @@ const SettingsScreen = ({ onNavigate }) => {
 
             {/* Right side configs */}
             <div className="space-y-6">
-              <div className="bg-white/5 backdrop-blur-xl p-5 rounded-2xl border border-white/10 shadow-2xl">
+              <div className="bg-white/5 p-5 rounded-2xl border border-white/10 shadow-2xl">
                 <h2 className="text-lg font-bold text-emerald-300 mb-3 flex items-center gap-2">
                   <Icon name="plug" />
                   Local Engine (Ollama)
@@ -615,7 +615,7 @@ const SettingsScreen = ({ onNavigate }) => {
                 </div>
               </div>
 
-              <div className="bg-white/5 backdrop-blur-xl p-5 rounded-2xl border border-white/10 shadow-2xl">
+              <div className="bg-white/5 p-5 rounded-2xl border border-white/10 shadow-2xl">
                 <h2 className="text-lg font-bold text-blue-300 mb-3 flex items-center gap-2">
                   <Icon name="language" />
                   Research Search Keys
@@ -685,7 +685,7 @@ const SettingsScreen = ({ onNavigate }) => {
         {activeTab === 'mcp' && (
           /* MCP Hub Integrations Tab */
           <div className="space-y-6">
-            <div className="bg-white/5 backdrop-blur-xl p-5 rounded-2xl border border-white/10 shadow-2xl">
+            <div className="bg-white/5 p-5 rounded-2xl border border-white/10 shadow-2xl">
               <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <h2 className="text-xl font-black text-white flex items-center gap-2">
@@ -794,7 +794,7 @@ const SettingsScreen = ({ onNavigate }) => {
             </div>
 
             {/* WhatsApp Integration Panel */}
-            <div className="bg-white/5 backdrop-blur-xl p-5 rounded-2xl border border-white/10 shadow-2xl">
+            <div className="bg-white/5 p-5 rounded-2xl border border-white/10 shadow-2xl">
               <h2 className="text-lg font-black text-white mb-4 flex items-center gap-2">
                 <Icon name="message" className="text-green-400" />
                 Mickii WhatsApp Routing Gateways
@@ -848,7 +848,7 @@ const SettingsScreen = ({ onNavigate }) => {
         )}
 
         {activeTab === 'database' && (
-          <div className="bg-white/5 backdrop-blur-xl p-5 rounded-2xl border border-white/10 relative overflow-hidden shadow-2xl space-y-6">
+          <div className="bg-white/5 p-5 rounded-2xl border border-white/10 relative overflow-hidden shadow-2xl space-y-6">
             <h2 className="text-xl font-black text-white mb-2 flex items-center gap-2">
               <Icon name="archive" className="text-indigo-400" size={24} />
               Database Maintenance & Backups

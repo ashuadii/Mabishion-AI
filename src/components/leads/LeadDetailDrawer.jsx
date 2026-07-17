@@ -289,7 +289,7 @@ export default function LeadDetailDrawer({ lead, onClose, onUpdate }) {
             <div className="space-y-4">
               
               {/* Lead Magnet Copysmith Builder */}
-              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 space-y-3 shadow-xl backdrop-blur-md">
+              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 space-y-3 shadow-xl">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-black text-white flex items-center gap-1.5 uppercase tracking-wider">
                     <span className="material-icons text-amber-400 text-sm">bolt</span>
