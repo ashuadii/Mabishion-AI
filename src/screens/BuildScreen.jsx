@@ -978,7 +978,9 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
   // ─── Render: Prompt Bar ──────────────────────────────────────────────────
   const renderPromptBar = () => (
     <div className="shrink-0 px-4 pb-4 pt-1.5">
-      <div className="max-w-lg mx-auto rounded-xl overflow-hidden"
+      {/* overflow-hidden removed: it clipped the upward-opening + menu invisible —
+          the button highlighted but the menu could never be seen (owner report 2026-07-17) */}
+      <div className="max-w-lg mx-auto rounded-xl"
         style={{ ...glassStyle({ strong: true, glow: 'primary' }), backgroundColor: 'rgba(27,46,58,0.88)' }}>
         <div className="flex items-center gap-1.5 px-2.5 py-1.5">
           {/* + Button: triggers Skills, Plugins, Attachments */}

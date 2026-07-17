@@ -16,7 +16,6 @@ import RetainersScreen from './screens/RetainersScreen';
 import ReportsScreen from './screens/ReportsScreen';
 import FinanceScreen from './screens/FinanceScreen';
 import SettingsScreen from './screens/SettingsScreen';
-import ResearchScreen from './screens/ResearchScreen';
 import BuildScreen from './screens/BuildScreen';
 import ApprovalCenterScreen from './screens/ApprovalCenterScreen';
 import ClientsScreen from './screens/ClientsScreen';

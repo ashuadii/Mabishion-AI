@@ -359,40 +359,10 @@ export async function runWorker(workerName, input, config = {}, hooks = {}) {
   const controller = new AbortController();
   _activeRuns.set(runId, { controller, workerName: actualWorkerName, startedAt: new Date().toISOString() });
 
-  // ── Approval gate (P0-2) — the single enforcement point for registry policy. ──
-  // CRITICAL: request via ApprovalEngine (popup/WhatsApp/sound) and SUSPEND until the
-  //   owner decides — no timeout, cancellable via cancelWorker().
-  // STANDARD: create the sidebar-queue record and proceed (per governance: queue,
-  //   24h no-response escalates to CRITICAL — never blocks, never auto-approves).
-  // Placed before acquireSlot() so a waiting gate can never deadlock the
-  // 2-slot concurrency semaphore, and outside BaseWorker's 5-minute timeout race.
-  // Vitest bypass: unit/integration suites exercise worker logic, not owner presence.
+  // Approval gate moved AFTER generation — see the review block below.
+  // Owner Decision 2026-07-17: "ban ne ke baad dikhao, phir bhejo — 2 nahi."
+  // One gate, on the OUTPUT, not on the intent to run.
   const isVitest = typeof process !== 'undefined' && !!process.env?.VITEST;
-  if (registry.policy.requiresApproval && !isVitest) {
-    const { ApprovalEngine } = await import('../../services/approvalEngine.js');
-    const requestPreview = typeof input === 'string'
-      ? input.slice(0, 300)
-      : JSON.stringify(input || {}).slice(0, 300);
-    const projectRef = (input && typeof input === 'object' && (input.projectId || input.project_id))
-      || config?.projectName || (typeof input === 'string' ? input : 'system');
-    try {
-      const approvalId = await ApprovalEngine.requestApproval(
-        `Run ${registry.name} (${registry.wkId})`,
-        registry.policy.approvalSeverity,
-        projectRef,
-        actualWorkerName,
-        { request_preview: requestPreview, tier: config?.tier || null, phase: config?.phase || null }
-      );
-      if (registry.policy.approvalSeverity === 'critical') {
-        if (hooks.onStatus) hooks.onStatus(`⏳ CRITICAL gate — waiting for owner approval: ${registry.name}`);
-        await ApprovalEngine.waitForResolution(approvalId, { abortSignal: controller.signal });
-        if (hooks.onStatus) hooks.onStatus(`✅ Owner approved — ${registry.name} starting.`);
-      }
-    } catch (gateErr) {
-      _activeRuns.delete(runId);
-      throw gateErr;
-    }
-  }
 
   // Per-worker daily cost cap: ₹50/day (5000 paise) — BRD v1.4 §14.2
   try {
@@ -422,7 +392,44 @@ export async function runWorker(workerName, input, config = {}, hooks = {}) {
   try {
     result = await worker.run(input, { ...runParams, abortSignal: controller.signal });
   } finally {
+    // Slot freed BEFORE the review wait — a pending owner review must never
+    // hog one of the 2 concurrency slots.
     releaseSlot();
+  }
+
+  // ── Approval gate (P0-2, Owner Decision 2026-07-17): review AFTER generation ──
+  // The worker produces its output first; the approval record carries the OUTPUT
+  // so the owner reviews the actual thing, not the intent ("ban ne ke baad dikhao").
+  // CRITICAL: popup/WhatsApp fire and the run does not complete until the owner
+  //   decides — no timeout (C1), cancellable via cancelWorker(). Rejection throws,
+  //   so callers (e.g. the Build pipeline tier) mark the step failed, not done.
+  // STANDARD: the record joins the sidebar queue (24h escalation) and the run
+  //   completes — per governance, standard never blocks and never auto-approves.
+  // Vitest bypass: suites exercise worker logic, not owner presence; the gate
+  //   semantics have their own dedicated tests (approvalGateWait.test.js).
+  try {
+    if (registry.policy.requiresApproval && !isVitest && result?.success !== false) {
+      const { ApprovalEngine } = await import('../../services/approvalEngine.js');
+      const out = result?.output;
+      const summary = out?.summary || out?.report?.summary;
+      const outputPreview = String(summary || (typeof out === 'string' ? out : JSON.stringify(out || {}))).slice(0, 500);
+      const projectRef = config?.projectName
+        || (input && typeof input === 'object' && (input.projectId || input.project_id))
+        || (typeof input === 'string' ? input : 'system');
+      const approvalId = await ApprovalEngine.requestApproval(
+        `${registry.name} — output ready for review${config?.projectName ? ` (${config.projectName})` : ''}`,
+        registry.policy.approvalSeverity,
+        projectRef,
+        actualWorkerName,
+        { output_preview: outputPreview, tier: config?.tier || null, phase: config?.phase || null }
+      );
+      if (registry.policy.approvalSeverity === 'critical') {
+        if (hooks.onStatus) hooks.onStatus(`⏳ ${registry.name} output ready — waiting for your review (CRITICAL gate)`);
+        await ApprovalEngine.waitForResolution(approvalId, { abortSignal: controller.signal });
+        if (hooks.onStatus) hooks.onStatus(`✅ Output approved — ${registry.name} done.`);
+      }
+    }
+  } finally {
     _activeRuns.delete(runId);
   }
 
