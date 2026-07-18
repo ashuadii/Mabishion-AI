@@ -1,4 +1,5 @@
 import { BaseWorker } from './baseWorker.js';
+import { COMPANY } from '../../data/companyProfile.js';
 import { getDb } from '../../data/db.js';
 import { executeLlmWithFallback } from '../../services/llmManager.js';
 import { jsPDF } from 'jspdf';
@@ -35,7 +36,7 @@ export class ComplianceWorker extends BaseWorker {
     const lawRef        = this._jurisdictionNote(jurisdiction);
 
     // Fetch client email from leads if possible
-    let businessEmail = 'contact@mabishion.ai';
+    let businessEmail = COMPANY.email;
     try {
       const clientRows = await db.select("SELECT welcome_email FROM clients WHERE client_name LIKE $1 LIMIT 1", [`%${clientName}%`]);
       if (!clientRows || clientRows.length === 0) {

@@ -91,8 +91,11 @@ export default function MarketingStudioScreen({ onNavigate }) {
         subtitle="Mabishion ki apni marketing — content plan se leads tak. Engine B: yahan se banao, approve karo, publish track karo."
         badgeLabel="Engine B · Self-Marketing"
       />
+      {/* Marketing hub (Owner Decision 2026-07-18): Marketing Studio + Internal Tools
+          ek jagah — Studio = content/campaign operating desk, Internal Tools = automation
+          BUILDER (16-tier pipeline). Alag screens rehte hain (builder vs desk), par ek hub. */}
       <HubTabs
-        tabs={[{ id: 'marketing-studio', label: 'Studio' }, { id: 'sales-marketing', label: 'Campaigns' }]}
+        tabs={[{ id: 'marketing-studio', label: 'Studio' }, { id: 'sales-marketing', label: 'Campaigns' }, { id: 'internal-tools', label: 'Internal Tools' }]}
         active="marketing-studio"
         onNavigate={onNavigate}
       />

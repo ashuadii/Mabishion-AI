@@ -14,6 +14,7 @@ import {
   getProjects, getLeads, getWorkerLogs, getPendingApprovals, getDb, getDocumentsByProject
 } from '../data/db.js';
 import { normalizeWorkerId, getWorkerLabel } from '../utils/approvalRouting.js';
+import HubTabs from '../components/HubTabs';
 import { executeLlmWithFallback } from '../services/llmManager.js';
 import { generateProposalPdf, saveFileToUserDirectory } from '../services/fileOperationService.js';
 import { jsPDF } from 'jspdf';
@@ -486,10 +487,10 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
         <div className="px-3 py-2.5 border-b border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <Icon name="construction" size={12} style={{ color: C.gold }} />
-            <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: C.gold }}>Pipeline</span>
+            <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: C.gold }}>Pipeline</span>
           </div>
           <button onClick={handleAdvanceTier} disabled={isProcessing}
-            className="text-[9px] font-bold px-1.5 py-0.5 rounded hover:bg-white/5 disabled:opacity-30"
+            className="text-[11px] font-bold px-1.5 py-0.5 rounded hover:bg-white/5 disabled:opacity-30"
             style={{ color: C.gold }}>
             Next →
           </button>
@@ -497,7 +498,7 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
 
         <div className="px-3 py-2 border-b border-white/5">
           <p className="text-[10px] font-bold text-white truncate">{activePipeline.name}</p>
-          <p className="text-[9px] text-slate-500">{activePipeline.category}</p>
+          <p className="text-[11px] text-slate-500">{activePipeline.category}</p>
         </div>
 
         <div className="flex-1 overflow-y-auto py-1">
@@ -511,7 +512,7 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
             return (
               <div key={t.id}
                 onClick={() => isActive && handleRunTier(t, activePipeline.name)}
-                className={`flex items-center gap-1.5 px-3 py-1 mx-1 rounded transition-all text-[9px] ${
+                className={`flex items-center gap-1.5 px-3 py-1 mx-1 rounded transition-all text-[11px] ${
                   isActive ? 'cursor-pointer hover:bg-white/5' : ''
                 }`}>
                 <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: dotColor }} />
@@ -531,11 +532,11 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
 
         {pendingApprovals.length > 0 && (
           <div className="px-3 py-2 border-t border-white/5">
-            <p className="text-[9px] font-black text-orange-400 uppercase mb-1">Approvals ({pendingApprovals.length})</p>
+            <p className="text-[11px] font-black text-orange-400 uppercase mb-1">Approvals ({pendingApprovals.length})</p>
             {pendingApprovals.slice(0, 2).map((a, i) => (
-              <div key={i} className="text-[9px] text-orange-300 truncate">{getWorkerLabel(a.worker_name)}</div>
+              <div key={i} className="text-[11px] text-orange-300 truncate">{getWorkerLabel(a.worker_name)}</div>
             ))}
-            <button onClick={() => onNavigate('approvals')} className="text-[9px] mt-0.5" style={{ color: C.gold }}>
+            <button onClick={() => onNavigate('approvals')} className="text-[11px] mt-0.5" style={{ color: C.gold }}>
               View All →
             </button>
           </div>
@@ -549,7 +550,14 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
     <div className="flex-1 flex flex-col items-center justify-center px-6 py-6 overflow-y-auto">
       <div className="w-full max-w-4xl mx-auto space-y-6">
         <div className="text-center space-y-1.5">
-          <p className="text-[9px] font-black uppercase tracking-[0.2em]" style={{ color: C.gold }}>{internalMode ? 'Internal Tools — Founder Only' : 'Build Playground'}</p>
+          {internalMode && (
+            <HubTabs
+              tabs={[{ id: 'marketing-studio', label: 'Studio' }, { id: 'sales-marketing', label: 'Campaigns' }, { id: 'internal-tools', label: 'Internal Tools' }]}
+              active="internal-tools"
+              onNavigate={onNavigate}
+            />
+          )}
+          <p className="text-[11px] font-black uppercase tracking-[0.2em]" style={{ color: C.gold }}>{internalMode ? 'Internal Tools — Founder Only' : 'Build Playground'}</p>
           <h2 className="font-heading text-3xl text-white">{internalMode ? 'What are we automating?' : 'What are we building?'}</h2>
           <p className="text-sm text-slate-400">{internalMode ? 'Mabishion internal automations — same 16-tier pipeline, never client-facing.' : 'Select a category, fill details, then the 16-tier pipeline takes over.'}</p>
         </div>
@@ -577,7 +585,7 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
         </div>
 
         <div className="space-y-1.5">
-          <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider text-center">Quick Start</p>
+          <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">Quick Start</p>
           <div className="flex flex-wrap gap-1.5 justify-center">
             {visibleTemplates.map(t => (
               <button key={t.label}
@@ -603,7 +611,7 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
       <div className="flex-1 flex flex-col overflow-y-auto">
         <div className="w-full max-w-2xl mx-auto px-5 py-5 space-y-4">
           <button onClick={handleBackToSkills}
-            className="flex items-center gap-1 text-[9px] font-bold text-slate-400 hover:text-white transition-colors">
+            className="flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-white transition-colors">
             <Icon name="arrow_back" size={12} />
             Back to Skills
           </button>
@@ -615,18 +623,18 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
             </div>
             <div>
               <p className="text-[11px] font-bold text-white">{cat.label}</p>
-              <p className="text-[9px] text-slate-400">{cat.desc}</p>
+              <p className="text-[11px] text-slate-400">{cat.desc}</p>
             </div>
           </div>
 
           {cat.items.length > 0 && (
             <div>
-              <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1.5">Service Type</label>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1.5">Service Type</label>
               <div className="flex flex-wrap gap-1">
                 {cat.items.map(item => (
                   <button key={item}
                     onClick={() => handleSelectItem(item)}
-                    className={`px-2 py-1 rounded-full text-[9px] font-medium transition-all ${
+                    className={`px-2 py-1 rounded-full text-[11px] font-medium transition-all ${
                       selectedItem === item ? 'text-white' : 'text-slate-400 hover:text-white hover:bg-white/4'
                     }`}
                     style={selectedItem === item ? {
@@ -642,9 +650,9 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
           {/* Required Parameters */}
           <div className="rounded-xl overflow-hidden" style={{ background: panelBg, border: panelBorder }}>
             <div className="px-3 py-2 border-b border-white/5 flex items-center justify-between">
-              <span className="text-[8px] font-black uppercase tracking-widest text-orange-400">Required</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-orange-400">Required</span>
               <div className="flex items-center gap-1">
-                <span className={`text-[9px] font-bold ${canStartBuild ? 'text-emerald-400' : 'text-slate-500'}`}>
+                <span className={`text-[11px] font-bold ${canStartBuild ? 'text-emerald-400' : 'text-slate-500'}`}>
                   {readiness.filled}/{readiness.total}
                 </span>
                 <div className="w-10 h-1 rounded-full bg-white/10 overflow-hidden">
@@ -662,7 +670,7 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
                 const isFilled = value.trim().length > 0;
                 return (
                   <div key={field.key}>
-                    <label className="flex items-center gap-1 text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                    <label className="flex items-center gap-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                       <span className={`w-3 h-3 rounded-full border flex items-center justify-center ${
                         isFilled ? 'bg-emerald-500/20 border-emerald-500/40' : 'border-slate-600'
                       }`}>
@@ -694,12 +702,12 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
           {/* Optional */}
           <div className="rounded-xl overflow-hidden" style={{ background: panelBg, border: panelBorder }}>
             <div className="px-3 py-2 border-b border-white/5">
-              <span className="text-[8px] font-black text-slate-500 uppercase tracking-wider">Optional</span>
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Optional</span>
             </div>
             <div className="p-3 space-y-2">
               {OPTIONAL_FIELDS.map(field => (
                 <div key={field.key}>
-                  <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">{field.label}</label>
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">{field.label}</label>
                   {field.type === 'select' ? (
                     <select
                       value={configData[field.key] || ''}
@@ -729,7 +737,7 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
           }}>
             <div className="p-3">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[9px] font-black uppercase tracking-widest"
+                <span className="text-[11px] font-black uppercase tracking-widest"
                   style={{ color: canStartBuild ? '#22c55e' : '#94a3b8' }}>
                   Readiness
                 </span>
@@ -745,7 +753,7 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
                   }} />
               </div>
               {!canStartBuild && readiness.missing.length > 0 && (
-                <p className="text-[9px] text-slate-500 mb-2">
+                <p className="text-[11px] text-slate-500 mb-2">
                   Missing: {readiness.missing.map(f => f.label).join(', ')}
                 </p>
               )}
@@ -780,7 +788,7 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
               {msg.role !== 'user' && (
                 <div className="flex items-center gap-1.5 mb-1">
                   <MickiiOrb isThinking={false} />
-                  <span className="text-[8px] font-black uppercase" style={{ color: C.gold }}>Mickii</span>
+                  <span className="text-[10px] font-black uppercase" style={{ color: C.gold }}>Mickii</span>
                 </div>
               )}
               <p className="whitespace-pre-wrap">{msg.content}</p>
@@ -803,7 +811,7 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
 
         {systemMessages.map(msg => (
           <div key={msg.id} className="flex justify-center">
-            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] font-bold ${
+            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${
               msg.type === 'error' ? 'bg-red-500/8 text-red-400 border border-red-500/15' :
               msg.type === 'success' ? 'bg-emerald-500/8 text-emerald-400 border border-emerald-500/15' :
               msg.type === 'worker' ? 'bg-amber-500/8 text-amber-400 border border-amber-500/15' :
@@ -817,7 +825,7 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
                 msg.type === 'warning' ? 'warning' : 'info'
               } size={10} />
               {msg.text}
-              <span className="text-[7px] text-slate-600">{msg.time}</span>
+              <span className="text-[9px] text-slate-600">{msg.time}</span>
             </div>
           </div>
         ))}
@@ -850,7 +858,7 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
     return (
       <div className="w-[280px] shrink-0 border-l border-white/5 flex flex-col overflow-hidden">
         <div className="px-3 py-2.5 border-b border-white/5 flex items-center justify-between">
-          <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: C.gold }}>
+          <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: C.gold }}>
             {rightTab === 'files' ? 'Files' : rightTab === 'code' ? (selectedFile?.title || 'Code') : (previewContent?.title || 'Output')}
           </span>
           <button onClick={() => setShowRightPanel(false)} className="text-slate-500 hover:text-white">
@@ -862,7 +870,7 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
           {[['preview','Preview'],['files','Files'],['code','Code']].map(([id, label]) => (
             <button key={id}
               onClick={() => { setRightTab(id); if (id === 'files') loadBuildFiles(); }}
-              className="flex-1 py-1 rounded-md text-[8px] font-black uppercase tracking-wider transition-all"
+              className="flex-1 py-1 rounded-md text-[10px] font-black uppercase tracking-wider transition-all"
               style={rightTab === id
                 ? { background: `linear-gradient(135deg, ${C.gold}, ${C.goldDeep})`, color: '#0B1120' }
                 : { color: 'rgba(237,231,221,0.55)' }}>
@@ -874,7 +882,7 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
         {rightTab === 'files' && (
           <div className="flex-1 overflow-y-auto p-2">
             {buildFiles.length === 0 && (
-              <p className="text-[9px] text-slate-500 text-center py-6">Is build ki koi file abhi nahi bani. Pipeline chalao — files yahan dikhengi.</p>
+              <p className="text-[11px] text-slate-500 text-center py-6">Is build ki koi file abhi nahi bani. Pipeline chalao — files yahan dikhengi.</p>
             )}
             {buildFiles.map(doc => (
               <button key={doc.id}
@@ -882,8 +890,8 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
                 className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-white/5 transition-colors flex items-center gap-2">
                 <Icon name={doc.doc_type === 'code' ? 'code' : 'file'} size={12} className="text-slate-400 shrink-0" />
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[9px] font-bold text-white truncate">{doc.title}</span>
-                  <span className="block text-[7px] text-slate-500 uppercase">{doc.doc_type} · v{doc.version}</span>
+                  <span className="block text-[11px] font-bold text-white truncate">{doc.title}</span>
+                  <span className="block text-[9px] text-slate-500 uppercase">{doc.doc_type} · v{doc.version}</span>
                 </span>
               </button>
             ))}
@@ -893,17 +901,17 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
         {rightTab === 'code' && (
           <div className="flex-1 overflow-y-auto p-2 flex flex-col">
             {!selectedFile && (
-              <p className="text-[9px] text-slate-500 text-center py-6">Files tab se koi file chuno — uska code yahan khulega.</p>
+              <p className="text-[11px] text-slate-500 text-center py-6">Files tab se koi file chuno — uska code yahan khulega.</p>
             )}
             {selectedFile && (
               <>
-                <pre className="flex-1 rounded-lg p-2.5 font-mono text-[9px] leading-relaxed whitespace-pre-wrap overflow-y-auto"
+                <pre className="flex-1 rounded-lg p-2.5 font-mono text-[11px] leading-relaxed whitespace-pre-wrap overflow-y-auto"
                   style={{ background: 'rgba(0,0,0,0.35)', color: '#A5D6FF' }}>
                   {selectedFile.content || '(empty file)'}
                 </pre>
                 <button
                   onClick={() => navigator.clipboard.writeText(selectedFile.content || '')}
-                  className="mt-2 py-1 text-[8px] font-bold text-white rounded-lg hover:bg-white/5 transition-colors"
+                  className="mt-2 py-1 text-[10px] font-bold text-white rounded-lg hover:bg-white/5 transition-colors"
                   style={{ background: panelBg, border: panelBorder }}>
                   Copy Code
                 </button>
@@ -916,7 +924,7 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
           {!previewContent && (
             <div className="flex flex-col items-center justify-center h-full text-center gap-2 opacity-30">
               <Icon name="preview" size={28} className="text-slate-600" />
-              <p className="text-[9px] text-slate-500">Output will appear here</p>
+              <p className="text-[11px] text-slate-500">Output will appear here</p>
             </div>
           )}
 
@@ -924,15 +932,15 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
             <div className="text-center space-y-3 py-6">
               <Icon name="picture_as_pdf" size={32} className="mx-auto" style={{ color: C.gold }} />
               <p className="text-[11px] font-bold text-white">{previewContent.title}</p>
-              <p className="text-[9px] text-slate-400">Saved to Downloads</p>
-              <p className="text-[8px] text-slate-500">{previewContent.name}</p>
+              <p className="text-[11px] text-slate-400">Saved to Downloads</p>
+              <p className="text-[10px] text-slate-500">{previewContent.name}</p>
             </div>
           )}
 
           {previewContent?.type === 'worker-output' && (
             <div>
               <p className="text-[10px] font-bold text-white mb-1.5">{previewContent.title}</p>
-              <div className="rounded-lg p-2.5 font-mono text-[9px] leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto"
+              <div className="rounded-lg p-2.5 font-mono text-[11px] leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto"
                 style={{ background: 'rgba(0,0,0,0.3)', color: C.gold }}>
                 {typeof previewContent.data === 'string'
                   ? previewContent.data
@@ -944,7 +952,7 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
                     const raw = typeof previewContent.data === 'string' ? previewContent.data : JSON.stringify(previewContent.data, null, 2);
                     navigator.clipboard.writeText(raw);
                   }}
-                  className="flex-1 py-1 text-[8px] font-bold text-white rounded-lg hover:bg-white/5 transition-colors"
+                  className="flex-1 py-1 text-[10px] font-bold text-white rounded-lg hover:bg-white/5 transition-colors"
                   style={{ background: panelBg, border: panelBorder }}>
                   Copy
                 </button>
@@ -957,7 +965,7 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
                     a.download = `${(previewContent.title || 'output').toLowerCase().replace(/\s+/g, '_')}.txt`;
                     a.click(); URL.revokeObjectURL(url);
                   }}
-                  className="flex-1 py-1 text-[8px] font-bold text-white rounded-lg transition-colors"
+                  className="flex-1 py-1 text-[10px] font-bold text-white rounded-lg transition-colors"
                   style={{ background: C.gold + '20', border: `1px solid ${C.gold}30` }}>
                   Download
                 </button>
@@ -998,7 +1006,7 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
                 style={{ ...glassStyle({ strong: true }), backgroundColor: 'rgba(15,23,42,0.96)', border: '1px solid rgba(255,255,255,0.1)' }}>
                 {/* Skills (4 categories) */}
                 <div className="px-2.5 py-1">
-                  <span className="text-[7px] font-black text-slate-500 uppercase tracking-wider">Skills</span>
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Skills</span>
                 </div>
                 {visibleCategories.map(cat => (
                   <button key={cat.id}
@@ -1013,7 +1021,7 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
 
                 {/* Plugins (document generators) */}
                 <div className="px-2.5 py-1">
-                  <span className="text-[7px] font-black text-slate-500 uppercase tracking-wider">Plugins</span>
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Plugins</span>
                 </div>
                 {PLUGINS.map(plugin => (
                   <button key={plugin.id}
@@ -1030,7 +1038,7 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
 
                 {/* Attachments */}
                 <div className="px-2.5 py-1">
-                  <span className="text-[7px] font-black text-slate-500 uppercase tracking-wider">Attach</span>
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider">Attach</span>
                 </div>
                 {[
                   { icon: 'upload_file', label: 'Upload file' },
@@ -1043,7 +1051,7 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
                     className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[10px] font-medium text-slate-500 cursor-not-allowed opacity-50">
                     <Icon name={opt.icon} size={12} className="text-slate-600" />
                     {opt.label}
-                    <span className="ml-auto text-[7px] font-black uppercase tracking-wider text-slate-600">Soon</span>
+                    <span className="ml-auto text-[9px] font-black uppercase tracking-wider text-slate-600">Soon</span>
                   </button>
                 ))}
               </div>
@@ -1064,7 +1072,7 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
             disabled={isProcessing}
           />
 
-          {isListening && <span className="text-[9px] text-red-400 font-bold animate-pulse">● REC</span>}
+          {isListening && <span className="text-[11px] text-red-400 font-bold animate-pulse">● REC</span>}
 
           <button
             onClick={isListening ? stopListening : startListening}
@@ -1085,9 +1093,9 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
           <div className="flex items-center gap-1.5 px-2.5 py-1 border-t border-white/5">
             <span className={`w-1 h-1 rounded-full ${isProcessing ? 'animate-pulse' : 'bg-slate-600'}`}
               style={isProcessing ? { backgroundColor: C.gold } : {}} />
-            <span className="text-[8px] font-bold text-slate-500 uppercase">{status}</span>
-            <span className="text-[8px] text-slate-600">·</span>
-            <span className="text-[8px] font-bold" style={{ color: C.gold }}>{activePipeline.name}</span>
+            <span className="text-[10px] font-bold text-slate-500 uppercase">{status}</span>
+            <span className="text-[10px] text-slate-600">·</span>
+            <span className="text-[10px] font-bold" style={{ color: C.gold }}>{activePipeline.name}</span>
           </div>
         )}
       </div>

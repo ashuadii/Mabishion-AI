@@ -1,4 +1,5 @@
 import { BaseWorker } from './baseWorker.js';
+import { COMPANY } from '../../data/companyProfile.js';
 import { getDb } from '../../data/db.js';
 import { executeLlmWithFallback } from '../../services/llmManager.js';
 import { jsPDF } from 'jspdf';
@@ -139,7 +140,7 @@ Return valid JSON only:
       doc.setFont('Helvetica', 'bold');
       doc.text('Payment Methods:', 15, 145);
       doc.setFont('Helvetica', 'normal');
-      doc.text('UPI: mabishion@upi  |  Bank Transfer: On request  |  Stripe: Link sent separately', 15, 153);
+      doc.text(`UPI: ${COMPANY.upiId || 'On request'}  |  Bank Transfer: On request  |  Stripe: Link sent separately`, 15, 153);
 
       // UPI QR placeholder
       doc.setFillColor(245, 247, 255);
@@ -147,16 +148,16 @@ Return valid JSON only:
       doc.setFontSize(8);
       doc.setTextColor(99, 102, 241);
       doc.text('UPI QR CODE', 22, 185);
-      doc.text('mabishion@upi', 22, 193);
+      doc.text(COMPANY.upiId || 'On request', 22, 193);
 
       // Payment stripe link placeholder
       doc.setTextColor(30, 30, 30);
       doc.setFont('Helvetica', 'bold');
       doc.setFontSize(9);
-      doc.text('Stripe Payment Link:', 75, 168);
+      doc.text('Pay via WhatsApp / Contact:', 75, 168);
       doc.setFont('Helvetica', 'normal');
       doc.setTextColor(99, 102, 241);
-      doc.text(`https://pay.mabishion.ai/${invoiceNumber}`, 75, 176);
+      doc.text(COMPANY.whatsappLink, 75, 176);
 
       // Note
       doc.setTextColor(100, 100, 100);
@@ -224,7 +225,7 @@ Return valid JSON only:
         paymentId, projectId, clientName, invoiceNumber, milestone, amount,
         'pending',
         pdfBase64 ? 'generated' : 'failed',
-        `https://pay.mabishion.ai/${invoiceNumber}`,
+        COMPANY.whatsappLink,
         JSON.stringify(llmData.reminderSchedule || []),
         invoiceDate, dueDate
       ]
@@ -249,8 +250,8 @@ Return valid JSON only:
       dueDate,
       pdfGenerated:      !!pdfBase64,
       pdfBase64,
-      paymentLink:       `https://pay.mabishion.ai/${invoiceNumber}`,
-      upiId:             'mabishion@upi',
+      paymentLink:       COMPANY.whatsappLink,
+      upiId:             COMPANY.upiId || 'On request',
       reminderSchedule:  llmData.reminderSchedule,
       paymentTerms:      llmData.paymentTerms,
       invoiceNote:       llmData.invoiceNote,

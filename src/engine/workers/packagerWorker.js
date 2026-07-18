@@ -1,4 +1,5 @@
 import { BaseWorker } from './baseWorker.js';
+import { COMPANY } from '../../data/companyProfile.js';
 import { getDb, addRevenue } from '../../data/db.js';
 import { executeLlmWithFallback } from '../../services/llmManager.js';
 import JSZip from 'jszip';
@@ -123,7 +124,7 @@ ${assets.payments.length > 0 ? `- ✅ **Invoices** — \`invoices/\` folder — 
 | Contact | Details |
 |---------|---------|
 | WhatsApp | Available in your contract |
-| Email | support@mabishion.ai |
+| Email | ${COMPANY.email} |
 | Response Time | Within 4 business hours |
 
 ---
@@ -169,7 +170,7 @@ Version : ${versionTag}
 SUPPORT CONTACTS
 -----------------
 WhatsApp : Contact via project agreement
-Email    : support@mabishion.ai
+Email    : ${COMPANY.email}
 Response : Within 4 business hours (Mon-Sat)
 
 WARRANTY
