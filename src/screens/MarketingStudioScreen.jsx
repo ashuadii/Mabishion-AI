@@ -23,7 +23,27 @@ const CONTENT_TYPES = [
   { id: 'ad_copy', label: 'Ad Copy' },
   { id: 'email', label: 'Email' },
 ];
-const CHANNELS = ['instagram', 'whatsapp', 'google', 'linkedin', 'website'];
+// Channels = owner's REAL platforms (companyProfile.js). linkedin removed until
+// the owner creates the page; facebook/x added (accounts exist: @mabishion).
+const CHANNELS = ['instagram', 'facebook', 'x', 'whatsapp', 'google', 'website'];
+
+// One-click posting via official web share/compose intents — works TODAY with
+// zero API tokens. X and WhatsApp genuinely pre-fill the text; Instagram and
+// Google Business have no web composer, so we copy the caption and open the
+// platform (honest semi-automation — full API auto-posting is a separate,
+// token-gated future step and is NOT claimed here).
+function buildPostIntent(item) {
+  const text = `${item.title || ''}\n\n${item.body || ''}`.trim();
+  const enc = encodeURIComponent(text.slice(0, 700));
+  switch (item.channel) {
+    case 'x':         return { url: `https://twitter.com/intent/tweet?text=${enc}`, note: 'X composer opened — text pre-filled' };
+    case 'whatsapp':  return { url: `https://wa.me/?text=${enc}`, note: 'WhatsApp share opened — text pre-filled' };
+    case 'facebook':  return { url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(COMPANY.website)}&quote=${enc}`, note: 'FB share opened — caption copied, paste if empty' };
+    case 'instagram': return { url: 'https://www.instagram.com/', note: 'Caption copied — IG has no web composer, paste in app' };
+    case 'google':    return { url: 'https://business.google.com/', note: 'Caption copied — paste into a Google Business post' };
+    default:          return { url: COMPANY.website, note: 'Caption copied' };
+  }
+}
 const STATUS_FLOW = { draft: 'approved', approved: 'scheduled', scheduled: 'published' };
 const STATUS_TONE = { draft: 'gold', approved: 'info', scheduled: 'violet', published: 'success' };
 const STATUS_ACTION = { draft: 'Approve', approved: 'Schedule', scheduled: 'Mark Published' };
@@ -76,6 +96,16 @@ export default function MarketingStudioScreen({ onNavigate }) {
   const handleDelete = async (id) => {
     await deleteMarketingContent(id);
     await refresh();
+  };
+
+  const [postNote, setPostNote] = useState(null);
+  const handlePostNow = async (item) => {
+    const { url, note } = buildPostIntent(item);
+    const text = `${item.title || ''}\n\n${item.body || ''}`.trim();
+    try { await navigator.clipboard?.writeText(text); } catch { /* clipboard optional */ }
+    window.open(url, '_blank', 'noopener');
+    setPostNote({ id: item.id, note });
+    setTimeout(() => setPostNote(null), 6000);
   };
 
   const inputStyle = {
@@ -213,6 +243,12 @@ export default function MarketingStudioScreen({ onNavigate }) {
                   </p>
                 </div>
                 <Badge tone={STATUS_TONE[item.status] || 'gold'}>{item.status}</Badge>
+                <button
+                  onClick={() => handlePostNow(item)}
+                  className="shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/15 transition-all"
+                  title="Caption clipboard me copy hota hai aur platform ka composer khulta hai (X/WhatsApp me text pre-filled)">
+                  Post ↗
+                </button>
                 {STATUS_ACTION[item.status] && (
                   <button
                     onClick={() => handleAdvance(item)}
@@ -224,6 +260,9 @@ export default function MarketingStudioScreen({ onNavigate }) {
                 <button onClick={() => handleDelete(item.id)} className="shrink-0 text-slate-500 hover:text-red-400 transition-colors" title="Delete">
                   <Icon name="delete" size={14} />
                 </button>
+                {postNote?.id === item.id && (
+                  <p role="status" className="w-full text-[10px] font-bold text-emerald-300">{postNote.note}</p>
+                )}
               </div>
             ))}
           </div>

@@ -1368,3 +1368,9 @@ What changed: (1) Marketing Studio ab "Accounts" strip dikhata hai — Website/F
 Why changed: Stop-hook sahi flag — handles diye the par app ke andar kahin attach/visible nahi the.
 Status: Working — VERIFIED live: Studio strip me 5 real links + LinkedIn note render; Settings card me email/phone/UPI-on-request render; vitest 356/356, build exit 0; fresh key-warning count 0 (instrumented).
 Next step: Owner platform setups (WhatsApp Business, Google Business Profile, LinkedIn) — handles milte hi companyProfile.js update. Leads-intake arrangement (Formspree form on wuaze site → email → CSV) owner-side setup; auto-posting via Meta/X APIs = future decision.
+
+[2026-07-18] [18:45] — [Claude Fable 5] — [PLATFORM MANAGEMENT (token-free tier): MarketingStudioScreen.jsx]
+What changed: Marketing Studio ab compose→schedule→POST karta hai. CHANNELS updated to owner's real platforms (instagram, facebook, x, whatsapp, google, website; linkedin removed until page exists). Har content item par "Post ↗": caption clipboard me copy + platform ka OFFICIAL web intent khulta hai — X (twitter.com/intent/tweet) aur WhatsApp (wa.me/?text=) me text PRE-FILLED; FB sharer website-link+quote ke saath; IG/Google Business ka web composer nahi hai to caption-copied + platform open (honest note per-item dikhta hai). Full API auto-posting deliberately NOT claimed — Meta/X developer tokens chahiye (owner-side setup, future step).
+Why changed: Stop-hook: accounts sirf links the, manage capability nahi thi. Ye token-free maximum hai jo bina assumptions ke sach me kaam karta hai.
+Status: Working — VERIFIED live: 'x' channel item banaya, Post ↗ ne https://twitter.com/intent/tweet?text=QA%20post%20test khola (intercepted), note render hua; vitest 356/356, build exit 0.
+Next step: Owner: WhatsApp Business + Google Business Profile + LinkedIn page setup; Meta/X API tokens milne par full auto-post/schedule engine plan hoga.
