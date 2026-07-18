@@ -1,4 +1,4 @@
---- Launching Mabishion AI at Thursday 16 July 2026 01:44:00 PM IST ---
+--- Launching Mabishion AI at Saturday 18 July 2026 05:20:16 PM IST ---
 Clearing port 1420...
 Ollama not installed — skipping (cloud LLMs will be used)
 Starting Tauri App...
@@ -11,136 +11,31 @@ Starting Tauri App...
 > mabishion-ai@0.1.0 dev
 > vite
 
-1:44:02 PM [vite] (client) Re-optimizing dependencies because vite config has changed
+5:20:19 PM [vite] (client) Re-optimizing dependencies because vite config has changed
 
-  VITE v8.1.4  ready in 242 ms
+  VITE v8.1.4  ready in 553 ms
 
   ➜  Local:   http://localhost:1420/
   ➜  Network: use --host to expose
      Running DevCommand (`cargo  run --no-default-features --color always --`)
         Info Watching /home/admin-ubuntu/Desktop/Mabishion-AI/Mabishion Software/src-tauri for changes...
-[1m[92m    Finished[0m `dev` profile [unoptimized + debuginfo] target(s) in 0.41s
+[1m[92m    Finished[0m `dev` profile [unoptimized + debuginfo] target(s) in 1.51s
 [1m[92m     Running[0m `target/debug/mabishion-ai`
-1:00:08 PM [vite] (client) hmr update /src/screens/SalesMarketingHubScreen.jsx, /src/index.css
-1:00:20 PM [vite] (client) hmr update /src/components/leads/LeadDetailDrawer.jsx, /src/index.css
-1:00:30 PM [vite] (client) page reload src/main.jsx
-1:01:06 PM [vite] (client) hmr update /src/screens/SkillLibraryScreen.jsx, /src/index.css
-1:01:07 PM [vite] (client) hmr update /src/screens/SkillLibraryScreen.jsx, /src/index.css
-1:01:19 PM [vite] (client) hmr update /src/screens/BuildScreen.jsx, /src/index.css
-1:01:22 PM [vite] (client) hmr update /src/screens/DashboardScreen.jsx, /src/index.css
-1:01:59 PM [vite] (client) hmr update /src/screens/BuildScreen.jsx, /src/index.css
-1:02:10 PM [vite] (client) hmr update /src/index.css, /src/screens/DashboardScreen.jsx, /src/screens/BuildScreen.jsx, /src/components/QuickCommandBar.jsx, /src/context/BuildContext.jsx
-1:02:10 PM [vite] (client) hmr invalidate /src/context/BuildContext.jsx Could not Fast Refresh ("useBuild" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
-1:02:10 PM [vite] (client) hmr update /src/App.jsx, /src/screens/SalesMarketingHubScreen.jsx, /src/screens/ResearchScreen.jsx, /src/screens/BuildScreen.jsx
-1:02:16 PM [vite] (client) hmr update /src/components/approvals/CriticalApprovalModal.jsx, /src/index.css
-1:02:49 PM [vite] (client) hmr update /src/screens/MarketingStudioScreen.jsx, /src/index.css
-1:02:53 PM [vite] (client) hmr update /src/screens/MarketingStudioScreen.jsx, /src/index.css
-1:02:56 PM [vite] (client) hmr update /src/screens/MarketingStudioScreen.jsx, /src/index.css
-1:02:59 PM [vite] (client) hmr update /src/components/QuickCommandBar.jsx, /src/index.css
-1:03:58 PM [vite] (client) hmr update /src/App.jsx, /src/index.css
-1:03:59 PM [vite] (client) hmr update /src/App.jsx, /src/index.css
-1:03:59 PM [vite] Internal server error: Transform failed with 2 errors:
-
-[31m[PARSE_ERROR] [0mExpected corresponding JSX closing tag for 'RequireUnlock'.
-    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/App.jsx:98:7 [38;5;246m][0m
-    [38;5;246m│[0m
- [38;5;246m54 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m<[0mRequireUnlock[38;5;249m>[0m
- [38;5;240m   │[0m        ──────┬──────  
- [38;5;240m   │[0m              ╰──────── Opened here
- [38;5;240m   │[0m 
- [38;5;246m98 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m<[0m[38;5;249m/[0mBuildProvider[38;5;249m>[0m
- [38;5;240m   │[0m       ──────┬──────  
- [38;5;240m   │[0m             ╰──────── Expected `</RequireUnlock>`
-[38;5;246m────╯[0m
-
-[31m[PARSE_ERROR] [0mUnexpected token. Did you mean `{'}'}` or `&rbrace;`?
-     [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/App.jsx:100:1 [38;5;246m][0m
-     [38;5;246m│[0m
- [38;5;246m100 │[0m [38;5;249m}[0m
- [38;5;240m    │[0m │ 
- [38;5;240m    │[0m ╰─ 
-[38;5;246m─────╯[0m
-
-  Plugin: vite:oxc
-  File: /home/admin-ubuntu/Desktop/Mabishion-AI/Mabishion Software/src/App.jsx
-      at transformWithOxc (file:///home/admin-ubuntu/Desktop/Mabishion-AI/Mabishion%20Software/node_modules/vite/dist/node/chunks/node.js:4017:19)
-      at TransformPluginContext.transform (file:///home/admin-ubuntu/Desktop/Mabishion-AI/Mabishion%20Software/node_modules/vite/dist/node/chunks/node.js:4088:26)
-      at EnvironmentPluginContainer.transform (file:///home/admin-ubuntu/Desktop/Mabishion-AI/Mabishion%20Software/node_modules/vite/dist/node/chunks/node.js:30151:51)
-      at async loadAndTransform (file:///home/admin-ubuntu/Desktop/Mabishion-AI/Mabishion%20Software/node_modules/vite/dist/node/chunks/node.js:20098:26)
-      at async viteTransformMiddleware (file:///home/admin-ubuntu/Desktop/Mabishion-AI/Mabishion%20Software/node_modules/vite/dist/node/chunks/node.js:24559:20)
-1:04:02 PM [vite] (client) hmr update /src/App.jsx, /src/index.css
-1:05:16 PM [vite] (client) page reload src/data/core.js
-1:05:21 PM [vite] (client) page reload src/data/core.js
-1:05:37 PM [vite] (client) page reload src/data/core.js
-1:05:41 PM [vite] (client) page reload src/data/core.js
-1:05:46 PM [vite] (client) page reload src/data/core.js
-1:06:25 PM [vite] (client) page reload src/data/core.js
-1:06:38 PM [vite] (client) page reload src/data/core.js
-1:08:48 PM [vite] (client) page reload src/services/approvalEngine.js
-1:09:06 PM [vite] (client) page reload src/engine/workers/index.js
-1:10:37 PM [vite] (client) page reload src/engine/workers/businessAnalystWorker.js
-1:10:49 PM [vite] (client) page reload src/engine/workers/proposalMakerWorker.js
-1:11:05 PM [vite] (client) page reload src/engine/workers/proposalMakerWorker.js
-1:11:16 PM [vite] (client) page reload src/engine/workers/blueprintMakerWorker.js
-1:11:36 PM [vite] (client) page reload src/engine/workers/blueprintMakerWorker.js
-1:11:48 PM [vite] (client) page reload src/engine/workers/developerWorker.js
-1:11:50 PM [vite] (client) page reload src/engine/workers/developerWorker.js
-1:12:08 PM [vite] (client) page reload src/engine/workers/websiteBuilderWorker.js
-1:12:10 PM [vite] (client) page reload src/engine/workers/websiteBuilderWorker.js
-1:12:14 PM [vite] (client) page reload src/engine/workers/securityAuditorWorker.js
-1:12:33 PM [vite] (client) page reload src/engine/workers/securityAuditorWorker.js
-1:12:49 PM [vite] (client) hmr update /src/App.jsx, /src/index.css
-1:12:50 PM [vite] (client) hmr update /src/App.jsx, /src/index.css
-1:14:38 PM [vite] (client) hmr update /src/screens/ReportsScreen.jsx, /src/index.css
-1:14:41 PM [vite] (client) hmr update /src/screens/ReportsScreen.jsx, /src/index.css
-1:14:41 PM [vite] Internal server error: Transform failed with 1 error:
-
-[31m[PARSE_ERROR] [0mExpected `,` or `)` but found `;`
-     [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/screens/ReportsScreen.jsx:105:6 [38;5;246m][0m
-     [38;5;246m│[0m
- [38;5;246m 45 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249mc[0m[38;5;249mo[0m[38;5;249mn[0m[38;5;249ms[0m[38;5;249mt[0m[38;5;249m [0m[38;5;249ml[0m[38;5;249mo[0m[38;5;249ma[0m[38;5;249md[0m[38;5;249mR[0m[38;5;249me[0m[38;5;249mp[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249mt[0m[38;5;249mD[0m[38;5;249ma[0m[38;5;249mt[0m[38;5;249ma[0m[38;5;249m [0m[38;5;249m=[0m[38;5;249m [0m[38;5;249mu[0m[38;5;249ms[0m[38;5;249me[0m[38;5;249mC[0m[38;5;249ma[0m[38;5;249ml[0m[38;5;249ml[0m[38;5;249mb[0m[38;5;249ma[0m[38;5;249mc[0m[38;5;249mk[0m([38;5;249ma[0m[38;5;249ms[0m[38;5;249my[0m[38;5;249mn[0m[38;5;249mc[0m[38;5;249m [0m[38;5;249m([0m[38;5;249m)[0m[38;5;249m [0m[38;5;249m=[0m[38;5;249m>[0m[38;5;249m [0m[38;5;249m{[0m
- [38;5;240m    │[0m                                     ┬  
- [38;5;240m    │[0m                                     ╰── Opened here
- [38;5;240m    │[0m 
- [38;5;246m105 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m}[0m;
- [38;5;240m    │[0m      ┬  
- [38;5;240m    │[0m      ╰── `,` or `)` expected
-[38;5;246m─────╯[0m
-
-  Plugin: vite:oxc
-  File: /home/admin-ubuntu/Desktop/Mabishion-AI/Mabishion Software/src/screens/ReportsScreen.jsx
-      at transformWithOxc (file:///home/admin-ubuntu/Desktop/Mabishion-AI/Mabishion%20Software/node_modules/vite/dist/node/chunks/node.js:4017:19)
-      at TransformPluginContext.transform (file:///home/admin-ubuntu/Desktop/Mabishion-AI/Mabishion%20Software/node_modules/vite/dist/node/chunks/node.js:4088:26)
-      at EnvironmentPluginContainer.transform (file:///home/admin-ubuntu/Desktop/Mabishion-AI/Mabishion%20Software/node_modules/vite/dist/node/chunks/node.js:30151:51)
-      at async loadAndTransform (file:///home/admin-ubuntu/Desktop/Mabishion-AI/Mabishion%20Software/node_modules/vite/dist/node/chunks/node.js:20098:26)
-      at async viteTransformMiddleware (file:///home/admin-ubuntu/Desktop/Mabishion-AI/Mabishion%20Software/node_modules/vite/dist/node/chunks/node.js:24559:20)
-1:14:52 PM [vite] (client) hmr update /src/screens/ReportsScreen.jsx, /src/index.css
-1:14:53 PM [vite] (client) hmr update /src/screens/ReportsScreen.jsx, /src/index.css
-1:14:56 PM [vite] (client) hmr update /src/screens/ReportsScreen.jsx, /src/index.css
-1:15:44 PM [vite] (client) page reload src/data/knowledge.js
-1:15:55 PM [vite] (client) hmr update /src/screens/AutomationsScreen.jsx, /src/index.css
-1:16:01 PM [vite] (client) hmr update /src/screens/AutomationsScreen.jsx, /src/index.css
-1:16:04 PM [vite] (client) hmr update /src/screens/AutomationsScreen.jsx, /src/index.css
-3:03:43 PM [vite] (client) hmr update /src/screens/AutomationsScreen.jsx, /src/index.css
-3:04:10 PM [vite] (client) hmr update /src/screens/ProjectDetailScreen.jsx, /src/index.css
-3:04:18 PM [vite] (client) hmr update /src/screens/ProjectDetailScreen.jsx, /src/index.css
-3:04:20 PM [vite] (client) hmr update /src/screens/ProjectDetailScreen.jsx, /src/index.css
-3:04:33 PM [vite] (client) hmr update /src/screens/ProjectDetailScreen.jsx, /src/index.css
-3:04:35 PM [vite] (client) hmr update /src/screens/ProjectDetailScreen.jsx, /src/index.css
-3:05:17 PM [vite] (client) hmr update /src/screens/ProjectsScreen.jsx, /src/index.css
-3:06:12 PM [vite] (client) page reload src/data/core.js
-3:06:21 PM [vite] (client) page reload src/data/core.js
-3:06:55 PM [vite] (client) hmr update /src/index.css
-3:17:02 PM [vite] (client) hmr update /src/index.css
-3:17:05 PM [vite] (client) hmr update /src/index.css
-3:17:09 PM [vite] (client) hmr update /src/index.css
-3:17:21 PM [vite] (client) hmr update /src/index.css
-3:17:22 PM [vite] (client) hmr update /src/index.css
-3:19:10 PM [vite] (client) hmr update /src/index.css
-7:45:59 PM [vite] (client) hmr update /src/screens/SettingsScreen.jsx, /src/index.css
-7:46:01 PM [vite] (client) hmr update /src/screens/ApprovalCenterScreen.jsx, /src/index.css
-7:46:03 PM [vite] (client) hmr update /src/components/approvals/StandardApprovalQueue.jsx, /src/index.css
-7:46:05 PM [vite] (client) hmr update /src/components/leads/LeadDetailDrawer.jsx, /src/index.css
-7:46:22 PM [vite] (client) hmr update /src/index.css, /src/components/Sidebar.jsx
-7:46:30 PM [vite] (client) hmr update /src/components/AppShell.jsx, /src/index.css
-7:46:33 PM [vite] (client) hmr update /src/components/ScreenHeader.jsx, /src/index.css
+5:39:38 PM [vite] (client) page reload src/engine/workers/packagerWorker.js
+5:39:38 PM [vite] (client) page reload src/engine/workers/leadManagerWorker.js
+5:39:38 PM [vite] (client) page reload src/engine/workers/documentorWorker.js
+5:39:38 PM [vite] (client) page reload src/engine/workers/paymentHandlerWorker.js
+5:39:51 PM [vite] (client) page reload src/engine/workers/paymentHandlerWorker.js
+5:40:10 PM [vite] (client) page reload src/engine/workers/packagerWorker.js
+5:40:10 PM [vite] (client) page reload src/engine/workers/documentorWorker.js
+5:40:10 PM [vite] (client) page reload src/engine/workers/leadManagerWorker.js
+5:40:10 PM [vite] (client) page reload src/engine/workers/paymentHandlerWorker.js
+5:40:28 PM [vite] (client) page reload src/engine/workers/documentorWorker.js
+5:40:28 PM [vite] (client) page reload src/engine/workers/leadManagerWorker.js
+5:40:28 PM [vite] (client) page reload src/engine/workers/complianceWorker.js
+5:40:42 PM [vite] (client) hmr update /src/screens/BuildScreen.jsx, /src/index.css
+5:41:09 PM [vite] (client) hmr update /src/screens/MarketingStudioScreen.jsx, /src/index.css
+5:41:12 PM [vite] (client) hmr update /src/screens/BuildScreen.jsx, /src/index.css
+5:41:24 PM [vite] (client) hmr update /src/screens/BuildScreen.jsx, /src/index.css
+5:41:24 PM [vite] (client) hmr update /src/index.css, /src/components/Sidebar.jsx
+5:44:12 PM [vite] (client) page reload src/data/core.js
