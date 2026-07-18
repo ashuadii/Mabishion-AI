@@ -593,6 +593,20 @@ function createDevelopmentPreviewDb() {
         return rows;
       }
 
+      // Leads grouped by source (Marketing Studio "Leads by source" card).
+      // The generic count(*) fallback returned a row with no `source` field,
+      // which rendered as a null React key.
+      if (normalized.includes('from leads group by')) {
+        const groups = {};
+        (developmentPreviewStore.leads || []).forEach(l => {
+          const s = l.source || 'Unknown';
+          groups[s] = groups[s] || { source: s, total: 0, converted: 0 };
+          groups[s].total++;
+          if (['Won', 'Closed Won', 'converted'].includes(l.status)) groups[s].converted++;
+        });
+        return Object.values(groups).sort((a, b) => b.total - a.total);
+      }
+
       if (normalized.includes('count(*)')) return [{ count: 0 }];
       return [];
     },
