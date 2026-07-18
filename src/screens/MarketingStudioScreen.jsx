@@ -7,6 +7,7 @@ import StatCard from '../components/StatCard';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
 import { C, glassStyle } from '../components/consts';
+import { COMPANY } from '../data/companyProfile.js';
 import {
   addMarketingContent, getMarketingContent, updateMarketingContentStatus,
   deleteMarketingContent, getLeadsBySource, getMarketingSummary,
@@ -99,6 +100,28 @@ export default function MarketingStudioScreen({ onNavigate }) {
         active="marketing-studio"
         onNavigate={onNavigate}
       />
+
+      {/* Connected accounts — real handles from companyProfile.js (owner 2026-07-18).
+          "Connected" = attached for reference/management; auto-posting needs platform
+          API tokens (separate future step, not claimed here). */}
+      <section className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl p-3" style={glassStyle()}>
+        <span className="text-[10px] font-black uppercase tracking-widest mr-1" style={{ color: C.gold }}>Accounts</span>
+        {[
+          ['Website', COMPANY.website],
+          ['Facebook', COMPANY.facebook],
+          ['Instagram', COMPANY.instagram],
+          ['X / Twitter', COMPANY.twitter],
+          ['WhatsApp', COMPANY.whatsappLink],
+        ].map(([label, url]) => (
+          <a key={label} href={url} target="_blank" rel="noopener noreferrer"
+            className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-bold text-slate-300 hover:bg-white/10 hover:text-white transition-all">
+            {label} ↗
+          </a>
+        ))}
+        <span className="rounded-lg border border-white/5 bg-white/[0.02] px-2.5 py-1 text-[11px] font-bold text-slate-600" title="Not created yet (owner 2026-07-18)">
+          LinkedIn — not set up
+        </span>
+      </section>
 
       {/* Summary strip */}
       <section className="grid grid-cols-12 gap-4 mb-6">

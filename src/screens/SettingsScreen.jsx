@@ -1,3 +1,4 @@
+import { COMPANY } from '../data/companyProfile.js';
 import React, { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { getSetting, setSetting, initDb, backupDatabase, restoreDatabase, setupPin, validateBackupIntegrity } from '../data/db.js';
@@ -470,6 +471,38 @@ const SettingsScreen = ({ onNavigate }) => {
           /* Credentials grid */
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
+              {/* Business Profile — real owner-provided contact details (companyProfile.js).
+                  Every client-facing deliverable (invoice/proposal/README) reads from here. */}
+              <div className="bg-white/5 p-5 rounded-2xl border border-white/10 shadow-2xl">
+                <h2 className="text-xl font-bold text-amber-300 mb-1 flex items-center gap-2">
+                  <Icon name="contact_page" /> Business Profile
+                </h2>
+                <p className="text-xs text-gray-500 mb-4">Real Mabishion accounts — invoices, proposals aur nurture emails inhi details ka use karte hain. Badalna ho to <code className="text-amber-300/80">src/data/companyProfile.js</code>.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                  {[
+                    ['Website', COMPANY.website, COMPANY.website],
+                    ['Email', COMPANY.email, `mailto:${COMPANY.email}`],
+                    ['Phone / WhatsApp', COMPANY.phone, COMPANY.whatsappLink],
+                    ['Facebook', 'facebook.com/mabishion', COMPANY.facebook],
+                    ['Instagram', 'instagram.com/mabishion', COMPANY.instagram],
+                    ['X / Twitter', 'x.com/mabishion', COMPANY.twitter],
+                  ].map(([label, value, href]) => (
+                    <a key={label} href={href} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2 hover:bg-white/10 transition-all">
+                      <span className="text-[11px] font-bold uppercase text-gray-500">{label}</span>
+                      <span className="text-gray-200 truncate ml-3">{value}</span>
+                    </a>
+                  ))}
+                  <div className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2 opacity-60">
+                    <span className="text-[11px] font-bold uppercase text-gray-600">LinkedIn</span>
+                    <span className="text-gray-500">Not set up yet</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2 opacity-60">
+                    <span className="text-[11px] font-bold uppercase text-gray-600">UPI</span>
+                    <span className="text-gray-500">On request (not set)</span>
+                  </div>
+                </div>
+              </div>
               {/* Cloud keys */}
               <div className="bg-white/5 p-5 rounded-2xl border border-white/10 relative overflow-hidden shadow-2xl">
                 <h2 className="text-xl font-bold text-indigo-300 mb-2 flex items-center gap-2">

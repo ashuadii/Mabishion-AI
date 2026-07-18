@@ -1362,3 +1362,9 @@ What changed: (1) FONTS: BuildScreen (Playground + Internal Tools intake) tiny t
 Why changed: Owner goal directive with real business contact details; fake domains were going into client deliverables (invoices, proposals, nurture emails, READMEs).
 Status: Working — VERIFIED: vitest 356/356, build exit 0; live e2e: sidebar shows 10 items, Studio→Internal Tools tab navigates, internal screen shows hub tabs; fake-ref grep = 0.
 Next step: Owner sets up socials; leads-intake arrangement (Formspree→CSV ya WhatsApp) is a follow-up decision — currently leads enter ONLY via manual form + CSV import (documented to owner).
+
+[2026-07-18] [18:20] — [Claude Fable 5] — [GOAL COMPLETION: accounts visibly attached in-app: MarketingStudioScreen.jsx, SettingsScreen.jsx, core.js dev store]
+What changed: (1) Marketing Studio ab "Accounts" strip dikhata hai — Website/FB/IG/X/WhatsApp real clickable links (companyProfile.js se) + "LinkedIn — not set up" honest chip. Auto-posting claim NAHI kiya (API tokens future step). (2) Settings > API Credentials tab me naya "Business Profile" card — saare real contact details ek jagah, clickable, LinkedIn/UPI clearly "not set". (3) Dev store: leads GROUP BY source ka real handler (Marketing Studio sources card me null React key fix).
+Why changed: Stop-hook sahi flag — handles diye the par app ke andar kahin attach/visible nahi the.
+Status: Working — VERIFIED live: Studio strip me 5 real links + LinkedIn note render; Settings card me email/phone/UPI-on-request render; vitest 356/356, build exit 0; fresh key-warning count 0 (instrumented).
+Next step: Owner platform setups (WhatsApp Business, Google Business Profile, LinkedIn) — handles milte hi companyProfile.js update. Leads-intake arrangement (Formspree form on wuaze site → email → CSV) owner-side setup; auto-posting via Meta/X APIs = future decision.
