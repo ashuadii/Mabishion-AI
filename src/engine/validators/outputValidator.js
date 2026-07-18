@@ -125,6 +125,67 @@ export class OutputValidator {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
+  /**
+   * Deterministic spec check (P2). Validates a worker's structured output against
+   * its registry `spec.outputSchema` (key → expected type) and light `checklist`
+   * rules. Pure/deterministic — no LLM — so the resulting score is trustworthy.
+   *
+   * @param {object} output  The parsed worker output object
+   * @param {object} spec    Worker spec: { outputSchema: {key: 'array'|'string'|'number'|'object'|'boolean'}, checklist?: [{key, minItems}] }
+   * @returns {{ valid, schemaMatchPct, missingKeys, typeMismatches, checklistFlags, score }}
+   */
+  validateAgainstSpec(output, spec = {}) {
+    const schema = spec.outputSchema || {};
+    const keys = Object.keys(schema);
+    const missingKeys = [];
+    const typeMismatches = [];
+    const checklistFlags = [];
+
+    const typeOf = (v) => Array.isArray(v) ? 'array' : (v === null ? 'null' : typeof v);
+
+    if (!output || typeof output !== 'object') {
+      return {
+        valid: false, schemaMatchPct: 0,
+        missingKeys: keys, typeMismatches: [], checklistFlags: [],
+        score: 0
+      };
+    }
+
+    keys.forEach((k) => {
+      if (!(k in output) || output[k] === undefined || output[k] === null) {
+        missingKeys.push(k);
+      } else if (typeOf(output[k]) !== schema[k]) {
+        typeMismatches.push({ key: k, expected: schema[k], got: typeOf(output[k]) });
+      }
+    });
+
+    // Light checklist rules — only the deterministically checkable kind
+    // (e.g. { key: 'competitors', minItems: 2 }). Free-text criteria stay in the prompt.
+    (spec.checklist || []).forEach((rule) => {
+      if (rule && rule.key && typeof rule.minItems === 'number') {
+        const val = output[rule.key];
+        const len = Array.isArray(val) ? val.length : 0;
+        if (len < rule.minItems) {
+          checklistFlags.push({ key: rule.key, need: rule.minItems, got: len });
+        }
+      }
+    });
+
+    const matched = keys.length ? (keys.length - missingKeys.length - typeMismatches.length) : 0;
+    const schemaMatchPct = keys.length ? Math.round((matched / keys.length) * 100) : 100;
+    // Score: schema is the backbone; each checklist flag is a smaller penalty.
+    const score = Math.max(0, schemaMatchPct - checklistFlags.length * 8);
+
+    return {
+      valid: missingKeys.length === 0 && typeMismatches.length === 0 && checklistFlags.length === 0,
+      schemaMatchPct,
+      missingKeys,
+      typeMismatches,
+      checklistFlags,
+      score
+    };
+  }
+
   sanitize(content, fixes = []) {
     let sanitized = content;
 

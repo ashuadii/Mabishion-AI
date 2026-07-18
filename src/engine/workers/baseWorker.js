@@ -1,6 +1,7 @@
 import { getDb, getWorkerDailyCost } from '../../data/db.js';
 import { logWorkerStart, logWorkerEnd, logWorkerFail, logApprovalWait } from '../utils/runtimeHealth.js';
 import { emit } from '@tauri-apps/api/event';
+import { OutputValidator } from '../validators/outputValidator.js';
 
 // Safe SQLite string value sanitization helper
 export const sanitizeSqlValue = (val) => {
@@ -25,6 +26,36 @@ export class BaseWorker {
    */
   async execute(targetId, params) {
     throw new Error('execute() must be implemented by subclass');
+  }
+
+  /**
+   * Worker Spec Kit (P1): build a system-prompt preamble from this.spec so every
+   * spec-driven worker asks the LLM in a consistent, high-quality shape — role,
+   * knowledge, explicit output schema, and few-shot examples. Returns '' when the
+   * worker has no spec (un-migrated workers are unaffected).
+   */
+  buildSpecPreamble() {
+    const s = this.spec;
+    if (!s) return '';
+    const lines = [];
+    if (s.role) lines.push(`ROLE: ${s.role}`);
+    if (s.skills?.length) lines.push(`SKILLS: ${s.skills.join(', ')}`);
+    if (s.knowledge) lines.push(`KNOWLEDGE & STANDARDS:\n${s.knowledge}`);
+    if (s.outputSchema) {
+      const shape = Object.entries(s.outputSchema).map(([k, t]) => `  "${k}": ${t}`).join(',\n');
+      lines.push(`OUTPUT: return ONLY a valid JSON object with EXACTLY these keys and types:\n{\n${shape}\n}`);
+    }
+    if (s.checklist?.length) {
+      const rules = s.checklist.map(c => typeof c === 'string' ? c : `${c.key}: at least ${c.minItems} items`);
+      lines.push(`MUST SATISFY:\n- ${rules.join('\n- ')}`);
+    }
+    if (s.successCriteria) lines.push(`SUCCESS: ${s.successCriteria}`);
+    if (s.examples?.length) {
+      lines.push('EXAMPLES:\n' + s.examples.map((ex, i) =>
+        `Example ${i + 1} input: ${ex.input}\nExample ${i + 1} output: ${typeof ex.output === 'string' ? ex.output : JSON.stringify(ex.output)}`
+      ).join('\n\n'));
+    }
+    return lines.join('\n\n');
   }
 
   /**
@@ -148,6 +179,46 @@ export class BaseWorker {
 
       const durationMs = Date.now() - startTime;
       this.status = 'completed';
+
+      // ── Quality scoring (P2 + P5-lite) — deterministic, spec-driven ──
+      // Only runs for spec-migrated workers; attaches result._quality and persists
+      // a score so Worker Monitor can show it. Never throws (quality is advisory).
+      if (this.spec?.outputSchema) {
+        try {
+          const validator = new OutputValidator();
+          // The scored object is the worker's primary payload — report/proposal/etc.
+          const payload = (result && typeof result === 'object')
+            ? (result.report || result.proposal || result.blueprint || result)
+            : result;
+          const q = validator.validateAgainstSpec(payload, this.spec);
+          if (result && typeof result === 'object') {
+            result._quality = {
+              score: q.score,
+              schemaMatchPct: q.schemaMatchPct,
+              valid: q.valid,
+              missingKeys: q.missingKeys,
+              checklistFlags: q.checklistFlags
+            };
+          }
+          await db.execute(
+            `CREATE TABLE IF NOT EXISTS quality_scores (
+               id TEXT PRIMARY KEY, worker_name TEXT, wk_id TEXT, score INTEGER,
+               schema_match_pct INTEGER, valid INTEGER, detail TEXT, timestamp TEXT DEFAULT CURRENT_TIMESTAMP
+             );`
+          ).catch(() => {});
+          await db.execute(
+            `INSERT INTO quality_scores (id, worker_name, wk_id, score, schema_match_pct, valid, detail, timestamp)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,CURRENT_TIMESTAMP)`,
+            [crypto.randomUUID(), this.name, this.wkId || null, q.score, q.schemaMatchPct, q.valid ? 1 : 0,
+             JSON.stringify({ missingKeys: q.missingKeys, typeMismatches: q.typeMismatches, checklistFlags: q.checklistFlags })]
+          ).catch(() => {});
+          if (!q.valid) {
+            console.warn(`[Quality] ${this.name} scored ${q.score}/100 (schema ${q.schemaMatchPct}%). Missing: ${q.missingKeys.join(',') || 'none'}`);
+          }
+        } catch (qErr) {
+          console.warn('[Quality] scoring skipped (non-fatal):', qErr?.message || qErr);
+        }
+      }
 
       // Log completion to runtime health monitor
       logWorkerEnd(this.name, durationMs);

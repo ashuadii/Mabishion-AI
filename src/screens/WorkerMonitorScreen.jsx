@@ -5,7 +5,7 @@ import HubTabs from '../components/HubTabs';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
 import { glassStyle, C } from '../components/consts';
-import { getWorkerLogs, getLlmUsage, getDailyCostTotal } from '../data/db.js';
+import { getWorkerLogs, getLlmUsage, getDailyCostTotal, getQualityScores } from '../data/db.js';
 import { getActiveWorkerCount, getQueuedWorkerCount, getActiveRuns, cancelWorker } from '../engine/workers/index.js';
 
 const STATUS_TONE = {
@@ -27,6 +27,7 @@ const STATUS_ICON = {
 export default function WorkerMonitorScreen({ onNavigate }) {
   const [logs, setLogs] = useState([]);
   const [llmUsage, setLlmUsage] = useState([]);
+  const [qualityScores, setQualityScores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('workers'); // workers | llm | health
   const [dailyCostPaise, setDailyCostPaise] = useState(0);
@@ -42,11 +43,12 @@ export default function WorkerMonitorScreen({ onNavigate }) {
   const load = async ({ initial = false } = {}) => {
     if (initial) setLoading(true);
     try {
-      const [wLogs, lUsage, daily] = await Promise.all([
-        getWorkerLogs(), getLlmUsage(), getDailyCostTotal()
+      const [wLogs, lUsage, daily, qScores] = await Promise.all([
+        getWorkerLogs(), getLlmUsage(), getDailyCostTotal(), getQualityScores(50)
       ]);
       setLogs((wLogs || []).slice(0, 50));
       setLlmUsage((lUsage || []).slice(0, 50));
+      setQualityScores(qScores || []);
       setDailyCostPaise(daily || 0);
       setActiveCount(getActiveWorkerCount());
       setQueueCount(getQueuedWorkerCount());
@@ -184,6 +186,29 @@ export default function WorkerMonitorScreen({ onNavigate }) {
       </div>
 
       {loading && <p className="text-sm py-4 text-center" style={{ color: C.textMuted }}>Loading...</p>}
+
+      {/* Quality Scores (P5) — deterministic per-run scores from spec-driven workers */}
+      {!loading && activeTab === 'workers' && qualityScores.length > 0 && (
+        <div className="mb-4 p-4 rounded-2xl" style={glassStyle({ glow: 'success' })}>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-black uppercase tracking-wider" style={{ color: C.success }}>Quality Scores</p>
+            <span className="text-[10px] text-slate-500">schema-match + checklist · deterministic, not LLM self-graded</span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {qualityScores.slice(0, 8).map(q => (
+              <div key={q.id} className="p-2.5 rounded-xl bg-white/[0.03] border border-white/5">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-lg font-black" style={{ color: q.score >= 80 ? C.success : q.score >= 50 ? C.warning : C.danger }}>{q.score}</span>
+                  <span className="text-[9px] text-slate-500">/100</span>
+                  {!q.valid && <span className="ml-auto text-[8px] font-bold text-red-400 uppercase">flagged</span>}
+                </div>
+                <p className="text-[10px] text-slate-400 truncate mt-0.5">{q.worker_name}</p>
+                <p className="text-[9px] text-slate-600">schema {q.schema_match_pct}%</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Worker logs tab */}
       {!loading && activeTab === 'workers' && (

@@ -28,6 +28,14 @@ export async function getLlmUsage() {
   return await db.select('SELECT * FROM llm_usage ORDER BY timestamp DESC');
 }
 
+// Worker quality scores (P5) — deterministic per-run scores written by BaseWorker.
+export async function getQualityScores(limit = 50) {
+  const db = await getDb();
+  return await db.select(
+    `SELECT * FROM quality_scores ORDER BY timestamp DESC LIMIT $1`, [limit]
+  ).catch(() => []);
+}
+
 // ── LLM response cache (Blueprint adoption P1, schema v21) ──────────────────
 
 export async function getLlmCacheEntry(promptHash, maxAgeHours = 24) {

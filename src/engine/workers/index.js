@@ -132,7 +132,33 @@ export const WORKER_REGISTRY = {
     timeoutMs: 180_000,
     workerClass: BusinessAnalystWorker,
     defaultConfig: {},
-    policy: { requiresApproval: true, approvalSeverity: 'standard' }
+    policy: { requiresApproval: true, approvalSeverity: 'standard' },
+    // Worker Spec Kit (P1) — first fully-migrated worker; pattern for the other 23.
+    spec: {
+      role: 'Senior business analyst producing evidence-backed SWOT and competitor intelligence for a digital agency.',
+      skills: ['SWOT analysis', 'competitor benchmarking', 'market sizing', 'positioning strategy'],
+      knowledge: 'Ground every claim in the provided SOURCES (live web search) when available. Name REAL competitors with real differentiators — never generic placeholders. Threats/opportunities must be specific and current, not evergreen filler.',
+      outputSchema: {
+        strengths: 'array',
+        weaknesses: 'array',
+        opportunities: 'array',
+        threats: 'array',
+        competitors: 'array',
+        recommendations: 'array',
+        sources: 'array'
+      },
+      checklist: [
+        { key: 'competitors', minItems: 2 },
+        { key: 'recommendations', minItems: 2 },
+        'Each competitor object has name + threat level + our-edge',
+        'Cite the SOURCES you used in the sources array (empty if none provided)'
+      ],
+      successCriteria: 'A client-ready analysis a strategist could act on without rework.',
+      examples: [{
+        input: 'Project: Cloud kitchen ordering app | Client: SpiceBox | Type: Food-tech web app',
+        output: { strengths: ['Direct-to-consumer margins'], weaknesses: ['No delivery fleet'], opportunities: ['Tier-2 city demand'], threats: ['Zomato/Swiggy pricing power'], competitors: [{ name: 'Swiggy', threat: 'High', advantage: 'Faster niche menu curation' }], recommendations: ['Bundle-first catalogue', 'WhatsApp reorder flow'], sources: ['https://example-source'] }
+      }]
+    }
   },
   documentor: {
     wkId: 'WK-006',
@@ -347,6 +373,12 @@ export async function runWorker(workerName, input, config = {}, hooks = {}) {
   // Overrides any constructor defaults so runtime behavior always matches registry.
   worker.requiresApproval = registry.policy.requiresApproval;
   worker.approvalSeverity = registry.policy.approvalSeverity;
+
+  // Worker Spec Kit (P1): attach the registry spec so BaseWorker can inject it
+  // into the prompt and validate output against it. Undefined for workers not yet
+  // migrated — those keep their existing behavior untouched.
+  worker.spec = registry.spec || null;
+  worker.wkId = registry.wkId;
 
   // Merge context config parameters (such as requirements_override) with hooks so they reach worker.run()
   // abortSignal passed so workers can check cancellation in their execute() loop

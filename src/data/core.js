@@ -463,6 +463,13 @@ function createDevelopmentPreviewDb() {
         saveDevelopmentPreviewDb();
         return { rowsAffected: 1 };
       }
+      if (normalized.startsWith('insert into quality_scores')) {
+        const [id, worker_name, wk_id, score, schema_match_pct, valid, detail] = params;
+        developmentPreviewStore.quality_scores = developmentPreviewStore.quality_scores || [];
+        developmentPreviewStore.quality_scores.unshift({ id, worker_name, wk_id, score, schema_match_pct, valid, detail, timestamp: new Date().toISOString() });
+        saveDevelopmentPreviewDb();
+        return { rowsAffected: 1 };
+      }
       if (normalized.startsWith('insert into retainers')) {
         const [id, client_name, service, amount_inr, billing_day, started_at, notes] = params;
         developmentPreviewStore.retainers = developmentPreviewStore.retainers || [];
@@ -576,6 +583,9 @@ function createDevelopmentPreviewDb() {
       if (normalized.includes('sum(amount_inr)') && normalized.includes('from retainers')) {
         const total = (developmentPreviewStore.retainers || []).filter(r => r.status === 'active').reduce((s, r) => s + Number(r.amount_inr || 0), 0);
         return [{ total }];
+      }
+      if (normalized.includes('from quality_scores')) {
+        return [...(developmentPreviewStore.quality_scores || [])];
       }
       if (normalized.startsWith('select * from retainers')) {
         let rows = [...(developmentPreviewStore.retainers || [])];
