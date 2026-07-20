@@ -1,4 +1,4 @@
---- Launching Mabishion AI at Saturday 18 July 2026 05:20:16 PM IST ---
+--- Launching Mabishion AI at Sunday 19 July 2026 02:14:34 PM IST ---
 Clearing port 1420...
 Ollama not installed — skipping (cloud LLMs will be used)
 Starting Tauri App...
@@ -11,31 +11,15 @@ Starting Tauri App...
 > mabishion-ai@0.1.0 dev
 > vite
 
-5:20:19 PM [vite] (client) Re-optimizing dependencies because vite config has changed
+2:14:37 PM [vite] (client) Re-optimizing dependencies because vite config has changed
 
-  VITE v8.1.4  ready in 553 ms
+  VITE v8.1.4  ready in 545 ms
 
   ➜  Local:   http://localhost:1420/
   ➜  Network: use --host to expose
      Running DevCommand (`cargo  run --no-default-features --color always --`)
         Info Watching /home/admin-ubuntu/Desktop/Mabishion-AI/Mabishion Software/src-tauri for changes...
-[1m[92m    Finished[0m `dev` profile [unoptimized + debuginfo] target(s) in 1.51s
+[1m[92m    Finished[0m `dev` profile [unoptimized + debuginfo] target(s) in 1.32s
 [1m[92m     Running[0m `target/debug/mabishion-ai`
-5:39:38 PM [vite] (client) page reload src/engine/workers/packagerWorker.js
-5:39:38 PM [vite] (client) page reload src/engine/workers/leadManagerWorker.js
-5:39:38 PM [vite] (client) page reload src/engine/workers/documentorWorker.js
-5:39:38 PM [vite] (client) page reload src/engine/workers/paymentHandlerWorker.js
-5:39:51 PM [vite] (client) page reload src/engine/workers/paymentHandlerWorker.js
-5:40:10 PM [vite] (client) page reload src/engine/workers/packagerWorker.js
-5:40:10 PM [vite] (client) page reload src/engine/workers/documentorWorker.js
-5:40:10 PM [vite] (client) page reload src/engine/workers/leadManagerWorker.js
-5:40:10 PM [vite] (client) page reload src/engine/workers/paymentHandlerWorker.js
-5:40:28 PM [vite] (client) page reload src/engine/workers/documentorWorker.js
-5:40:28 PM [vite] (client) page reload src/engine/workers/leadManagerWorker.js
-5:40:28 PM [vite] (client) page reload src/engine/workers/complianceWorker.js
-5:40:42 PM [vite] (client) hmr update /src/screens/BuildScreen.jsx, /src/index.css
-5:41:09 PM [vite] (client) hmr update /src/screens/MarketingStudioScreen.jsx, /src/index.css
-5:41:12 PM [vite] (client) hmr update /src/screens/BuildScreen.jsx, /src/index.css
-5:41:24 PM [vite] (client) hmr update /src/screens/BuildScreen.jsx, /src/index.css
-5:41:24 PM [vite] (client) hmr update /src/index.css, /src/components/Sidebar.jsx
-5:44:12 PM [vite] (client) page reload src/data/core.js
+2:20:23 PM [vite] (client) hmr update /src/screens/SettingsScreen.jsx, /src/index.css
+2:29:20 PM [vite] (client) hmr update /src/screens/MarketingStudioScreen.jsx, /src/index.css

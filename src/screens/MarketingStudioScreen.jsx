@@ -23,9 +23,9 @@ const CONTENT_TYPES = [
   { id: 'ad_copy', label: 'Ad Copy' },
   { id: 'email', label: 'Email' },
 ];
-// Channels = owner's REAL platforms (companyProfile.js). linkedin removed until
-// the owner creates the page; facebook/x added (accounts exist: @mabishion).
-const CHANNELS = ['instagram', 'facebook', 'x', 'whatsapp', 'google', 'website'];
+// Channels = owner's REAL platforms (companyProfile.js). All live as of 2026-07-19:
+// LinkedIn page (company/142894852) and Google Business Profile now set up by owner.
+const CHANNELS = ['instagram', 'facebook', 'x', 'linkedin', 'whatsapp', 'google', 'website'];
 
 // One-click posting via official web share/compose intents — works TODAY with
 // zero API tokens. X and WhatsApp genuinely pre-fill the text; Instagram and
@@ -40,7 +40,8 @@ function buildPostIntent(item) {
     case 'whatsapp':  return { url: `https://wa.me/?text=${enc}`, note: 'WhatsApp share opened — text pre-filled' };
     case 'facebook':  return { url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(COMPANY.website)}&quote=${enc}`, note: 'FB share opened — caption copied, paste if empty' };
     case 'instagram': return { url: 'https://www.instagram.com/', note: 'Caption copied — IG has no web composer, paste in app' };
-    case 'google':    return { url: 'https://business.google.com/', note: 'Caption copied — paste into a Google Business post' };
+    case 'linkedin':  return { url: `https://www.linkedin.com/feed/?shareActive=true&text=${enc}`, note: 'LinkedIn composer opened — text pre-filled; post as the Mabishion page' };
+    case 'google':    return { url: COMPANY.googleBusinessManage, note: 'Caption copied — Google Business manager opened, paste into a post' };
     default:          return { url: COMPANY.website, note: 'Caption copied' };
   }
 }
@@ -148,9 +149,15 @@ export default function MarketingStudioScreen({ onNavigate }) {
             {label} ↗
           </a>
         ))}
-        <span className="rounded-lg border border-white/5 bg-white/[0.02] px-2.5 py-1 text-[11px] font-bold text-slate-600" title="Not created yet (owner 2026-07-18)">
-          LinkedIn — not set up
-        </span>
+        {[
+          ['LinkedIn', COMPANY.linkedin],
+          ['Google Business', COMPANY.googleBusinessManage],
+        ].map(([label, url]) => (
+          <a key={label} href={url} target="_blank" rel="noopener noreferrer"
+            className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-bold text-slate-300 hover:bg-white/10 hover:text-white transition-all">
+            {label} ↗
+          </a>
+        ))}
       </section>
 
       {/* Summary strip */}

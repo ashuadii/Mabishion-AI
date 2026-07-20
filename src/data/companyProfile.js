@@ -12,6 +12,10 @@ export const COMPANY = {
   facebook: 'https://facebook.com/mabishion',
   instagram: 'https://instagram.com/mabishion',
   twitter: 'https://x.com/mabishion',
-  linkedin: null, // not created yet (owner 2026-07-18)
+  // LinkedIn page created 2026-07-18. Public URL = admin URL minus /admin/dashboard.
+  linkedin: 'https://www.linkedin.com/company/142894852/',
+  linkedinAdmin: 'https://www.linkedin.com/company/142894852/admin/dashboard/', // owner-private manage link — never client-facing
+  // Google Business Profile — owner's private MANAGE link (not a public profile URL).
+  googleBusinessManage: 'https://business.google.com/manager/overview?a=om-5363602496953971968',
   upiId: null,    // not provided — show "UPI: On request", do NOT invent
 };

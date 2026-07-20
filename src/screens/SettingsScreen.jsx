@@ -486,6 +486,8 @@ const SettingsScreen = ({ onNavigate }) => {
                     ['Facebook', 'facebook.com/mabishion', COMPANY.facebook],
                     ['Instagram', 'instagram.com/mabishion', COMPANY.instagram],
                     ['X / Twitter', 'x.com/mabishion', COMPANY.twitter],
+                    ['LinkedIn', 'linkedin.com/company/mabishion', COMPANY.linkedin],
+                    ['Google Business', 'Business Profile — manage', COMPANY.googleBusinessManage],
                   ].map(([label, value, href]) => (
                     <a key={label} href={href} target="_blank" rel="noopener noreferrer"
                       className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2 hover:bg-white/10 transition-all">
@@ -493,10 +495,6 @@ const SettingsScreen = ({ onNavigate }) => {
                       <span className="text-gray-200 truncate ml-3">{value}</span>
                     </a>
                   ))}
-                  <div className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2 opacity-60">
-                    <span className="text-[11px] font-bold uppercase text-gray-600">LinkedIn</span>
-                    <span className="text-gray-500">Not set up yet</span>
-                  </div>
                   <div className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2 opacity-60">
                     <span className="text-[11px] font-bold uppercase text-gray-600">UPI</span>
                     <span className="text-gray-500">On request (not set)</span>
