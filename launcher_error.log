@@ -23,3 +23,5 @@ Starting Tauri App...
 [1m[92m     Running[0m `target/debug/mabishion-ai`
 2:20:23 PM [vite] (client) hmr update /src/screens/SettingsScreen.jsx, /src/index.css
 2:29:20 PM [vite] (client) hmr update /src/screens/MarketingStudioScreen.jsx, /src/index.css
+10:11:59 PM [vite] (client) hmr update /src/components/AppShell.jsx, /src/index.css
+10:12:08 PM [vite] (client) hmr update /src/components/AppShell.jsx, /src/index.css

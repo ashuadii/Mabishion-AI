@@ -131,7 +131,12 @@ export default function AppShell({ activeNavId, onNavigate, commandBar, children
         className={`relative z-10 flex h-screen flex-col overflow-y-auto ${commandBar ? 'pb-0' : 'pb-28'}`}
         style={{ marginLeft: sidebarExpanded ? C.sidebarExpand : C.sidebarW, transition: 'margin-left 0.3s' }}
       >
-        <div className="flex-1 p-8">
+        {/* Scroll-perf (WebKitGTK): promote screen content to its own GPU compositor
+            layer so scrolling TRANSLATES a cached layer instead of CPU-repainting all
+            ~77 glass-panel blurred box-shadows every frame. translateZ(0) is visually
+            neutral. Put on the inner content wrapper (not <main>) to keep sticky
+            children working. Revert = remove the style prop. Verify in the Tauri shell. */}
+        <div className="flex-1 p-8" style={{ transform: 'translateZ(0)' }}>
           <div className="mx-auto max-w-[1480px]">{children}</div>
         </div>
       </main>

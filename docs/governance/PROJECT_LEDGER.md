@@ -1380,3 +1380,10 @@ What changed: Owner ne teeno platforms ready kar diye (GBP manage a=om-536360249
 Why changed: Prior ledger "Next step" = owner platform setup ke baad in-app attach karna; owner ne setup kar diya, Settings screen sync se reh gaya tha.
 Status: Working — VERIFIED: npm run build exit 0 (sirf purane chunk-size/dynamic-import warnings). Change static JSX contact table — koi live account touch nahi hua, koi posting nahi.
 Next step: Meta/X/LinkedIn/GBP API tokens milne par full auto-post engine (abhi token-free web-intent tier chal raha hai).
+
+[2026-07-20] [Claude Opus 4.8] — [OWNER REPORT: scrolling slow/janky on every screen: AppShell.jsx]
+What changed: AppShell ke inner content wrapper (`flex-1 p-8`) par `transform: translateZ(0)` add kiya — screen content ko apni GPU compositor layer par promote karta hai, taaki scroll par WebKitGTK ~77 glassStyle panels ke blurred box-shadows CPU-repaint na kare (bas cached layer translate ho). Inner wrapper par lagaya (main par nahi) taaki sticky children na toote. Visually neutral (identity matrix).
+Diagnosis (evidence, no guess): Suspected sticky backdrop-blur = DEAD CODE (OperatingModeBar kabhi render nahi hota). Global CSS clean. glass-panel/premium-panel (60-70px shadow) unused. Asli baaki bottleneck = 77 glassStyle panels × 26px blurred box-shadow, jo repo ke apne 2026-07-17 note mutabik WebKitGTK par CPU-painted hote hain (tab 80→28px kiya tha, khatam nahi hua).
+Why changed: Owner: "scrolling very slow and not smooth in every screen." Layer-promotion = highest-confidence, reversible, look-preserving lever.
+Status: Working (build exit 0, no console errors, transform applied & visually neutral in Chromium pane). NOT YET VERIFIED in Tauri shell — WebKitGTK smoothness Chromium pane par reproduce nahi hota; owner ko desktop app me confirm karna hai.
+Next step: Owner desktop app me scroll test kare. Agar abhi bhi slow: revert = translateZ(0) hatao; next lever = glassStyle default shadow blur further trim (26→~14px) ya layered-gradient bg overlay hatao (77 panels ka paint aur kam).
