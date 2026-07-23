@@ -139,6 +139,59 @@ const QUICK_TEMPLATES = [
 const panelBg = 'rgba(255,255,255,0.03)';
 const panelBorder = '1px solid rgba(255,255,255,0.07)';
 
+// Turn a snake/camelCase key into a human Title (welcomeEmail → "Welcome Email").
+function humanizeKey(k) {
+  return String(k)
+    .replace(/_/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// Human-readable renderer for worker output. Owner feedback 2026-07-22: raw JSON was
+// unreadable. Objects render as labelled sections (arrays → numbered list, nested
+// objects → key: value lines); strings render as-is. Falls back to JSON only for
+// values it can't format. Used by the Playground preview panel.
+function ReadableOutput({ data }) {
+  if (data == null) return null;
+  if (typeof data === 'string') {
+    return <div className="whitespace-pre-wrap text-[12px] leading-relaxed" style={{ color: C.gold }}>{data}</div>;
+  }
+  if (Array.isArray(data)) {
+    return (
+      <ol className="list-decimal pl-5 space-y-1 text-[12px] leading-relaxed" style={{ color: C.gold }}>
+        {data.map((v, i) => <li key={i}>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</li>)}
+      </ol>
+    );
+  }
+  if (typeof data !== 'object') {
+    return <div className="text-[12px]" style={{ color: C.gold }}>{String(data)}</div>;
+  }
+  return (
+    <div className="space-y-3">
+      {Object.entries(data).map(([key, val]) => (
+        <div key={key}>
+          <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: C.gold }}>{humanizeKey(key)}</p>
+          {typeof val === 'string' ? (
+            <p className="whitespace-pre-wrap text-[12px] leading-relaxed text-slate-200">{val}</p>
+          ) : Array.isArray(val) ? (
+            <ol className="list-decimal pl-5 space-y-0.5 text-[12px] leading-relaxed text-slate-200">
+              {val.map((v, i) => <li key={i}>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</li>)}
+            </ol>
+          ) : val && typeof val === 'object' ? (
+            <div className="pl-2 space-y-0.5 text-[12px] leading-relaxed text-slate-200">
+              {Object.entries(val).map(([k2, v2]) => (
+                <p key={k2}><span className="font-semibold text-slate-300">{humanizeKey(k2)}:</span> {typeof v2 === 'object' ? JSON.stringify(v2) : String(v2)}</p>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[12px] text-slate-200">{String(val)}</p>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 // internalMode (Owner Decision 2026-07-15): same 16-tier engine, separate entry point.
 // Playground (/build-new) = 4 client-facing categories; Internal Tools (/internal-tools)
@@ -276,8 +329,11 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
   const canStartBuild = readiness.percent === 100;
 
   // ─── Handlers ────────────────────────────────────────────────────────────
-  const addSystemMsg = (text, type = 'info') => {
-    setSystemMessages(prev => [...prev, { id: crypto.randomUUID(), text, type, time: new Date().toLocaleTimeString() }]);
+  // `data` (optional) carries a worker's readable output so type:'output' messages
+  // render as a Mickii chat bubble in the thread — the conversation lives above the
+  // prompt box, not only in the side technical panel (owner 2026-07-22, option A).
+  const addSystemMsg = (text, type = 'info', data = null) => {
+    setSystemMessages(prev => [...prev, { id: crypto.randomUUID(), text, type, data, time: new Date().toLocaleTimeString() }]);
   };
 
   const handleSend = async () => {
@@ -322,10 +378,14 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
     addSystemMsg(`Project "${projectName}" for ${configData.clientName} (${selectedCat.label})`, 'worker');
     addSystemMsg(`Budget: ${configData.budget || 'N/A'} | Timeline: ${configData.timeline || 'N/A'}`, 'info');
     addSystemMsg('T1 Discovery — Starting intake...', 'info');
-    handleRunTier(pipeline[0], projectName);
+    // Pass the owner's intake (clientName, budget, requirements…) EXPLICITLY. On this
+    // first tier, setActivePipeline() above hasn't committed yet, so reading
+    // activePipeline?.intake inside handleRunTier would be stale (null) and the worker
+    // would fall back to the demo lead ("Sam Altman"). Passing configData fixes the name.
+    handleRunTier(pipeline[0], projectName, { ...configData });
   };
 
-  const handleRunTier = async (tier, projectName) => {
+  const handleRunTier = async (tier, projectName, intakeOverride = null) => {
     if (!tier.worker) {
       addSystemMsg(`${tier.id} ${tier.label} — Requires human approval (Ashu)`, 'warning');
       return;
@@ -338,7 +398,8 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
     });
     try {
       const workerConfig = { projectName, tier: tier.id, phase: tier.label };
-      if (activePipeline?.intake) workerConfig.intake = activePipeline.intake;
+      const intake = intakeOverride || activePipeline?.intake;
+      if (intake) workerConfig.intake = intake;
       const result = await runWorker(
         tier.worker,
         selectedLeadId || selectedProjectId || 'demo-proj-1',
@@ -353,6 +414,8 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
       if (output) {
         setShowRightPanel(true);
         setPreviewContent({ type: 'worker-output', title: `${tier.id} ${tier.label}`, data: output });
+        // Surface the readable output in the conversation thread (above the prompt box).
+        addSystemMsg(`${tier.id} ${tier.label} — output ready`, 'output', output);
       }
       setActivePipeline(prev => {
         if (!prev) return prev;
@@ -809,7 +872,18 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
           </div>
         ))}
 
-        {systemMessages.map(msg => (
+        {systemMessages.map(msg => msg.type === 'output' ? (
+          <div key={msg.id} className="flex justify-start">
+            <div className="max-w-[80%] rounded-xl px-3 py-2" style={{ background: panelBg, border: panelBorder }}>
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <MickiiOrb isThinking={false} />
+                <span className="text-[10px] font-black uppercase" style={{ color: C.gold }}>Mickii · {msg.text}</span>
+                <span className="text-[9px] text-slate-600 ml-1">{msg.time}</span>
+              </div>
+              <ReadableOutput data={msg.data} />
+            </div>
+          </div>
+        ) : (
           <div key={msg.id} className="flex justify-center">
             <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${
               msg.type === 'error' ? 'bg-red-500/8 text-red-400 border border-red-500/15' :
@@ -940,11 +1014,9 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
           {previewContent?.type === 'worker-output' && (
             <div>
               <p className="text-[10px] font-bold text-white mb-1.5">{previewContent.title}</p>
-              <div className="rounded-lg p-2.5 font-mono text-[11px] leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto"
-                style={{ background: 'rgba(0,0,0,0.3)', color: C.gold }}>
-                {typeof previewContent.data === 'string'
-                  ? previewContent.data
-                  : JSON.stringify(previewContent.data, null, 2)}
+              <div className="rounded-lg p-2.5 text-[11px] leading-relaxed max-h-[400px] overflow-y-auto"
+                style={{ background: 'rgba(0,0,0,0.3)' }}>
+                <ReadableOutput data={previewContent.data} />
               </div>
               <div className="flex gap-1.5 mt-2">
                 <button

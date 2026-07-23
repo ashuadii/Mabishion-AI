@@ -103,7 +103,7 @@ Return a valid JSON object ONLY with keys: welcomeEmail, questionnaire (10 items
     }
 
     await db.execute(`
-      CREATE TABLE IF NOT EXISTS clients (
+      CREATE TABLE IF NOT EXISTS client_onboarding (
         id TEXT PRIMARY KEY,
         lead_id TEXT,
         project_id TEXT,
@@ -119,7 +119,7 @@ Return a valid JSON object ONLY with keys: welcomeEmail, questionnaire (10 items
 
     const clientId = crypto.randomUUID();
     await db.execute(
-      `INSERT INTO clients (id, lead_id, project_id, client_name, welcome_email, questionnaire, project_timeline, communication_plan, onboarding_status, created_at)
+      `INSERT INTO client_onboarding (id, lead_id, project_id, client_name, welcome_email, questionnaire, project_timeline, communication_plan, onboarding_status, created_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,CURRENT_TIMESTAMP)`,
       [
         clientId, leadId, params.project_id || '', clientName,

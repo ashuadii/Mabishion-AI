@@ -38,7 +38,7 @@ export class ComplianceWorker extends BaseWorker {
     // Fetch client email from leads if possible
     let businessEmail = COMPANY.email;
     try {
-      const clientRows = await db.select("SELECT welcome_email FROM clients WHERE client_name LIKE $1 LIMIT 1", [`%${clientName}%`]);
+      const clientRows = await db.select("SELECT welcome_email FROM client_onboarding WHERE client_name LIKE $1 LIMIT 1", [`%${clientName}%`]);
       if (!clientRows || clientRows.length === 0) {
         const leadRows = await db.select("SELECT email FROM leads WHERE name LIKE $1 LIMIT 1", [`%${clientName}%`]);
         if (leadRows && leadRows.length > 0 && leadRows[0].email) businessEmail = leadRows[0].email;
