@@ -34,36 +34,14 @@ describe('RequireUnlock — P0-1 gate', () => {
     expect(screen.queryByRole('heading', { name: /Welcome back/i })).not.toBeInTheDocument();
   });
 
-  it('blocks children behind LoginScreen when a PIN is configured', async () => {
+  // Owner decision 2026-07-25: App Lock disabled. A stale seeded user row was
+  // re-locking the app on every launch even though no PIN was intentionally set.
+  // The gate is now bypassed, so children always render — even if isPinSetup()
+  // still reports a (stale) configured PIN. LoginScreen must never appear.
+  it('never locks even when a (stale) PIN is reported as configured', async () => {
     pinConfigured = true;
     render(<RequireUnlock><div data-testid="app-content">APP</div></RequireUnlock>);
-    await waitFor(() => expect(screen.getByRole('heading', { name: /Welcome back/i })).toBeInTheDocument());
-    expect(screen.queryByTestId('app-content')).not.toBeInTheDocument();
-  });
-
-  it('unlocks and renders children after a valid PIN', async () => {
-    pinConfigured = true;
-    render(<RequireUnlock><div data-testid="app-content">APP</div></RequireUnlock>);
-    await waitFor(() => expect(screen.getByRole('heading', { name: /Welcome back/i })).toBeInTheDocument());
-
-    const input = screen.getByLabelText(/Operator PIN/i);
-    fireEvent.change(input, { target: { value: '1234' } });
-    fireEvent.click(screen.getByRole('button', { name: /Unlock Mabishion/i }));
-
     await waitFor(() => expect(screen.getByTestId('app-content')).toBeInTheDocument());
-  });
-
-  it('stays locked after an invalid PIN', async () => {
-    pinConfigured = true;
-    verifyResult = { valid: false, firstTime: false };
-    render(<RequireUnlock><div data-testid="app-content">APP</div></RequireUnlock>);
-    await waitFor(() => expect(screen.getByRole('heading', { name: /Welcome back/i })).toBeInTheDocument());
-
-    const input = screen.getByLabelText(/Operator PIN/i);
-    fireEvent.change(input, { target: { value: '9999' } });
-    fireEvent.click(screen.getByRole('button', { name: /Unlock Mabishion/i }));
-
-    await waitFor(() => expect(screen.getByText(/Incorrect PIN/i)).toBeInTheDocument());
-    expect(screen.queryByTestId('app-content')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /Welcome back/i })).not.toBeInTheDocument();
   });
 });

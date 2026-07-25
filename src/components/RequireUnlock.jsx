@@ -13,9 +13,17 @@ import { C } from './consts';
  * which is exactly the "PIN on app launch" semantics the governance rules ask for.
  */
 export default function RequireUnlock({ children }) {
-  const [gate, setGate] = useState('checking'); // 'checking' | 'locked' | 'unlocked'
+  // Owner decision 2026-07-25: App Lock disabled by owner request. A stale seeded
+  // user row (is_setup=1) was making isPinSetup() return true and re-locking the
+  // app on every launch, even though the owner never set a PIN and Settings showed
+  // "Not Configured". The lock gate is bypassed here so the app never locks.
+  // To re-enable later, restore the isPinSetup()-driven logic below.
+  const LOCK_ENABLED = false;
+
+  const [gate, setGate] = useState(LOCK_ENABLED ? 'checking' : 'unlocked');
 
   useEffect(() => {
+    if (!LOCK_ENABLED) return; // lock disabled — never gate
     let cancelled = false;
     isPinSetup()
       .then(setup => { if (!cancelled) setGate(setup ? 'locked' : 'unlocked'); })

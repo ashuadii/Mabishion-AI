@@ -586,6 +586,47 @@ async fn deploy_to_cpanel(host: String, user: String, pass: String, local_dir: S
     }).await.map_err(|e| e.to_string())?
 }
 
+/// C1 (safe, read-only): list files in a remote FTP directory so Mickii can see
+/// what the live site is made of before touching anything.
+#[tauri::command]
+async fn ftp_list(host: String, user: String, pass: String, remote_dir: String) -> Result<Vec<String>, String> {
+    tokio::task::spawn_blocking(move || -> Result<Vec<String>, String> {
+        use suppaftp::FtpStream;
+        let mut ftp = FtpStream::connect(format!("{}:21", host))
+            .map_err(|e| format!("Connection error: {}", e))?;
+        ftp.login(&user, &pass).map_err(|e| format!("Login error: {}", e))?;
+        let dir = if remote_dir.trim().is_empty() { None } else { Some(remote_dir.as_str()) };
+        let names = ftp.nlst(dir).map_err(|e| format!("List error: {}", e))?;
+        let _ = ftp.quit();
+        Ok(names)
+    }).await.map_err(|e| e.to_string())?
+}
+
+/// C1 (safe, read-only): download and return the text content of one remote file
+/// so Mickii can read the ACTUAL source and find real mistakes to fix.
+#[tauri::command]
+async fn ftp_read(host: String, user: String, pass: String, remote_path: String) -> Result<serde_json::Value, String> {
+    tokio::task::spawn_blocking(move || -> Result<serde_json::Value, String> {
+        use suppaftp::FtpStream;
+        let mut ftp = FtpStream::connect(format!("{}:21", host))
+            .map_err(|e| format!("Connection error: {}", e))?;
+        ftp.login(&user, &pass).map_err(|e| format!("Login error: {}", e))?;
+        let cursor = ftp.retr_as_buffer(&remote_path)
+            .map_err(|e| format!("Read error for {}: {}", remote_path, e))?;
+        let _ = ftp.quit();
+        let bytes = cursor.into_inner();
+        let content = String::from_utf8_lossy(&bytes).to_string();
+        const MAX_CHARS: usize = 50_000;
+        let truncated = content.chars().count() > MAX_CHARS;
+        let out: String = if truncated { content.chars().take(MAX_CHARS).collect() } else { content };
+        Ok(serde_json::json!({
+            "path": remote_path,
+            "truncated": truncated,
+            "content": out,
+        }))
+    }).await.map_err(|e| e.to_string())?
+}
+
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Mickii bol raha hai: {}, system ready hai!", name)
@@ -794,6 +835,143 @@ async fn exa_research(
     
     let json = res.json::<serde_json::Value>().await.map_err(|e| format!("Exa Parse Error: {}", e))?;
     Ok(json)
+}
+
+fn hex_to_bytes(s: &str) -> Option<Vec<u8>> {
+    if s.len() % 2 != 0 { return None; }
+    (0..s.len()).step_by(2)
+        .map(|i| u8::from_str_radix(&s[i..i + 2], 16).ok())
+        .collect()
+}
+
+fn bytes_to_hex(b: &[u8]) -> String {
+    b.iter().map(|x| format!("{:02x}", x)).collect()
+}
+
+/// Solve the InfinityFree / aes.js "are you a real browser" JavaScript challenge.
+/// The challenge page defines three hex values via toNumbers("..") — key (a),
+/// iv (b) and ciphertext (c) — then sets a `__test` cookie to the AES-128-CBC
+/// decryption of c (mode 2 = CBC in slowAES). We reproduce that here so the real
+/// page can be fetched with the cookie. Returns the cookie hex value on success.
+fn solve_aes_challenge(body: &str) -> Option<String> {
+    use aes::Aes128;
+    use aes::cipher::{KeyInit, BlockDecrypt};
+    use aes::cipher::generic_array::GenericArray;
+
+    // Extract every toNumbers("HEX") in document order → [key, iv, ciphertext].
+    let mut nums: Vec<Vec<u8>> = Vec::new();
+    let mut rest = body;
+    while let Some(pos) = rest.find("toNumbers(\"") {
+        let after = &rest[pos + "toNumbers(\"".len()..];
+        if let Some(end) = after.find('"') {
+            if let Some(bytes) = hex_to_bytes(&after[..end]) {
+                nums.push(bytes);
+            }
+            rest = &after[end + 1..];
+        } else {
+            break;
+        }
+    }
+    if nums.len() < 3 { return None; }
+    let (key, iv, ct) = (&nums[0], &nums[1], &nums[2]);
+    if key.len() != 16 || iv.len() != 16 || ct.len() != 16 { return None; }
+
+    let cipher = Aes128::new(GenericArray::from_slice(key));
+    let mut block = *GenericArray::from_slice(ct);
+    cipher.decrypt_block(&mut block);
+    // CBC: XOR the decrypted block with the IV to recover the plaintext.
+    let plain: Vec<u8> = block.iter().zip(iv.iter()).map(|(b, i)| b ^ i).collect();
+    Some(bytes_to_hex(&plain))
+}
+
+async fn http_get(
+    client: &reqwest::Client,
+    url: &str,
+    cookie: Option<&str>,
+) -> std::result::Result<(u16, String, String, String), String> {
+    let mut req = client.get(url)
+        .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36")
+        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+    if let Some(c) = cookie {
+        req = req.header("Cookie", format!("__test={}", c));
+    }
+    let res = req.send().await.map_err(|e| format!("Fetch failed for {}: {}", url, e))?;
+    let status = res.status().as_u16();
+    let final_url = res.url().to_string();
+    let content_type = res.headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("")
+        .to_string();
+    let body = res.text().await.map_err(|e| format!("Read body failed: {}", e))?;
+    Ok((status, final_url, content_type, body))
+}
+
+/// Fetch the raw content of ANY web page by URL so Cortex can actually READ a
+/// website (not just search for it). Auto-solves the InfinityFree aes.js browser
+/// challenge and normalises bare domains. Content is capped to keep the LLM
+/// payload sane.
+#[tauri::command]
+async fn fetch_url(
+    url: String,
+    state: tauri::State<'_, AppState>
+) -> std::result::Result<serde_json::Value, String> {
+    // Normalise: default to https:// if the user pasted a bare domain.
+    let full_url = if url.starts_with("http://") || url.starts_with("https://") {
+        url.clone()
+    } else {
+        format!("https://{}", url)
+    };
+
+    println!("[Rust] 🌍 FETCH URL: {}", full_url);
+
+    let (mut status, mut final_url, mut content_type, mut body) =
+        http_get(&state.client, &full_url, None).await?;
+
+    // Detect the InfinityFree / aes.js JS challenge and solve it, then re-fetch.
+    let is_challenge = body.contains("aes.js")
+        && body.contains("slowAES.decrypt")
+        && body.contains("toNumbers(");
+    let mut bypassed = false;
+    if is_challenge {
+        println!("[Rust] 🔓 aes.js challenge detected — solving...");
+        if let Some(cookie) = solve_aes_challenge(&body) {
+            // The challenge redirects to <url>?i=1; hit that with the __test cookie.
+            let target = if full_url.contains('?') {
+                format!("{}&i=1", full_url)
+            } else {
+                format!("{}?i=1", full_url)
+            };
+            match http_get(&state.client, &target, Some(&cookie)).await {
+                Ok((s, fu, ct, b)) => {
+                    status = s; final_url = fu; content_type = ct; body = b;
+                    bypassed = true;
+                    println!("[Rust] 🔓 challenge solved — real content fetched.");
+                }
+                Err(e) => println!("[Rust] challenge retry failed: {}", e),
+            }
+        } else {
+            println!("[Rust] could not solve aes.js challenge.");
+        }
+    }
+
+    // Cap at ~50k chars so a huge page never blows the token budget.
+    const MAX_CHARS: usize = 50_000;
+    let truncated = body.chars().count() > MAX_CHARS;
+    let content: String = if truncated {
+        body.chars().take(MAX_CHARS).collect()
+    } else {
+        body
+    };
+
+    Ok(serde_json::json!({
+        "status": status,
+        "final_url": final_url,
+        "content_type": content_type,
+        "truncated": truncated,
+        "challenge_bypassed": bypassed,
+        "content": content,
+    }))
 }
 
 #[tauri::command]
@@ -1087,6 +1265,8 @@ fn main() {
             mickii_workflow,
             execute_skill,
             deploy_to_cpanel,
+            ftp_list,
+            ftp_read,
             mickii_fs_create,
             mickii_fs_read,
             mickii_fs_write,
@@ -1099,6 +1279,7 @@ fn main() {
             gemini_proxy,
             serper_search,
             exa_research,
+            fetch_url,
             get_system_time_info,
             hmac_sign,
             hash_pin,

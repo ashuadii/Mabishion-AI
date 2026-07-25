@@ -1,4 +1,4 @@
---- Launching Mabishion AI at Wednesday 22 July 2026 12:43:23 PM IST ---
+--- Launching Mabishion AI at Saturday 25 July 2026 05:40:04 PM IST ---
 Clearing port 1420...
 Ollama not installed — skipping (cloud LLMs will be used)
 Starting Tauri App...
@@ -12,18 +12,11 @@ Starting Tauri App...
 > vite
 
 
-  VITE v8.1.4  ready in 156 ms
+  VITE v8.1.4  ready in 180 ms
 
   ➜  Local:   http://localhost:1420/
   ➜  Network: use --host to expose
      Running DevCommand (`cargo  run --no-default-features --color always --`)
         Info Watching /home/admin-ubuntu/Desktop/Mabishion-AI/Mabishion Software/src-tauri for changes...
-[1m[92m    Finished[0m `dev` profile [unoptimized + debuginfo] target(s) in 0.59s
+[1m[92m    Finished[0m `dev` profile [unoptimized + debuginfo] target(s) in 0.20s
 [1m[92m     Running[0m `target/debug/mabishion-ai`
-12:54:45 PM [vite] (client) hmr update /src/screens/BuildScreen.jsx, /src/index.css
-12:54:49 PM [vite] (client) hmr update /src/screens/BuildScreen.jsx, /src/index.css
-12:56:34 PM [vite] (client) hmr update /src/screens/BuildScreen.jsx, /src/index.css
-12:56:42 PM [vite] (client) hmr update /src/screens/BuildScreen.jsx, /src/index.css
-1:13:43 PM [vite] (client) hmr update /src/screens/BuildScreen.jsx, /src/index.css
-1:13:50 PM [vite] (client) hmr update /src/screens/BuildScreen.jsx, /src/index.css
-1:14:00 PM [vite] (client) hmr update /src/screens/BuildScreen.jsx, /src/index.css

@@ -684,10 +684,19 @@ export class LLMProvider {
     const isParseIssue = lastMsg.toLowerCase().includes('parse') ||
       lastMsg.toLowerCase().includes('trailing') ||
       lastMsg.toLowerCase().includes('json');
+    const lm = lastMsg.toLowerCase();
+    const isRateLimit = lm.includes('429') || lm.includes('rate') ||
+      lm.includes('quota') || lm.includes('exhausted') ||
+      lm.includes('overloaded') || lm.includes('too many') ||
+      lm.includes('resource_exhausted');
+    const isTooLarge = lm.includes('400') || lm.includes('too large') ||
+      lm.includes('token') || lm.includes('payload') || lm.includes('context length');
 
     let hint = 'Please check your API keys in Settings.';
     if (isKeyIssue) hint = 'API key invalid or expired. Settings → refresh Gemini/Groq key.';
     if (isParseIssue) hint = 'Provider returned a bad response (likely NVIDIA NIM). Go to Settings and test each key — disable NIM if it keeps failing.';
+    if (isTooLarge) hint = 'Message bahut bada ho gaya tha (badी website/history). Nayi chat shuru karke dobara try karo.';
+    if (isRateLimit) hint = 'Free AI ki limit thodी der ke liye bhar gayi. 1-2 minute baad dobara try karo, ya Settings mein Ollama (local, free) chालू karo.';
 
     // Raw provider internals go to the console for debugging; the thrown message
     // stays owner-readable because it surfaces directly in the chat UI.
@@ -896,14 +905,28 @@ export class Cortex {
             }
             if (hooks.onToolEnd)
               hooks.onToolEnd({ name, args, result: observation });
+
+            // Cap what a tool result adds to the conversation history. A big page
+            // read (mickii_web_read can return ~50k chars) would otherwise stay in
+            // history and bloat every following turn's payload until ALL providers
+            // fail. 14k chars (~4k tokens) is plenty to analyse a page while keeping
+            // subsequent turns reliable.
+            const MAX_OBS_CHARS = 14000;
+            let storedObs = observation;
+            if (typeof storedObs === "string" && storedObs.length > MAX_OBS_CHARS) {
+              storedObs =
+                storedObs.slice(0, MAX_OBS_CHARS) +
+                "\n\n[... content truncated to keep the assistant reliable ...]";
+            }
+
             this.history.push({
               role: "tool",
               name,
               tool_call_id: id,
-              content: observation,
+              content: storedObs,
             });
             if (this.projectId)
-              await addProjectMemory(this.projectId, observation).catch((e) =>
+              await addProjectMemory(this.projectId, storedObs).catch((e) =>
                 console.error("[Cortex] Memory save failed", e),
               );
             await new Promise((r) => setTimeout(r, 1000));

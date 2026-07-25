@@ -23,6 +23,7 @@ suppaftp = { version = "5.3", features = ["native-tls"] }
 walkdir = "2.4"
 argon2 = "0.5"
 rand = "0.8"
+aes = "0.8"
 
 
 [features]

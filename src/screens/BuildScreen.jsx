@@ -206,7 +206,8 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
   const { currentBuild } = useBuild();
   const { messages, send, status, isProcessing } = useMickiiAgent({
     model: 'llama3.1:8b',
-    baseURL: 'http://localhost:11434/v1'
+    baseURL: 'http://localhost:11434/v1',
+    persist: true, // Playground conversation survives app restarts (B)
   });
 
   // Playground state
@@ -296,6 +297,17 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, systemMessages]);
 
+  // On startup, if a saved conversation was restored (B), open the chat view so
+  // the history is actually visible instead of hiding behind the landing screen.
+  const restoredViewRef = useRef(false);
+  useEffect(() => {
+    if (restoredViewRef.current) return;
+    if (messages.length > 0 && pgView === 'skills') {
+      restoredViewRef.current = true;
+      setPgView('build');
+    }
+  }, [messages, pgView]);
+
   useEffect(() => {
     if (!showPlusMenu) return;
     const handler = (e) => {
@@ -340,6 +352,13 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
     if (!input.trim() || isProcessing) return;
     const msg = input.trim();
     setInput('');
+    // A free-text chat message must land in the conversation view, otherwise it
+    // vanishes: the chat thread only renders in the 'build' view, so sending from
+    // the skills/configure landing showed nothing. Switch to the chat view first.
+    if (pgView !== 'build') {
+      setPgView('build');
+      setShowRightPanel(false);
+    }
     await send(msg);
   };
 

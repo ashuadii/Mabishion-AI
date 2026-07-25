@@ -24,3 +24,4 @@ export * from './knowledge.js';
 export * from './security.js';
 export * from './system.js';
 export * from './marketing.js';
+export * from './chat.js';

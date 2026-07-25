@@ -86,6 +86,48 @@ export const SystemTools = [
     }
   },
   {
+    name: 'mickii_web_read',
+    description: 'Open a SPECIFIC website/URL and read its full page content. Use this whenever the user gives a website address or asks to check/review/analyse/audit/rebuild an existing site (e.g. "check mabishion.wuaze.je and list its problems"). This is different from mickii_web_search — search finds links, this READS one exact page.',
+    parameters: {
+      type: 'object',
+      properties: {
+        url: {
+          type: 'string',
+          description: 'The exact website URL or domain to open and read, e.g. "mabishion.wuaze.je" or "https://example.com/pricing".'
+        }
+      },
+      required: ['url']
+    }
+  },
+  {
+    name: 'mickii_ftp_list',
+    description: 'Connect to the owner\'s website hosting over FTP and list the files in a folder. Read-only and safe. Use to see what the live site is made of (e.g. find index.html) before reading or fixing anything. FTP credentials come from Settings automatically.',
+    parameters: {
+      type: 'object',
+      properties: {
+        remoteDir: {
+          type: 'string',
+          description: 'Remote folder to list, e.g. "htdocs" or "/" or "public_html". Leave empty for the default login folder.'
+        }
+      },
+      required: []
+    }
+  },
+  {
+    name: 'mickii_ftp_read',
+    description: 'Download and read the SOURCE of one file from the owner\'s website over FTP (e.g. htdocs/index.html). Read-only and safe. Use this to see the real HTML/source so you can find exact mistakes to fix. FTP credentials come from Settings automatically.',
+    parameters: {
+      type: 'object',
+      properties: {
+        remotePath: {
+          type: 'string',
+          description: 'Full remote path of the file to read, e.g. "htdocs/index.html".'
+        }
+      },
+      required: ['remotePath']
+    }
+  },
+  {
     name: 'mickii_deep_research',
     description: 'Exa neural search for complex analysis. IMPORTANT: ALWAYS translate conversational/Hinglish inputs into concise ENGLISH search queries.',
     parameters: {
@@ -263,6 +305,40 @@ export class AgentRuntime {
         ).join('\n\n') + warningSuffix;
       }
       return JSON.stringify({ error: "All search providers failed or returned empty results." });
+    }
+
+    if (toolName === 'mickii_web_read') {
+      console.log(`[Runtime] 🌍 READING WEBSITE: "${args.url}"`);
+      try {
+        const page = await invoke('fetch_url', { url: args.url });
+        if (!page || !page.content) {
+          return JSON.stringify({ error: `Could not read ${args.url} — empty response.` });
+        }
+        const note = page.truncated ? '\n\n[NOTE: page was long, content truncated to first ~50k chars]' : '';
+        return `READ URL: ${page.final_url} (HTTP ${page.status}, ${page.content_type})\n\n----- PAGE CONTENT -----\n${page.content}${note}`;
+      } catch (err) {
+        return JSON.stringify({ error: `Failed to read ${args.url}: ${err?.message || err}` });
+      }
+    }
+
+    if (toolName === 'mickii_ftp_list' || toolName === 'mickii_ftp_read') {
+      const host = await this.getCachedKey('cpanel_host', '');
+      const user = await this.getCachedKey('cpanel_user', '');
+      const pass = await this.getCachedKey('cpanel_pass', '');
+      if (!host || !user || !pass) {
+        return JSON.stringify({ error: 'FTP/hosting credentials (host, user, pass) missing. Owner ko Settings mein cPanel/FTP details bharni hongi.' });
+      }
+      try {
+        if (toolName === 'mickii_ftp_list') {
+          const names = await invoke('ftp_list', { host, user, pass, remoteDir: args.remoteDir || '' });
+          return `FTP FILES in "${args.remoteDir || '(default)'}":\n${(names || []).join('\n') || '(empty)'}`;
+        }
+        const file = await invoke('ftp_read', { host, user, pass, remotePath: args.remotePath });
+        const note = file.truncated ? '\n\n[NOTE: file long, truncated to first ~50k chars]' : '';
+        return `FILE: ${file.path}\n\n----- SOURCE -----\n${file.content}${note}`;
+      } catch (err) {
+        return JSON.stringify({ error: `FTP ${toolName === 'mickii_ftp_list' ? 'list' : 'read'} failed: ${err?.message || err}` });
+      }
     }
 
     if (toolName === 'mickii_deep_research') {

@@ -688,26 +688,19 @@ const SettingsScreen = ({ onNavigate }) => {
               </div>
             </div>
 
-            {/* Blueprint P3 placeholder (Owner Decision 2026-07-15): App Lock deferred — set up when needed */}
+            {/* App Lock — disabled by owner request (2026-07-25). Kept as an informational card. */}
             <div className="bg-white/5 border border-white/10 rounded-2xl p-5 opacity-80">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                    🔒 App Lock — Master Password / PIN
-                    <span className="text-[9px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full">Not Configured</span>
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-bold text-white flex items-center flex-wrap gap-2">
+                    <span>🔒 App Lock — Master Password / PIN</span>
+                    <span className="text-[9px] font-black uppercase tracking-wider bg-gray-500/20 text-gray-400 px-2 py-0.5 rounded-full whitespace-nowrap">Disabled</span>
                   </h3>
                   <p className="text-xs text-gray-500 mt-1">
-                    Optional security layer: operator PIN required on every app launch.
-                    Off by default (owner decision 2026-07-17) — set a PIN here to turn it on.
+                    Optional security layer that would ask for a PIN on every launch.
+                    Turned off by owner (2026-07-25) — the app no longer locks.
                   </p>
                 </div>
-                <button
-                  onClick={() => onNavigate && onNavigate('login')}
-                  title="Set up an operator PIN — the app will then lock on every launch"
-                  className="text-xs px-4 py-2 rounded-xl bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white transition-all flex-shrink-0"
-                >
-                  Set Up Lock
-                </button>
               </div>
             </div>
           </div>
