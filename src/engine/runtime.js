@@ -128,6 +128,19 @@ export const SystemTools = [
     }
   },
   {
+    name: 'mickii_ftp_write',
+    description: 'Upload/overwrite ONE file on the owner\'s LIVE website via FTP (e.g. publish a fixed htdocs/index.html). This changes the live site, so it ALWAYS asks the owner for approval first — it NEVER happens silently. Use only AFTER reading the file with mickii_ftp_read and preparing the corrected content. Provide the COMPLETE new file content, not a diff or snippet.',
+    parameters: {
+      type: 'object',
+      properties: {
+        remotePath: { type: 'string', description: 'Full remote path to write, e.g. "htdocs/index.html".' },
+        content: { type: 'string', description: 'The COMPLETE new content of the file (full corrected HTML/source), not a partial snippet.' },
+        summary: { type: 'string', description: 'One-line Hinglish summary of exactly what you changed, shown to the owner in the approval popup (e.g. "Sefxice → Service theek kiya, © 2025 → 2026").' }
+      },
+      required: ['remotePath', 'content']
+    }
+  },
+  {
     name: 'mickii_deep_research',
     description: 'Exa neural search for complex analysis. IMPORTANT: ALWAYS translate conversational/Hinglish inputs into concise ENGLISH search queries.',
     parameters: {
@@ -338,6 +351,61 @@ export class AgentRuntime {
         return `FILE: ${file.path}\n\n----- SOURCE -----\n${file.content}${note}`;
       } catch (err) {
         return JSON.stringify({ error: `FTP ${toolName === 'mickii_ftp_list' ? 'list' : 'read'} failed: ${err?.message || err}` });
+      }
+    }
+
+    if (toolName === 'mickii_ftp_write') {
+      const host = await this.getCachedKey('cpanel_host', '');
+      const user = await this.getCachedKey('cpanel_user', '');
+      const pass = await this.getCachedKey('cpanel_pass', '');
+      if (!host || !user || !pass) {
+        return JSON.stringify({ error: 'FTP/hosting credentials (host, user, pass) missing. Owner ko Settings mein cPanel/FTP details bharni hongi.' });
+      }
+      if (!args.remotePath || typeof args.content !== 'string') {
+        return JSON.stringify({ error: 'remotePath aur poora content dono chahiye upload ke liye.' });
+      }
+
+      // LIVE-site write → ALWAYS route through the owner's CRITICAL approval gate.
+      const preview = [
+        'WEBSITE FILE UPLOAD (LIVE SITE)',
+        '',
+        `File:   ${args.remotePath}`,
+        `Host:   ${host}`,
+        `Change: ${args.summary || '(summary not provided)'}`,
+        `Size:   ${args.content.length} chars`,
+        '',
+        '--- NEW CONTENT (preview, first 1500 chars) ---',
+        args.content.slice(0, 1500)
+      ].join('\n');
+
+      const approvalId = await addApproval(preview, 'Website File Upload', '{}', 'Mickii Cortex', 'Critical');
+      await emit('approval_requested', { approvalId, path: args.remotePath });
+
+      try {
+        await new Promise(async (resolve, reject) => {
+          const unlisten = await listen('approval_action', (event) => {
+            const { approval_id: receivedId, action } = event.payload;
+            if (receivedId === approvalId) {
+              clearTimeout(timeout);
+              unlisten();
+              if (action === 'approved') resolve(true);
+              else reject(new Error('rejected'));
+            }
+          });
+          const timeout = setTimeout(() => { unlisten(); reject(new Error('timeout')); }, 60000);
+        });
+      } catch (e) {
+        const why = e.message === 'timeout'
+          ? 'owner ne time par approve nahi kiya'
+          : 'owner ne reject kar diya';
+        return JSON.stringify({ error: `Upload nahi hua — ${why}. Live site jaisा tha waisा hi hai (kuch nahi badla).` });
+      }
+
+      try {
+        const res = await invoke('ftp_put', { host, user, pass, remotePath: args.remotePath, content: args.content });
+        return `✅ Owner-approved upload done: ${res}`;
+      } catch (err) {
+        return JSON.stringify({ error: `Upload approve to hua par FTP fail: ${err?.message || err}` });
       }
     }
 

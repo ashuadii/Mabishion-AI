@@ -627,6 +627,40 @@ async fn ftp_read(host: String, user: String, pass: String, remote_path: String)
     }).await.map_err(|e| e.to_string())?
 }
 
+/// C2 (write — must be gated by owner approval in the JS layer before calling):
+/// upload the given text content as a single file to a remote FTP path. Creates
+/// parent folders as needed.
+#[tauri::command]
+async fn ftp_put(host: String, user: String, pass: String, remote_path: String, content: String) -> Result<String, String> {
+    tokio::task::spawn_blocking(move || -> Result<String, String> {
+        use suppaftp::FtpStream;
+        let mut ftp = FtpStream::connect(format!("{}:21", host))
+            .map_err(|e| format!("Connection error: {}", e))?;
+        ftp.login(&user, &pass).map_err(|e| format!("Login error: {}", e))?;
+
+        // Ensure parent directories exist (best-effort).
+        if let Some(idx) = remote_path.rfind('/') {
+            let dir = &remote_path[..idx];
+            if !dir.is_empty() {
+                let mut cur = String::new();
+                for part in dir.split('/') {
+                    if part.is_empty() { continue; }
+                    cur = format!("{}/{}", cur, part);
+                    let _ = ftp.mkdir(&cur);
+                }
+            }
+        }
+
+        let bytes = content.into_bytes();
+        let len = bytes.len();
+        let mut reader = std::io::Cursor::new(bytes);
+        ftp.put_file(&remote_path, &mut reader)
+            .map_err(|e| format!("Upload error for {}: {}", remote_path, e))?;
+        let _ = ftp.quit();
+        Ok(format!("Uploaded {} bytes to {}", len, remote_path))
+    }).await.map_err(|e| e.to_string())?
+}
+
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Mickii bol raha hai: {}, system ready hai!", name)
@@ -1267,6 +1301,7 @@ fn main() {
             deploy_to_cpanel,
             ftp_list,
             ftp_read,
+            ftp_put,
             mickii_fs_create,
             mickii_fs_read,
             mickii_fs_write,

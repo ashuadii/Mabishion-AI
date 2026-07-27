@@ -17,6 +17,35 @@ function CpanelDeployPanel() {
   const [deploying, setDeploying] = useState(false);
   const [result, setResult] = useState('');
 
+  // Load saved FTP credentials so they persist across restarts AND so Mickii's
+  // FTP tools (which read cpanel_host/user/pass from settings) can find them.
+  useEffect(() => {
+    (async () => {
+      try {
+        const [h, u, p, r] = await Promise.all([
+          getSetting('cpanel_host'), getSetting('cpanel_user'),
+          getSetting('cpanel_pass'), getSetting('cpanel_remote_dir'),
+        ]);
+        if (h) setHost(h);
+        if (u) setUser(u);
+        if (p) setPass(p);
+        if (r) setRemoteDir(r);
+      } catch (_) { /* first run — fields stay empty */ }
+    })();
+  }, []);
+
+  // Auto-persist credentials to settings whenever a field loses focus, so they
+  // survive restarts AND Mickii's FTP tools (read cpanel_host/user/pass) can use
+  // them — no separate save button needed.
+  const persistCreds = async () => {
+    try {
+      if (host) await setSetting('cpanel_host', host.trim());
+      if (user) await setSetting('cpanel_user', user.trim());
+      if (pass) await setSetting('cpanel_pass', pass.trim());
+      await setSetting('cpanel_remote_dir', (remoteDir || '/public_html').trim());
+    } catch (_) { /* non-blocking */ }
+  };
+
   const handleDeploy = async () => {
     if (!host || !user || !pass || !localDir) {
       setResult('❌ All fields required — host, username, password, and local directory.');
@@ -62,6 +91,7 @@ function CpanelDeployPanel() {
             <label className="text-[10px] uppercase font-bold block mb-1 text-gray-500">{label}</label>
             <input type={type} placeholder={ph} value={val}
               onChange={e => setter(e.target.value)}
+              onBlur={persistCreds}
               className="w-full px-4 py-2 rounded-xl text-sm bg-slate-900 border border-white/10 text-white outline-none focus:border-indigo-500 placeholder-slate-600" />
           </div>
         ))}
