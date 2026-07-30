@@ -165,6 +165,24 @@ export async function runDailyBackupJob() {
       await writeTextFile(filePath, jsonData);
       await pruneOldBackups(backupDir);
 
+      // Owner decision 2026-07-26: the appData backup dies on uninstall, so ALSO
+      // write a copy to the user's Documents folder — that survives a reinstall and
+      // can be pointed at a Google Drive / Dropbox synced folder for cloud backup.
+      // WhatsApp-style: reinstall -> restore from this file. Best-effort, never
+      // breaks the primary backup above.
+      try {
+        const { documentDir } = await import('@tauri-apps/api/path');
+        const docBackupDir = `${(await documentDir()).replace(/\/$/, '')}/Mabishion Backups`;
+        try { await mkdir(docBackupDir, { recursive: true }); } catch (_) {}
+        // Stable filename so restore-after-reinstall always knows what to pick,
+        // plus a timestamped copy for history.
+        await writeTextFile(`${docBackupDir}/mabishion_latest_backup.json`, jsonData);
+        await writeTextFile(`${docBackupDir}/mabishion_db_${stamp}.json`, jsonData);
+        await pruneOldBackups(docBackupDir);
+      } catch (docErr) {
+        console.warn('[cronService] Documents backup copy failed (non-fatal):', docErr?.message || docErr);
+      }
+
       // B06: Write backup metadata to backups table
       try {
         const db = await getDb();
