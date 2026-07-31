@@ -20,17 +20,23 @@ export class WriterWorker extends BaseWorker {
    * blog_post | email_sequence | social_caption | landing_copy |
    * newsletter | case_study | ad_copy | whatsapp_message
    */
-  async execute(input, hooks) {
+  async execute(targetId, params = {}) {
+    // BUGFIX 2026-07-31: BaseWorker calls execute(targetId, params). This worker used the
+    // (input, hooks) shape and read every field from the FIRST arg — the targetId string —
+    // so all config params (topic, content_type, tone…) were silently ignored and it produced
+    // generic output. Params and hooks both ride in `params`.
+    const input = params;
+    const hooks = params;
     const {
       content_type = 'blog_post',
       topic = '',
       target_audience = 'small business owners',
       tone = 'professional',        // professional | casual | persuasive | urgent
       word_count = 500,
-      project_id = null,
       keywords = [],
       brand_voice = 'Mabishion AI — Premium Digital Services'
     } = input;
+    const project_id = input.project_id || (targetId && targetId !== 'demo-proj-1' ? targetId : null);
 
     if (hooks?.onStatus) hooks.onStatus(`Writer: Generating ${content_type}...`);
 

@@ -23,18 +23,26 @@ export class ImageGenWorker extends BaseWorker {
    * - project_id: optional SQLite project reference
    * - count: number of variations (1-4)
    */
-  async execute(input, hooks) {
+  async execute(targetId, params = {}) {
+    // BUGFIX 2026-07-31: BaseWorker invokes execute(targetId, params). This worker used the
+    // (input, hooks) shape and read prompt/style from the FIRST arg — which is actually the
+    // targetId string, not the config object — so `prompt` was always undefined and EVERY call
+    // threw "Prompt is required". The image worker could never run. Worker params AND hooks
+    // (onStatus) both ride in `params`.
+    const input = params;
+    const hooks = params;
     const {
       prompt = '',
       style = 'photorealistic',
       aspect = '1:1',
       use_case = 'social_post',
-      project_id = null,
       count = 1,
       negative_prompt = 'blurry, low quality, watermark, text overlay, distorted'
     } = input;
+    // project_id may arrive in config; else fall back to the run's targetId when it's a real id.
+    const project_id = input.project_id || (targetId && targetId !== 'demo-proj-1' ? targetId : null);
 
-    if (!prompt.trim()) {
+    if (!String(prompt).trim()) {
       throw new Error('[ImageGenWorker] Prompt is required.');
     }
 

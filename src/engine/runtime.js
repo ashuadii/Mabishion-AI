@@ -168,7 +168,7 @@ export const SystemTools = [
   },
   {
     name: 'mickii_trigger_worker',
-    description: 'Dynamically trigger a specialized worker (e.g. developer, blueprint_maker, website_builder).',
+    description: "Trigger a specialized worker to actually PRODUCE a deliverable. Pass the worker's parameters inside `config`. Common workers: image_gen (images/banners/logos/thumbnails — config {prompt, style, use_case, aspect}), website_builder, blueprint_maker, developer, writer (config {content_type, topic, tone}), proposal_maker, business_analyst, qa_worker, packager.",
     parameters: {
       type: 'object',
       properties: {

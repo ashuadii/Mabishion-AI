@@ -87,6 +87,7 @@ export function useMickiiAgent(config = {}) {
         role: 'mickii',
         content: response.content,
         created_at: Date.now(),
+        images: response.images || null,
         searchTelemetry: activeSearches.length > 0 ? activeSearches[0] : null,
         hallucinationWarning: response._hallucinationWarning || false,
         hallucinationNote: response._hallucinationNote || null,

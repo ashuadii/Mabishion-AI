@@ -727,6 +727,10 @@ export class Cortex {
       "B. To read the actual SOURCE FILES of Mabishion's own site (e.g. to fix HTML) → use mickii_ftp_list and mickii_ftp_read.",
       "B2. To FIX and PUBLISH a change to the live site: FIRST mickii_ftp_read the file, THEN prepare the COMPLETE corrected file content (keep everything else identical, change only what needs fixing), THEN call mickii_ftp_write with the full content and a clear one-line summary of what changed. mickii_ftp_write ALWAYS asks the owner for approval before anything goes live — never claim a change is published until the tool confirms an approved upload. Never guess file content: always read before you write.",
       "C. If a URL fails to load (DNS/not found), do NOT give up immediately: auto-correct obvious typos and retry common variants (try https://, and .com if another TLD failed), then tell the owner what worked (e.g. 'aapne .je likha tha, sahi .com hai').",
+      "WORKER ACTIONS — you can DO things, not only talk. To actually produce a deliverable, call mickii_trigger_worker with { workerName, input, config }, where `config` carries the worker's parameters:",
+      "• Image / banner / logo / thumbnail / social creative → workerName 'image_gen', config { prompt: '<vivid visual description>', style: 'banner'|'logo'|'illustration'|'photorealistic'|'minimal', use_case: 'hero_banner'|'thumbnail'|'social_post'|'logo', aspect: '16:9'|'1:1'|'9:16' }. Pollinations.AI is free — no API key needed.",
+      "• Website/landing → 'website_builder'. Blueprint/architecture → 'blueprint_maker'. Code/module → 'developer'. Copy/content → 'writer' (config { content_type, topic, tone }). Proposal → 'proposal_maker'. Market/SWOT research → 'business_analyst'.",
+      "When the owner says CREATE / GENERATE / BANAO / DESIGN something (banner, image, logo, site, doc), TRIGGER the matching worker — do not just describe it in words. After it runs, tell the owner it is ready.",
       "CRITICAL RULES (SEARCH-FIRST, DATE-AWARE):",
       "1. For general factual/market/model questions (NOT a specific website), use mickii_web_search (and optionally mickii_deep_research) before answering.",
       "2. When results are available, provide a single, concise Hinglish response. Do not repeat instructions like a robot.",
@@ -755,6 +759,24 @@ export class Cortex {
     }
 
     this.history.push({ role: "user", content: userText });
+
+    // Collect any images a worker produces during this turn (e.g. image_gen returns
+    // { images: [{ image_url }] }) so the UI can render the banner/logo, not just text.
+    const collectedImages = [];
+    const collectImages = (node) => {
+      if (!node) return;
+      if (typeof node === "string") {
+        if (/https?:\/\/[^\s"']+(pollinations\.ai|placehold\.co|\.(?:png|jpe?g|webp|svg))/i.test(node)) collectedImages.push(node);
+        return;
+      }
+      if (Array.isArray(node)) { node.forEach(collectImages); return; }
+      if (typeof node === "object") {
+        for (const [k, v] of Object.entries(node)) {
+          if (k === "image_url" && typeof v === "string") collectedImages.push(v);
+          else collectImages(v);
+        }
+      }
+    };
 
     // ── Executive Agent role injection (T5.3) — B31/B32: load from DB, fallback to hardcoded ──
     const lower = userText.toLowerCase();
@@ -881,6 +903,7 @@ export class Cortex {
               ]);
               observation =
                 typeof result === "string" ? result : JSON.stringify(result);
+              try { collectImages(result); } catch (_) {}
             } catch (err) {
               console.error(`[Cortex] Tool Failed: ${err.message}`);
               observation = JSON.stringify({
@@ -954,6 +977,7 @@ export class Cortex {
               : "Boss, I've processed your request but have no further details to add.";
         }
         const finalMsg = { role: "assistant", content: finalContent };
+        if (collectedImages.length) finalMsg.images = [...new Set(collectedImages)];
         this.history.push(finalMsg);
         return finalMsg;
       } catch (err) {

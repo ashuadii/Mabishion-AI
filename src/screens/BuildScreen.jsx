@@ -881,6 +881,17 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
                 </div>
               )}
               <p className="whitespace-pre-wrap">{msg.content}</p>
+              {Array.isArray(msg.images) && msg.images.length > 0 && (
+                <div className="mt-2 grid grid-cols-2 gap-1.5">
+                  {msg.images.map((src, ii) => (
+                    <a key={ii} href={src} target="_blank" rel="noopener noreferrer" title="Open full size">
+                      <img src={src} alt={`Generated ${ii + 1}`} loading="lazy"
+                        className="w-full rounded-lg object-cover"
+                        style={{ border: panelBorder, maxHeight: 220 }} />
+                    </a>
+                  ))}
+                </div>
+              )}
               {msg.searchTelemetry && (
                 <div className="mt-1.5">
                   <SearchResult
