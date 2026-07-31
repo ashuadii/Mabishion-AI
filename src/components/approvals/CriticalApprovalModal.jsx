@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Icon from "../Icon";
 import Button from "../Button";
 import { glassStyle } from "../consts";
@@ -13,6 +13,30 @@ export default function CriticalApprovalModal({
   const [ownerNotes, setOwnerNotes] = useState("");
   const [timeLeft, setTimeLeft] = useState(3600); // 1 hour = 3600 seconds
   const [isPulse, setIsPulse] = useState(false);
+  const overlayRef = useRef(null);
+  const textareaRef = useRef(null);
+
+  // A blocking critical modal MUST own the keyboard. Otherwise focus stays on <body>
+  // and every keystroke is swallowed — which reads to the owner as "the keyboard is dead"
+  // across the whole app. Focus the notes field on mount and trap Tab inside the dialog so
+  // the owner can act entirely by keyboard. (Does not weaken the gate: no Esc/Enter shortcut
+  // that could bypass or accidentally approve — the owner still clicks a decision.)
+  useEffect(() => {
+    const t = setTimeout(() => textareaRef.current?.focus(), 50);
+    const trap = (e) => {
+      if (e.key !== "Tab" || !overlayRef.current) return;
+      const nodes = Array.from(
+        overlayRef.current.querySelectorAll('button, textarea, input, [href], [tabindex]:not([tabindex="-1"])')
+      ).filter((n) => !n.disabled && n.offsetParent !== null);
+      if (nodes.length === 0) return;
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
+    document.addEventListener("keydown", trap, true);
+    return () => { clearTimeout(t); document.removeEventListener("keydown", trap, true); };
+  }, []);
 
   // Compute time left on mount based on expires_at
   useEffect(() => {
@@ -72,6 +96,10 @@ export default function CriticalApprovalModal({
 
   return (
     <div
+      ref={overlayRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Critical approval required"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300"
       onClick={handleOverlayClick}
     >
@@ -179,6 +207,7 @@ export default function CriticalApprovalModal({
             Feedback / Notes to Worker
           </label>
           <textarea
+            ref={textareaRef}
             value={ownerNotes}
             onChange={(e) => setOwnerNotes(e.target.value)}
             placeholder="Add specific instructions, target values, or rejection notes..."
