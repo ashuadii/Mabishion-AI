@@ -28,6 +28,7 @@ import ProjectDetailScreen from './screens/ProjectDetailScreen';
 import TasksScreen from './screens/TasksScreen';
 import ProductsScreen from './screens/ProductsScreen';
 import { BuildProvider } from './context/BuildContext';
+import { ToastProvider } from './components/Toast';
 
 export default function App() {
   const navigate = useNavigate();
@@ -51,6 +52,7 @@ export default function App() {
 
   return (
     <BuildProvider>
+      <ToastProvider>
       <RequireUnlock>
       <GlobalApprovalWatcher />
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
@@ -100,6 +102,7 @@ export default function App() {
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
       </RequireUnlock>
+      </ToastProvider>
     </BuildProvider>
   );
 }

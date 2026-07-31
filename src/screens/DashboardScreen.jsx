@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { invoke } from "@tauri-apps/api/core";
 import { useMickiiAgent } from "../hooks/useMickiiAgent.js";
 import { useMickiiEar } from "../hooks/useMickiiEar.js";
 import {
@@ -28,15 +27,11 @@ import {
 } from "recharts";
 
 import AppShell from "../components/AppShell";
-import ScreenHeader from "../components/ScreenHeader";
 import { C, glassStyle } from "../components/consts";
-import Badge from "../components/Badge";
-import Button from "../components/Button";
 import Icon from "../components/Icon";
 import StatCard from '../components/StatCard';
-import ProgressBar from "../components/ProgressBar";
-import SkeletonCard from "../components/SkeletonCard.jsx";
 import MickiiOrb from "../components/MickiiOrb";
+import { useToast } from "../components/Toast";
 
 const DEMO_PROJECTS = [
   {
@@ -97,8 +92,8 @@ const DEMO_APPROVALS = [
 //  project that does not exist — a latent bug. A proper "pick project → run" flow is the
 //  follow-up; until then only the config-modal tools are exposed.)
 const QUICK_TOOLS = [
-  { id: "skill-plan",   name: "Create Plan",     icon: "document", desc: "New project blueprint", accent: "#6366F1" },
-  { id: "skill-design", name: "Design Website",  icon: "screen",   desc: "Generate a layout",     accent: "#10B981" },
+  { id: "skill-plan",   name: "Create Plan",     icon: "document", desc: "New project blueprint", accent: "#C9A24B" },
+  { id: "skill-design", name: "Design Website",  icon: "screen",   desc: "Generate a layout",     accent: "#3B82F6" },
 ];
 
 // Beautiful chart data
@@ -156,11 +151,12 @@ export default function DashboardScreen({ onNavigate }) {
   const [designNotes, setDesignNotes] = useState("");
 
   // Mickii Autonomous Engine
-  const { messages, send, status, isProcessing } = useMickiiAgent({
+  const { messages, send, isProcessing } = useMickiiAgent({
     model: "llama-3.3-70b-versatile",
   });
 
   const [chatInput, setChatInput] = useState("");
+  const toast = useToast();
 
   const handleTranscript = useCallback((transcript) => {
     setChatInput(transcript);
@@ -392,7 +388,7 @@ export default function DashboardScreen({ onNavigate }) {
           `[UI] Worker ${workerName} completed successfully for target ID ${targetId}`,
         );
       } catch (err) {
-        alert(`Worker ${workerName} failed: ${err.message}`);
+        toast(`Worker ${workerName} failed: ${err.message}`, 'error');
       }
     }).then((u) => {
       unlistenSkill = u;
@@ -421,7 +417,7 @@ export default function DashboardScreen({ onNavigate }) {
     let designPrefs =
       "Premium dark glassmorphism theme, glowing backdrop filters, smooth margins, neon accents";
     let colorScheme =
-      "#6366F1 primary indigo, #0F172A background, #F8FAFC text, transparent glass panels";
+      "#C9A24B primary indigo, #0F172A background, #F8FAFC text, transparent glass panels";
 
     if (designPreset === "corporate") {
       designPrefs =
@@ -474,11 +470,9 @@ export default function DashboardScreen({ onNavigate }) {
         color_scheme: colorScheme,
       });
 
-      alert(
-        `Design Tool successfully executed!\nStatus: ${result.status || "Success"}\nWebsite Builder has designed your layout with "${designPreset}" preset!`
-      );
+      toast(`Website design started with the "${designPreset}" preset — ${result.status || 'running'}.`, 'success');
     } catch (e) {
-      alert(`Error running Design Tool: ${e.message || e}`);
+      toast(`Design Tool failed: ${e.message || e}`, 'error');
     } finally {
       setSkillRunning(null);
       // Reset design inputs
@@ -559,11 +553,9 @@ Reference URL or notes: ${planUrl || "None"}
       
       await send(prompt);
 
-      alert(
-        `Plan Request sent to Mickii!\nMickii is now orchestrating the blueprint generation. Please check the Mickii AI terminal on the right for updates.`
-      );
+      toast('Plan sent to Mickii — orchestrating your blueprint. Watch the Mickii panel for updates.', 'success');
     } catch (e) {
-      alert(`Error running Plan Tool: ${e.message || e}`);
+      toast(`Plan Tool failed: ${e.message || e}`, 'error');
     } finally {
       setSkillRunning(null);
       // Reset plan inputs
@@ -584,11 +576,11 @@ Reference URL or notes: ${planUrl || "None"}
 
   // ── Quick action nav items ──────────────────────────────────────────────────
   const QUICK_ACTIONS = [
-    { label: 'New Lead',    icon: 'person_add', route: 'leads',    color: '#6366F1' },
-    { label: 'New Project', icon: 'rocket',     route: 'build-new', color: '#F59E0B' },
+    { label: 'New Lead',    icon: 'person_add', route: 'leads',    color: '#3B82F6' },
+    { label: 'New Project', icon: 'rocket',     route: 'build-new', color: '#C9A24B' },
     { label: 'New Invoice', icon: 'receipt_long',route: 'invoices', color: '#10B981' },
     { label: 'Approval',    icon: 'approval',   route: 'approvals', color: '#EF4444' },
-    { label: 'Reports',     icon: 'analytics',  route: 'analytics', color: '#8B5CF6' },
+    { label: 'Reports',     icon: 'analytics',  route: 'analytics', color: '#C9A24B' },
   ];
 
   const dailyPct  = Math.min(100, Math.round((dailyCostPaise  / 15000)  * 100));
@@ -602,7 +594,7 @@ Reference URL or notes: ${planUrl || "None"}
       commandBar={
         <div
           className="fixed bottom-5 right-6 z-40 flex h-[58px] items-center gap-3 px-4 rounded-2xl"
-          style={{ left: 300, background: 'rgba(15,23,42,0.92)', border: '1px solid rgba(99,102,241,0.3)', backdropFilter: 'blur(20px)', boxShadow: '0 8px 32px rgba(99,102,241,0.15)' }}
+          style={{ left: 300, background: 'rgba(15,23,42,0.92)', border: '1px solid rgba(201,162,75,0.35)', backdropFilter: 'blur(20px)', boxShadow: '0 8px 32px rgba(201,162,75,0.15)' }}
         >
           <MickiiOrb isThinking={isProcessing} />
           <input
@@ -625,13 +617,30 @@ Reference URL or notes: ${planUrl || "None"}
           <button
             onClick={handleChatSend}
             disabled={!chatInput.trim() || isProcessing}
-            className="px-4 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-1.5 rounded-xl text-xs font-bold bg-gold hover:bg-gold-deep text-navy-deep transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isProcessing ? '...' : 'Send'}
           </button>
         </div>
       }
     >
+      {/* ── Status strip: AI engine health (FR-038) + live counts ───────────── */}
+      <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px]" style={{ color: C.textMuted }}>
+        <span className="flex items-center gap-1.5" title="Last LLM provider used (FR-038)">
+          <span
+            className="w-1.5 h-1.5 rounded-full"
+            style={{ background: llmStatus && !['Idle', 'Unknown'].includes(llmStatus) ? C.success : llmStatus === 'Idle' ? C.gold : C.muted }}
+          />
+          AI Engine:&nbsp;<span className="font-semibold" style={{ color: 'rgba(237,231,221,0.85)' }}>{llmStatus || '—'}</span>
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Icon name="receipt_long" size={12} /> {invoiceCount} invoice{invoiceCount === 1 ? '' : 's'}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Icon name="users" size={12} /> {clientCount} client{clientCount === 1 ? '' : 's'}
+        </span>
+      </div>
+
       {/* ── Morning Brief — compact callout ────────────────────────────────── */}
       {morningBrief && (
         <div className="mb-5 p-4 rounded-2xl flex items-start gap-3" style={glassStyle({ glow: 'gold' })}>
@@ -650,7 +659,7 @@ Reference URL or notes: ${planUrl || "None"}
             sub: `Net P&L: ${visionMetrics.monthlyRevenue - visionMetrics.monthlyExpenses < 0 ? '−' : ''}₹${Math.abs(visionMetrics.monthlyRevenue - visionMetrics.monthlyExpenses).toLocaleString('en-IN')} after expenses`,
             icon: 'currency',
             pct: Math.min(100, Math.round((visionMetrics.monthlyRevenue / 100000) * 100)),
-            barColor: visionMetrics.monthlyRevenue - visionMetrics.monthlyExpenses < 0 ? '#EF4444' : visionMetrics.monthlyRevenue >= 100000 ? '#10B981' : '#6366F1',
+            barColor: visionMetrics.monthlyRevenue - visionMetrics.monthlyExpenses < 0 ? '#EF4444' : visionMetrics.monthlyRevenue >= 100000 ? '#10B981' : '#C9A24B',
           },
           {
             label: 'Active Projects',
@@ -658,7 +667,7 @@ Reference URL or notes: ${planUrl || "None"}
             sub: `${projects.length} total`,
             icon: 'project',
             pct: null,
-            barColor: '#F59E0B',
+            barColor: '#C9A24B',
           },
           {
             label: 'Leads Pipeline',
@@ -666,7 +675,7 @@ Reference URL or notes: ${planUrl || "None"}
             sub: `${leads.filter(l => l.status === 'Won').length} won`,
             icon: 'users',
             pct: null,
-            barColor: '#8B5CF6',
+            barColor: '#C9A24B',
           },
           {
             label: 'AI Cost Today',
@@ -674,7 +683,7 @@ Reference URL or notes: ${planUrl || "None"}
             sub: `${dailyPct}% of ₹150 limit`,
             icon: 'health',
             pct: dailyPct,
-            barColor: dailyPct >= 90 ? '#EF4444' : dailyPct >= 70 ? '#F59E0B' : '#10B981',
+            barColor: dailyPct >= 90 ? '#EF4444' : dailyPct >= 70 ? '#C9A24B' : '#10B981',
           },
         ].map(card => (
           <StatCard key={card.label} label={card.label} value={card.value} sub={card.sub}
@@ -690,7 +699,7 @@ Reference URL or notes: ${planUrl || "None"}
         {/* Revenue trend */}
         <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
           <div className="flex items-center gap-2 mb-4">
-            <Icon name="analytics" size={14} className="text-indigo-400" />
+            <Icon name="analytics" size={14} className="text-gold" />
             <h3 className="text-sm font-black text-white">Revenue Trend</h3>
             <span className="ml-auto text-[10px] text-slate-500">last 6 months</span>
           </div>
@@ -698,20 +707,20 @@ Reference URL or notes: ${planUrl || "None"}
             <AreaChart data={revenueChartData} margin={{ top: 5, right: 8, left: -12, bottom: 0 }}>
               <defs>
                 <linearGradient id="revFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#6366F1" stopOpacity={0.35} />
-                  <stop offset="100%" stopColor="#6366F1" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#C9A24B" stopOpacity={0.35} />
+                  <stop offset="100%" stopColor="#C9A24B" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis dataKey="month" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
               <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} width={48}
                 tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
               <Tooltip
-                contentStyle={{ background: 'rgba(15,23,42,0.95)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 12, fontSize: 12, color: '#fff' }}
+                contentStyle={{ background: 'rgba(15,23,42,0.95)', border: '1px solid rgba(201,162,75,0.35)', borderRadius: 12, fontSize: 12, color: '#fff' }}
                 labelStyle={{ color: '#cbd5e1' }}
                 formatter={(v) => [`₹${Number(v).toLocaleString('en-IN')}`, 'Revenue']}
-                cursor={{ stroke: 'rgba(99,102,241,0.3)' }}
+                cursor={{ stroke: 'rgba(201,162,75,0.35)' }}
               />
-              <Area type="monotone" dataKey="revenue" stroke="#6366F1" strokeWidth={2} fill="url(#revFill)" />
+              <Area type="monotone" dataKey="revenue" stroke="#C9A24B" strokeWidth={2} fill="url(#revFill)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -719,7 +728,7 @@ Reference URL or notes: ${planUrl || "None"}
         {/* Lead sources */}
         <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
           <div className="flex items-center gap-2 mb-4">
-            <Icon name="users" size={14} className="text-violet-400" />
+            <Icon name="users" size={14} className="text-gold" />
             <h3 className="text-sm font-black text-white">Lead Sources</h3>
             <span className="ml-auto text-[10px] text-slate-500">by count</span>
           </div>
@@ -728,12 +737,12 @@ Reference URL or notes: ${planUrl || "None"}
               <XAxis dataKey="source" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
               <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} width={32} allowDecimals={false} />
               <Tooltip
-                contentStyle={{ background: 'rgba(15,23,42,0.95)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 12, fontSize: 12, color: '#fff' }}
+                contentStyle={{ background: 'rgba(15,23,42,0.95)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 12, fontSize: 12, color: '#fff' }}
                 labelStyle={{ color: '#cbd5e1' }}
                 formatter={(v) => [v, 'Leads']}
-                cursor={{ fill: 'rgba(139,92,246,0.08)' }}
+                cursor={{ fill: 'rgba(59,130,246,0.08)' }}
               />
-              <Bar dataKey="count" fill="#8B5CF6" radius={[6, 6, 0, 0]} maxBarSize={44} />
+              <Bar dataKey="count" fill="#3B82F6" radius={[6, 6, 0, 0]} maxBarSize={44} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -746,7 +755,7 @@ Reference URL or notes: ${planUrl || "None"}
         <div className="lg:col-span-3 rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
           <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
             <div className="flex items-center gap-2">
-              <Icon name="approval" size={15} className="text-violet-400" />
+              <Icon name="approval" size={15} className="text-gold" />
               <h3 className="text-sm font-black text-white">Approvals</h3>
               {approvals.length > 0 && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-red-500/20 text-red-400">
@@ -775,7 +784,7 @@ Reference URL or notes: ${planUrl || "None"}
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${(app.type === 'critical' || app.action_type === 'critical') ? 'bg-red-400' : 'bg-amber-400'}`} />
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-white truncate group-hover:text-violet-300 transition-colors">
+                      <p className="text-sm font-medium text-white truncate group-hover:text-gold transition-colors">
                         {app.title || app.preview}
                       </p>
                       <p className="text-[10px] text-slate-500 truncate">
@@ -794,7 +803,7 @@ Reference URL or notes: ${planUrl || "None"}
                       </button>
                       <button
                         onClick={async () => { await approveAction(app.id); fetchApprovals(); }}
-                        className="px-3 py-1 rounded-lg text-[10px] font-bold text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/15 transition-all"
+                        className="px-3 py-1 rounded-lg text-[10px] font-bold text-emerald-400 border border-emerald-500/30 hover:bg-gold-deep/15 transition-all"
                         aria-label="Approve"
                       >
                         Approve
@@ -807,7 +816,7 @@ Reference URL or notes: ${planUrl || "None"}
           </div>
           {approvals.length > 5 && (
             <div className="px-5 py-3 border-t border-white/5">
-              <button onClick={() => onNavigate('approvals')} className="text-xs text-violet-400 hover:text-violet-300 font-bold transition-colors">
+              <button onClick={() => onNavigate('approvals')} className="text-xs text-gold hover:text-gold font-bold transition-colors">
                 +{approvals.length - 5} more →
               </button>
             </div>
@@ -903,14 +912,14 @@ Reference URL or notes: ${planUrl || "None"}
           <div className="px-4 py-3 border-b border-white/5 flex items-center gap-2">
             <MickiiOrb size="sm" isThinking={isProcessing} />
             <span className="text-xs font-black text-white">Mickii Response</span>
-            {isProcessing && <span className="text-[10px] text-violet-400 animate-pulse">thinking...</span>}
+            {isProcessing && <span className="text-[10px] text-gold animate-pulse">thinking...</span>}
           </div>
           <div className="px-4 py-4 max-h-48 overflow-y-auto">
             {messages.slice(-3).map((m, i) => (
               <div key={i} className={`mb-3 last:mb-0 ${m.role === 'user' ? 'text-right' : ''}`}>
                 <span className={`inline-block px-3 py-2 rounded-xl text-xs leading-relaxed max-w-[90%] text-left ${
                   m.role === 'user'
-                    ? 'bg-indigo-600/30 text-indigo-200'
+                    ? 'bg-gold/20 text-cream'
                     : 'bg-white/5 text-slate-300'
                 }`}>
                   {typeof m.content === 'string' ? m.content : JSON.stringify(m.content)}
@@ -924,7 +933,7 @@ Reference URL or notes: ${planUrl || "None"}
       {/* ── Plan Modal ───────────────────────────────────────────────────────── */}
       {isPlanModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setIsPlanModalOpen(false)}>
-          <div className="w-full max-w-md rounded-2xl p-6 space-y-4" style={{ background: 'rgba(15,23,42,0.97)', border: '1px solid rgba(99,102,241,0.3)' }} onClick={e => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-2xl p-6 space-y-4" style={{ background: 'rgba(15,23,42,0.97)', border: '1px solid rgba(201,162,75,0.35)' }} onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-black text-white">New Project Plan</h3>
               <button onClick={() => setIsPlanModalOpen(false)} className="text-slate-500 hover:text-white"><Icon name="close" size={18} /></button>
@@ -934,7 +943,7 @@ Reference URL or notes: ${planUrl || "None"}
               <select
                 value={planType}
                 onChange={e => setPlanType(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-indigo-500"
+                className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-gold"
                 style={{ colorScheme: 'dark' }}
               >
                 {['Website', 'Landing Page', 'Mobile App', 'API', 'SaaS', 'E-Commerce', 'Blog', 'Other'].map(t => <option key={t} value={t}>{t}</option>)}
@@ -945,7 +954,7 @@ Reference URL or notes: ${planUrl || "None"}
               <select
                 value={planDomain}
                 onChange={e => setPlanDomain(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-indigo-500"
+                className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-gold"
                 style={{ colorScheme: 'dark' }}
               >
                 {['E-Commerce', 'Healthcare', 'Finance', 'Education', 'Real Estate', 'Restaurant', 'Fashion', 'Tech', 'Agency', 'Other'].map(d => <option key={d} value={d}>{d}</option>)}
@@ -956,7 +965,7 @@ Reference URL or notes: ${planUrl || "None"}
               <textarea
                 rows={3}
                 placeholder="Client requirements, features needed, any references..."
-                className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-indigo-500 resize-none"
+                className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-gold resize-none"
                 value={planContext}
                 onChange={e => setPlanContext(e.target.value)}
               />
@@ -976,7 +985,7 @@ Reference URL or notes: ${planUrl || "None"}
               <button
                 onClick={handleGeneratePlan}
                 disabled={skillRunning === 'skill-plan'}
-                className="flex-[2] py-2.5 rounded-xl text-sm font-black bg-indigo-600 hover:bg-indigo-500 text-white transition-all disabled:opacity-50"
+                className="flex-[2] py-2.5 rounded-xl text-sm font-black bg-gold hover:bg-gold-deep text-navy-deep transition-all disabled:opacity-50"
               >
                 {skillRunning === 'skill-plan' ? 'Generating...' : 'Generate Plan →'}
               </button>
@@ -988,7 +997,7 @@ Reference URL or notes: ${planUrl || "None"}
       {/* ── Design Modal ─────────────────────────────────────────────────────── */}
       {isDesignModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setIsDesignModalOpen(false)}>
-          <div className="w-full max-w-md rounded-2xl p-6 space-y-4" style={{ background: 'rgba(15,23,42,0.97)', border: '1px solid rgba(16,185,129,0.3)' }} onClick={e => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-2xl p-6 space-y-4" style={{ background: 'rgba(15,23,42,0.97)', border: '1px solid rgba(201,162,75,0.35)' }} onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-black text-white">Design Website</h3>
               <button onClick={() => setIsDesignModalOpen(false)} className="text-slate-500 hover:text-white"><Icon name="close" size={18} /></button>
@@ -998,7 +1007,7 @@ Reference URL or notes: ${planUrl || "None"}
               <select
                 value={designPreset}
                 onChange={e => setDesignPreset(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-emerald-500"
+                className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-gold"
                 style={{ colorScheme: 'dark' }}
               >
                 {[['glassmorphism','Glassmorphism (Dark)'],['corporate','Corporate (Clean)'],['wellness','Wellness (Teal)'],['cyberpunk','Cyberpunk (Neon)'],['dark_mode','Dark Premium (Gold)']].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
@@ -1010,7 +1019,7 @@ Reference URL or notes: ${planUrl || "None"}
                 type="text"
                 value={designPages}
                 onChange={e => setDesignPages(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-emerald-500"
+                className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-gold"
                 placeholder="Home, About, Services, Contact"
               />
             </div>
@@ -1019,7 +1028,7 @@ Reference URL or notes: ${planUrl || "None"}
               <textarea
                 rows={2}
                 placeholder="Koi specific design requirements..."
-                className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-emerald-500 resize-none"
+                className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-gold resize-none"
                 value={designNotes}
                 onChange={e => setDesignNotes(e.target.value)}
               />
@@ -1027,7 +1036,7 @@ Reference URL or notes: ${planUrl || "None"}
             <button
               onClick={handleGenerateDesign}
               disabled={skillRunning === 'skill-design'}
-              className="w-full py-3 rounded-xl text-sm font-black bg-emerald-600 hover:bg-emerald-500 text-white transition-all disabled:opacity-50"
+              className="w-full py-3 rounded-xl text-sm font-black bg-gold hover:bg-gold-deep text-navy-deep transition-all disabled:opacity-50"
             >
               {skillRunning === 'skill-design' ? 'Generating...' : 'Generate Website →'}
             </button>
