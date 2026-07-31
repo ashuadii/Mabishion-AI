@@ -6,7 +6,6 @@ import {
   initDb,
   getProjects,
   getLeads,
-  getSkills,
   getTotalRevenue,
   getPendingApprovals,
   approveAction,
@@ -92,25 +91,14 @@ const DEMO_APPROVALS = [
   { title: "Change product price", source: "Products", risk: "Revenue Impact" },
 ];
 
-const QUICK_SKILLS = [
-  {
-    id: "website_build",
-    name: "Build Website",
-    icon: "screen",
-    desc: "Client website from template",
-  },
-  {
-    id: "proposal_create",
-    name: "Create Proposal",
-    icon: "document",
-    desc: "Standard client proposal",
-  },
-  {
-    id: "lead_followup",
-    name: "Follow Up Lead",
-    icon: "message",
-    desc: "Warm lead sequence",
-  },
+// Quick Tools — both open a proper config modal before any worker runs.
+// (Restored 2026-07-31, owner decision. The old QUICK_SKILLS "run now" entries were dropped:
+//  they called runWorker() with crypto.randomUUID() as the target project id, i.e. against a
+//  project that does not exist — a latent bug. A proper "pick project → run" flow is the
+//  follow-up; until then only the config-modal tools are exposed.)
+const QUICK_TOOLS = [
+  { id: "skill-plan",   name: "Create Plan",     icon: "document", desc: "New project blueprint", accent: "#6366F1" },
+  { id: "skill-design", name: "Design Website",  icon: "screen",   desc: "Generate a layout",     accent: "#10B981" },
 ];
 
 // Beautiful chart data
@@ -130,7 +118,6 @@ const LEAD_DATA = [
 ];
 
 export default function DashboardScreen({ onNavigate }) {
-  const [skills, setSkills] = useState([]);
   const [projects, setProjects] = useState(DEMO_PROJECTS);
   const [approvals, setApprovals] = useState(DEMO_APPROVALS);
   const [leads, setLeads] = useState([]);
@@ -202,9 +189,6 @@ export default function DashboardScreen({ onNavigate }) {
         const lList = await getLeads();
         setLeads(lList || []);
 
-        const sList = await getSkills();
-        setSkills(sList && sList.length > 0 ? sList : QUICK_SKILLS);
-
         const rev = await getTotalRevenue();
         setRevenue(rev || 143000);
 
@@ -236,26 +220,43 @@ export default function DashboardScreen({ onNavigate }) {
           setTodayDeadlines(deadlineRows || []);
         } catch (_) {}
 
-        // FR-005: Activity feed — last 50 events from audit_logs + worker_logs combined
+        // FR-005: Activity feed — last 50 events from audit_logs + worker_logs combined.
+        // BUGFIX 2026-07-31: both queries referenced non-existent columns (audit_logs/worker_logs
+        // have no created_at; worker_logs has no output_summary) so the whole feed threw and was
+        // silently swallowed — Recent Activity was always empty. Correct columns + normalize both
+        // timestamps to epoch-ms (audit_logs.timestamp is INTEGER ms; worker_logs.timestamp is
+        // TEXT 'YYYY-MM-DD HH:MM:SS' UTC) so the merged sort is numerically correct.
         try {
           const db = await getDb();
           const auditRows = await db.select(
-            `SELECT 'audit' as src, level, message as label, created_at as ts FROM audit_logs ORDER BY created_at DESC LIMIT 25`
+            `SELECT 'audit' as src, level, message as label, timestamp as ts_ms
+             FROM audit_logs ORDER BY timestamp DESC LIMIT 25`
           );
           const workerRows = await db.select(
-            `SELECT 'worker' as src, status as level, worker_name || ': ' || COALESCE(output_summary, status) as label, created_at as ts FROM worker_logs ORDER BY created_at DESC LIMIT 25`
+            `SELECT 'worker' as src, status as level,
+                    worker_name || ' · ' || status as label,
+                    CAST(strftime('%s', timestamp) AS INTEGER) * 1000 as ts_ms
+             FROM worker_logs ORDER BY timestamp DESC LIMIT 25`
           );
-          const combined = [...(auditRows || []), ...(workerRows || [])].sort((a, b) => b.ts > a.ts ? 1 : -1).slice(0, 50);
+          const combined = [...(auditRows || []), ...(workerRows || [])]
+            .sort((a, b) => (b.ts_ms || 0) - (a.ts_ms || 0))
+            .slice(0, 50);
           setActivityFeed(combined);
-        } catch (_) {}
+        } catch (err) {
+          console.warn('[Dashboard] Activity feed load failed:', err);
+        }
 
         // VIS-011: Vision success metrics — revenue target, conversion rates, delivered projects
         try {
           const db = await getDb();
           const firstOfMonth = new Date(); firstOfMonth.setDate(1); firstOfMonth.setHours(0,0,0,0);
           // Monthly revenue this month (BUGFIX 2026-07-15: revenue table's date column is `timestamp`, not `created_at`)
+          // BUGFIX 2026-07-31: revenue.timestamp is TEXT 'YYYY-MM-DD HH:MM:SS'. Comparing it against a
+          // full ISO string ('...T00:00:00.000Z') breaks lexically at the space-vs-'T' boundary and drops
+          // 1st-of-month rows. Use the date-only prefix (same pattern the expenses query below already uses).
+          const monthStart = firstOfMonth.toISOString().slice(0, 10);
           const mRevRows = await db.select(
-            `SELECT COALESCE(SUM(amount),0) as total FROM revenue WHERE timestamp >= $1`, [firstOfMonth.toISOString()]
+            `SELECT COALESCE(SUM(amount),0) as total FROM revenue WHERE timestamp >= $1`, [monthStart]
           );
           const monthlyRevenue = Number(mRevRows?.[0]?.total || 0);
           // Blueprint P2: monthly expenses for Net P&L on dashboard
@@ -285,23 +286,29 @@ export default function DashboardScreen({ onNavigate }) {
           const cliRows = await db.select("SELECT COUNT(*) as c FROM clients");
           setClientCount(cliRows?.[0]?.c || 0);
 
-          // Build live revenue chart from revenue table (last 6 months)
+          // Build live revenue chart from revenue table (last 6 months).
+          // BUGFIX 2026-07-31: revenue.timestamp is TEXT 'YYYY-MM-DD HH:MM:SS', not epoch-ms.
+          // The old datetime(timestamp/1000,'unixepoch') coerced the text to a number and produced
+          // 1970 buckets. strftime() reads the text datetime directly.
           const revRows = await db.select(
-            `SELECT strftime('%b', datetime(timestamp/1000,'unixepoch')) as month,
+            `SELECT strftime('%b', timestamp) as month,
                     SUM(amount) as revenue
              FROM revenue
-             GROUP BY strftime('%Y-%m', datetime(timestamp/1000,'unixepoch'))
-             ORDER BY timestamp DESC LIMIT 6`
+             GROUP BY strftime('%Y-%m', timestamp)
+             ORDER BY strftime('%Y-%m', timestamp) DESC LIMIT 6`
           );
-          if (revRows && revRows.length > 0) {
-            setRevenueChartData([...revRows].reverse());
-          }
+          // Only replace the demo fallback with well-formed rows. Sparse/NULL-grouped rows
+          // (e.g. leads with no `source`) would otherwise collapse the chart to an empty axis.
+          const cleanRev = (revRows || []).filter(r => r.month && r.revenue != null);
+          if (cleanRev.length > 0) setRevenueChartData([...cleanRev].reverse());
 
           // Build live lead source chart
           const leadRows = await db.select(
-            `SELECT source, COUNT(*) as count FROM leads GROUP BY source ORDER BY count DESC LIMIT 5`
+            `SELECT source, COUNT(*) as count FROM leads WHERE source IS NOT NULL AND source != ''
+             GROUP BY source ORDER BY count DESC LIMIT 5`
           );
-          if (leadRows && leadRows.length > 0) setLeadChartData(leadRows);
+          const cleanLeads = (leadRows || []).filter(r => r.source);
+          if (cleanLeads.length > 0) setLeadChartData(cleanLeads);
           // Morning brief — latest from audit_logs
           const briefRows = await db.select(
             `SELECT message FROM audit_logs WHERE message LIKE 'Morning Brief%' ORDER BY timestamp DESC LIMIT 1`
@@ -400,31 +407,11 @@ export default function DashboardScreen({ onNavigate }) {
     };
   }, []);
 
-  const runSkill = async (skillId) => {
-    setSkillRunning(skillId);
-    try {
-      const db = await getDb();
-      const targetId = crypto.randomUUID();
-      
-      const result = await runWorker(skillId, targetId, { user: "Adii" });
-      alert(
-        `Skill "${skillId}" successfully executed!\nStatus: ${result.status || "Success"}\n${result.message || "Task completed in the background."}`
-      );
-    } catch (e) {
-      alert(`Error running skill "${skillId}": ${e.message || e}`);
-    } finally {
-      setSkillRunning(null);
-    }
-  };
-
-  const handleSkillClick = (skillId) => {
-    if (skillId === "skill-plan") {
-      setIsPlanModalOpen(true);
-    } else if (skillId === "skill-design") {
-      setIsDesignModalOpen(true);
-    } else {
-      runSkill(skillId);
-    }
+  // Open the config modal for a Quick Tool. Every tool routes through its modal so no
+  // worker ever runs without a real target project — see QUICK_TOOLS note above.
+  const handleQuickTool = (toolId) => {
+    if (toolId === "skill-plan") setIsPlanModalOpen(true);
+    else if (toolId === "skill-design") setIsDesignModalOpen(true);
   };
 
   const handleGenerateDesign = async () => {
@@ -695,6 +682,63 @@ Reference URL or notes: ${planUrl || "None"}
         ))}
       </div>
 
+      {/* ── ZONE 1.5: Charts — Revenue trend + Lead sources ─────────────────── */}
+      {/* Restored 2026-07-31 (owner decision): recharts + data were already wired but nothing
+          was rendered after the Codex redesign (commit 9e9f8ec). Styled to match the screen's
+          existing dark indigo/violet panels, not the light C brand tokens. */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+        {/* Revenue trend */}
+        <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+          <div className="flex items-center gap-2 mb-4">
+            <Icon name="analytics" size={14} className="text-indigo-400" />
+            <h3 className="text-sm font-black text-white">Revenue Trend</h3>
+            <span className="ml-auto text-[10px] text-slate-500">last 6 months</span>
+          </div>
+          <ResponsiveContainer width="100%" height={200}>
+            <AreaChart data={revenueChartData} margin={{ top: 5, right: 8, left: -12, bottom: 0 }}>
+              <defs>
+                <linearGradient id="revFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#6366F1" stopOpacity={0.35} />
+                  <stop offset="100%" stopColor="#6366F1" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="month" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} width={48}
+                tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
+              <Tooltip
+                contentStyle={{ background: 'rgba(15,23,42,0.95)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 12, fontSize: 12, color: '#fff' }}
+                labelStyle={{ color: '#cbd5e1' }}
+                formatter={(v) => [`₹${Number(v).toLocaleString('en-IN')}`, 'Revenue']}
+                cursor={{ stroke: 'rgba(99,102,241,0.3)' }}
+              />
+              <Area type="monotone" dataKey="revenue" stroke="#6366F1" strokeWidth={2} fill="url(#revFill)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Lead sources */}
+        <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+          <div className="flex items-center gap-2 mb-4">
+            <Icon name="users" size={14} className="text-violet-400" />
+            <h3 className="text-sm font-black text-white">Lead Sources</h3>
+            <span className="ml-auto text-[10px] text-slate-500">by count</span>
+          </div>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={leadChartData} margin={{ top: 5, right: 8, left: -18, bottom: 0 }}>
+              <XAxis dataKey="source" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
+              <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} width={32} allowDecimals={false} />
+              <Tooltip
+                contentStyle={{ background: 'rgba(15,23,42,0.95)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 12, fontSize: 12, color: '#fff' }}
+                labelStyle={{ color: '#cbd5e1' }}
+                formatter={(v) => [v, 'Leads']}
+                cursor={{ fill: 'rgba(139,92,246,0.08)' }}
+              />
+              <Bar dataKey="count" fill="#8B5CF6" radius={[6, 6, 0, 0]} maxBarSize={44} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
       {/* ── ZONE 2: Approvals + Activity ────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-6">
 
@@ -810,6 +854,29 @@ Reference URL or notes: ${planUrl || "None"}
               })}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ── ZONE 2.5: Quick Tools — open a config modal (restored 2026-07-31) ──── */}
+      <div className="mb-6">
+        <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2.5">Quick Tools</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {QUICK_TOOLS.map(tool => (
+            <button
+              key={tool.id}
+              onClick={() => handleQuickTool(tool.id)}
+              className="flex items-center gap-3 py-3.5 px-4 rounded-2xl transition-all hover:bg-white/5 active:scale-[0.99] text-left"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+            >
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${tool.accent}18` }}>
+                <Icon name={tool.icon} size={18} style={{ color: tool.accent }} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-white truncate">{tool.name}</p>
+                <p className="text-[11px] text-slate-500 truncate">{tool.desc}</p>
+              </div>
+            </button>
+          ))}
         </div>
       </div>
 
