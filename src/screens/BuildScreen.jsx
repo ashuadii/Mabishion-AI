@@ -465,8 +465,15 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
   };
 
   const handleGenerateDocument = async (docType) => {
-    const activeProject = projectsList.find(p => p.id === selectedProjectId) || { name: 'AI Website Builder', client_name: 'Priya Sharma' };
-    const activeLead = leadsList.find(l => l.id === selectedLeadId) || { name: 'Priya Sharma', budget: '$5,000' };
+    // Prefer the active build's own intake so a client PDF never carries a stale/first-project
+    // name (same bug class as the 2026-07-22 "Sam Altman" wrong-name incident). Fall back to the
+    // selected project/lead, then to a neutral placeholder — never a hardcoded fake client name.
+    const activeProject = activePipeline
+      ? { name: activePipeline.name, client_name: activePipeline.intake?.clientName || 'Client' }
+      : (projectsList.find(p => p.id === selectedProjectId) || { name: 'Untitled Project', client_name: 'Client' });
+    const activeLead = activePipeline
+      ? { name: activePipeline.intake?.clientName || 'Client', budget: activePipeline.intake?.budget || 'N/A' }
+      : (leadsList.find(l => l.id === selectedLeadId) || { name: 'Client', budget: 'N/A' });
     setGeneratingDoc(docType);
     setShowPlusMenu(false);
 
@@ -514,7 +521,7 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
         addSystemMsg('Lead Magnet generated!', 'success');
       } else if (docType === 'pricing') {
         const doc = new jsPDF();
-        doc.setFillColor(99, 102, 241); doc.rect(0, 0, 210, 40, 'F');
+        doc.setFillColor(27, 46, 58); doc.rect(0, 0, 210, 40, 'F'); // brand navy (#1B2E3A), not indigo
         doc.setTextColor(255, 255, 255); doc.setFont('Helvetica', 'bold'); doc.setFontSize(18);
         doc.text('COMMERCIAL PRICING SHEET', 20, 25);
         doc.setTextColor(15, 23, 42); doc.setFontSize(13); doc.setFont('Helvetica', 'bold');
@@ -1064,11 +1071,6 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
             </div>
           )}
 
-          {previewContent?.type === 'html' && (
-            <iframe srcDoc={previewContent.html}
-              className="w-full h-full rounded-lg" style={{ border: panelBorder }}
-              sandbox="allow-scripts" title="Preview" />
-          )}
         </div>
       </div>
     );
