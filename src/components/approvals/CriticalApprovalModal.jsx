@@ -104,7 +104,7 @@ export default function CriticalApprovalModal({
       onClick={handleOverlayClick}
     >
       <div
-        className="w-full max-w-lg p-8 rounded-2xl border border-white/10 flex flex-col relative text-left select-none animate-in zoom-in duration-300"
+        className="w-full max-w-lg max-h-[92vh] overflow-y-auto p-8 rounded-2xl border border-white/10 flex flex-col relative text-left select-none animate-in zoom-in duration-300"
         style={glassStyle({ glow: "red", strong: true, blur: true })}
         onClick={handleOverlayClick}
       >
@@ -215,8 +215,13 @@ export default function CriticalApprovalModal({
           />
         </div>
 
-        {/* Visual Button Action Grid */}
-        <div className="grid grid-cols-3 gap-3">
+        {/* Visual Button Action Grid — sticky footer so Reject/Approve are ALWAYS reachable,
+            even on short screens where the modal must scroll (owner report 2026-08-01:
+            "reject option gayab" = buttons were clipped off-screen and unreachable). */}
+        <div
+          className="grid grid-cols-3 gap-3 sticky bottom-0 -mx-8 -mb-8 px-8 pt-3 pb-8 border-t border-white/10"
+          style={{ background: "rgba(27,46,58,0.98)" }}
+        >
           <Button
             onClick={() => onResolve(approval.id, "rejected", ownerNotes)}
             variant="soft"

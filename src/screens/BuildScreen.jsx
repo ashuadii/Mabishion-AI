@@ -75,18 +75,10 @@ const SERVICE_CATEGORIES = [
       { key: 'coreFeatures', label: 'Key Features', type: 'textarea', placeholder: 'Contact form, payment, blog, admin panel...' },
     ],
   },
-  {
-    id: 'custom_software', label: 'Custom Software Development', icon: 'code',
-    color: '#EC4899', bgColor: 'rgba(236,72,153,0.08)',
-    desc: 'Desktop & mobile applications',
-    items: ['Desktop Application', 'Mobile Application'],
-    requiredFields: [
-      { key: 'clientName', label: 'Client Name', type: 'text', placeholder: 'e.g. ABC Trading Company' },
-      { key: 'projectGoal', label: 'What are we building?', type: 'textarea', placeholder: 'Billing app, inventory manager, field-team app...' },
-      { key: 'coreFeatures', label: 'Key Features', type: 'textarea', placeholder: 'Offline mode, reports, notifications, sync...' },
-      { key: 'targetPlatform', label: 'Platform', type: 'text', placeholder: 'Windows, Linux, Android, iOS...' },
-    ],
-  },
+  // Custom Software Development (desktop/mobile apps) REMOVED — Owner Decision 2026-08-01.
+  // Scope narrowed to: AI Agents/Automation, Web Development, Social Media Marketing.
+  // A single strong Developer worker (with the right skills/tools) covers website + app-style
+  // builds under Web Development, so a separate desktop/mobile category is redundant.
   {
     id: 'ai_automation', label: 'AI Development', icon: 'smart_toy',
     color: '#8B5CF6', bgColor: 'rgba(139,92,246,0.08)',
