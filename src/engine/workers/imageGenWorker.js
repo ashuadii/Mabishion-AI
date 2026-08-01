@@ -109,10 +109,10 @@ export class ImageGenWorker extends BaseWorker {
 
         imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${width}&height=${height}&seed=${seed}&nologo=true&negative=${encodedNeg}&model=flux`;
 
-        // Verify the URL is reachable
-        const testFetch = await fetch(imageUrl, { method: 'HEAD' });
-        if (!testFetch.ok) throw new Error('Pollinations HEAD check failed');
-
+        // BUGFIX 2026-08-01: do NOT pre-check with fetch HEAD. image.pollinations.ai returns 403
+        // to HEAD/CORS requests even though the exact same URL loads perfectly as an <img src>.
+        // The old check therefore FAILED every time and dropped every generation to the grey
+        // placeholder — no real banner ever appeared. Trust the URL directly; it renders as an image.
         provider = 'pollinations_flux';
 
       } catch (pollinationErr) {
