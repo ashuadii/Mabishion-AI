@@ -127,8 +127,14 @@ export default function AppShell({ activeNavId, onNavigate, commandBar, children
           visible glide back to the top and made the wheel fight the animation (owner screencast,
           Projects screen ~1.0–1.5s). Native wheel scrolling is smooth on its own; do not re-add
           scroll-behavior on this container without testing in the Tauri shell, not just a browser. */}
+      {/* Bottom padding must clear the fixed floating command bar (~84px footprint) on EVERY
+          screen — otherwise a screen's last content sits hidden behind it (owner report
+          2026-08-01: "every screen's bottom content hidden behind command box"). The old rule
+          keyed padding off the commandBar prop, which gave custom-bar screens (Dashboard) 0px.
+          Playground/Internal-Tools run their own full-height layout with a hidden bar, so they
+          are the only screens that opt out. */}
       <main
-        className={`relative z-10 flex h-screen flex-col overflow-y-auto ${commandBar ? 'pb-0' : 'pb-28'}`}
+        className={`relative z-10 flex h-screen flex-col overflow-y-auto ${activeNavId === 'build-new' || activeNavId === 'internal-tools' ? 'pb-0' : 'pb-36'}`}
         style={{ marginLeft: sidebarExpanded ? C.sidebarExpand : C.sidebarW, transition: 'margin-left 0.3s' }}
       >
         {/* Scroll-perf (WebKitGTK): promote screen content to its own GPU compositor
