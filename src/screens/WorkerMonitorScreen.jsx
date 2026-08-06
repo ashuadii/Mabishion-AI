@@ -5,8 +5,102 @@ import HubTabs from '../components/HubTabs';
 import Badge from '../components/Badge';
 import Icon from '../components/Icon';
 import { glassStyle, C } from '../components/consts';
-import { getWorkerLogs, getLlmUsage, getDailyCostTotal, getQualityScores } from '../data/db.js';
-import { getActiveWorkerCount, getQueuedWorkerCount, getActiveRuns, cancelWorker } from '../engine/workers/index.js';
+import { getWorkerLogs, getLlmUsage, getDailyCostTotal, getQualityScores, getProjects } from '../data/db.js';
+import { getActiveWorkerCount, getQueuedWorkerCount, getActiveRuns, cancelWorker, runWorker } from '../engine/workers/index.js';
+
+// 11 floating workers — no UI trigger existed before this tab
+const LAUNCHABLE = [
+  {
+    id: 'image_gen', wkId: 'WK-023', name: 'Image Generator', tier: 'standard',
+    desc: 'AI images via Pollinations.AI (free)',
+    params: [
+      { key: 'prompt', label: 'Prompt', type: 'text', placeholder: 'Dark blue banner for AI agency' },
+      { key: 'style', label: 'Style', type: 'select', options: ['photorealistic','digital-art','cinematic','minimalist','corporate'] },
+      { key: 'use_case', label: 'Use Case', type: 'select', options: ['banner','logo','social-post','hero-image','thumbnail'] },
+    ]
+  },
+  {
+    id: 'documentor', wkId: 'WK-006', name: 'Documentor', tier: 'standard',
+    desc: 'User manual, API docs, README (Markdown)',
+    params: [
+      { key: 'doc_type', label: 'Doc Type', type: 'select', options: ['user_manual','admin_guide','api_docs','readme'] },
+      { key: 'project_id', label: 'Project', type: 'project' },
+    ]
+  },
+  {
+    id: 'notification', wkId: 'WK-008', name: 'Notification', tier: 'auto',
+    desc: 'WhatsApp alerts, in-app toasts, email summaries',
+    params: [
+      { key: 'message', label: 'Message', type: 'text', placeholder: 'Task completed successfully' },
+      { key: 'recipient_type', label: 'Recipient', type: 'select', options: ['owner','client','all'] },
+    ]
+  },
+  {
+    id: 'social_scheduler', wkId: 'WK-010', name: 'Social Scheduler', tier: 'auto',
+    desc: 'Content calendar with best-time optimization',
+    params: [
+      { key: 'topic', label: 'Topic / Niche', type: 'text', placeholder: 'AI tools for SMEs' },
+      { key: 'platforms', label: 'Platforms', type: 'text', placeholder: 'LinkedIn, Instagram' },
+    ]
+  },
+  {
+    id: 'self_promo', wkId: 'WK-017', name: 'Self Promo', tier: 'standard',
+    desc: 'Personal branding posts for LinkedIn, X, Instagram',
+    params: [
+      { key: 'platform', label: 'Platform', type: 'select', options: ['LinkedIn','X (Twitter)','Instagram'] },
+      { key: 'niche', label: 'Niche', type: 'text', placeholder: 'AI Automation for SMEs' },
+    ]
+  },
+  {
+    id: 'service_promo', wkId: 'WK-018', name: 'Service Promo', tier: 'standard',
+    desc: 'Ad copy, landing page text & email sequences',
+    params: [
+      { key: 'service_name', label: 'Service Name', type: 'text', placeholder: 'AI Lead Generation' },
+      { key: 'platform', label: 'Platform', type: 'select', options: ['LinkedIn','Instagram','Google Ads','Facebook'] },
+      { key: 'target_audience', label: 'Target Audience', type: 'text', placeholder: 'SME founders in Pune' },
+    ]
+  },
+  {
+    id: 'payment_handler', wkId: 'WK-009', name: 'Payment Handler', tier: 'critical',
+    desc: 'Invoice PDF + Stripe/UPI links + payment reminders',
+    params: [
+      { key: 'client_name', label: 'Client Name', type: 'text', placeholder: 'Rahul Gupta' },
+      { key: 'amount', label: 'Amount (₹)', type: 'number', placeholder: '50000' },
+      { key: 'milestone_type', label: 'Milestone', type: 'select', options: ['advance','midway','final','full'] },
+    ]
+  },
+  {
+    id: 'ai_call_product', wkId: 'WK-022', name: 'AI Call Product', tier: 'standard',
+    desc: 'Packaged AI product listing, pricing tiers, sales page',
+    params: [
+      { key: 'product_name', label: 'Product Name', type: 'text', placeholder: 'AI Lead Qualifier Bot' },
+      { key: 'call_objective', label: 'Objective', type: 'text', placeholder: 'Qualify inbound leads for agencies' },
+    ]
+  },
+  {
+    id: 'security_auditor', wkId: 'WK-024', name: 'Security Auditor', tier: 'critical',
+    desc: 'Audits API keys, DB encryption, approval gates',
+    params: [
+      { key: 'scan_type', label: 'Scan Type', type: 'select', options: ['full','api_keys','db','approval_gates','workers'] },
+    ]
+  },
+  {
+    id: 'mcp_hub', wkId: 'WK-021', name: 'MCP Hub', tier: 'auto',
+    desc: 'MCP server registry, health checks, tool management',
+    params: []
+  },
+  {
+    id: 'llm_manager', wkId: 'WK-020', name: 'LLM Manager', tier: 'auto',
+    desc: 'Quota tracking, key rotation, provider health check',
+    params: []
+  },
+];
+
+const TIER_STYLE = {
+  critical: { label: 'CRITICAL', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.35)', text: '#fca5a5' },
+  standard: { label: 'STANDARD', bg: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.35)', text: '#c4b5fd' },
+  auto:     { label: 'AUTO', bg: 'rgba(34,197,94,0.10)', border: 'rgba(34,197,94,0.25)', text: '#86efac' },
+};
 
 const STATUS_TONE = {
   running: 'info',
@@ -29,11 +123,17 @@ export default function WorkerMonitorScreen({ onNavigate }) {
   const [llmUsage, setLlmUsage] = useState([]);
   const [qualityScores, setQualityScores] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('workers'); // workers | llm | health
+  const [activeTab, setActiveTab] = useState('workers'); // workers | llm | health | launch
   const [dailyCostPaise, setDailyCostPaise] = useState(0);
   const [activeCount, setActiveCount] = useState(0);
   const [queueCount, setQueueCount] = useState(0);
   const [liveRuns, setLiveRuns] = useState([]);
+  const [projects, setProjects] = useState([]);
+  // Launch tab state: form values and run status per worker
+  const [launchForms, setLaunchForms] = useState(() =>
+    Object.fromEntries(LAUNCHABLE.map(w => [w.id, {}]))
+  );
+  const [launchStatus, setLaunchStatus] = useState({});
 
   // BUGFIX 2026-07-16 (owner: "scroller jumping back to top"): this ran setLoading(true) on
   // every 5s poll. Because the content is rendered as `{!loading && ...}`, each poll unmounted
@@ -43,9 +143,10 @@ export default function WorkerMonitorScreen({ onNavigate }) {
   const load = async ({ initial = false } = {}) => {
     if (initial) setLoading(true);
     try {
-      const [wLogs, lUsage, daily, qScores] = await Promise.all([
-        getWorkerLogs(), getLlmUsage(), getDailyCostTotal(), getQualityScores(50)
+      const [wLogs, lUsage, daily, qScores, projs] = await Promise.all([
+        getWorkerLogs(), getLlmUsage(), getDailyCostTotal(), getQualityScores(50), getProjects()
       ]);
+      setProjects(projs || []);
       setLogs((wLogs || []).slice(0, 50));
       setLlmUsage((lUsage || []).slice(0, 50));
       setQualityScores(qScores || []);
@@ -57,6 +158,19 @@ export default function WorkerMonitorScreen({ onNavigate }) {
       console.error('[WorkerMonitorScreen]', e);
     } finally {
       if (initial) setLoading(false);
+    }
+  };
+
+  const handleLaunch = async (workerId) => {
+    const form = launchForms[workerId] || {};
+    const projectId = form.project_id || (projects[0]?.id) || 'manual';
+    setLaunchStatus(prev => ({ ...prev, [workerId]: 'running' }));
+    try {
+      await runWorker(workerId, projectId, form);
+      setLaunchStatus(prev => ({ ...prev, [workerId]: 'done' }));
+      load(); // refresh logs
+    } catch (e) {
+      setLaunchStatus(prev => ({ ...prev, [workerId]: 'error: ' + (e.message || String(e)) }));
     }
   };
 
@@ -174,7 +288,7 @@ export default function WorkerMonitorScreen({ onNavigate }) {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-5">
-        {[['workers','🤖 Worker Logs'],['llm','🧠 LLM Usage'],['health','💚 System Health']].map(([tab, label]) => (
+        {[['workers','🤖 Worker Logs'],['llm','🧠 LLM Usage'],['health','💚 System Health'],['launch','🚀 Launch Workers']].map(([tab, label]) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -312,6 +426,100 @@ export default function WorkerMonitorScreen({ onNavigate }) {
               <p className="text-xs mt-1" style={{ color: C.textMuted }}>{m.unit}</p>
             </div>
           ))}
+        </div>
+      )}
+      {/* Launch Workers tab */}
+      {!loading && activeTab === 'launch' && (
+        <div>
+          <p className="text-xs mb-5" style={{ color: C.textMuted }}>
+            Ye 11 workers pehle kisi bhi UI se trigger nahi hote the — sirf Mickii ke through jaate the.
+            Ab yahan se seedha run kar sakte ho.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {LAUNCHABLE.map(w => {
+              const status = launchStatus[w.id];
+              const form = launchForms[w.id] || {};
+              const tier = TIER_STYLE[w.tier];
+              const isRunning = status === 'running';
+              return (
+                <div key={w.id} className="p-4 rounded-2xl flex flex-col gap-3"
+                  style={{ background: tier.bg, border: `1px solid ${tier.border}` }}>
+                  {/* Header */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-[10px] font-black px-1.5 py-0.5 rounded" style={{ background: tier.border, color: tier.text }}>
+                          {w.wkId}
+                        </span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: tier.text }}>
+                          {tier.label}
+                        </span>
+                      </div>
+                      <p className="text-sm font-black text-white">{w.name}</p>
+                      <p className="text-[11px] mt-0.5" style={{ color: C.textMuted }}>{w.desc}</p>
+                    </div>
+                  </div>
+
+                  {/* Params */}
+                  {w.params.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      {w.params.map(p => (
+                        <div key={p.key}>
+                          <label className="text-[10px] font-bold uppercase tracking-wider block mb-1" style={{ color: C.textMuted }}>
+                            {p.label}
+                          </label>
+                          {p.type === 'select' ? (
+                            <select
+                              value={form[p.key] || ''}
+                              onChange={e => setLaunchForms(prev => ({ ...prev, [w.id]: { ...prev[w.id], [p.key]: e.target.value } }))}
+                              className="w-full px-3 py-1.5 rounded-lg text-xs text-white outline-none border border-white/10 bg-black/30"
+                            >
+                              <option value="">— select —</option>
+                              {p.options.map(o => <option key={o} value={o}>{o}</option>)}
+                            </select>
+                          ) : p.type === 'project' ? (
+                            <select
+                              value={form[p.key] || ''}
+                              onChange={e => setLaunchForms(prev => ({ ...prev, [w.id]: { ...prev[w.id], [p.key]: e.target.value } }))}
+                              className="w-full px-3 py-1.5 rounded-lg text-xs text-white outline-none border border-white/10 bg-black/30"
+                            >
+                              <option value="">— select project —</option>
+                              {projects.map(pr => <option key={pr.id} value={pr.id}>{pr.name || pr.id}</option>)}
+                            </select>
+                          ) : (
+                            <input
+                              type={p.type}
+                              placeholder={p.placeholder || ''}
+                              value={form[p.key] || ''}
+                              onChange={e => setLaunchForms(prev => ({ ...prev, [w.id]: { ...prev[w.id], [p.key]: e.target.value } }))}
+                              className="w-full px-3 py-1.5 rounded-lg text-xs text-white outline-none border border-white/10 bg-black/30 placeholder:text-slate-600"
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Status */}
+                  {status && status !== 'running' && (
+                    <p className={`text-[11px] font-bold px-2 py-1 rounded-lg ${status === 'done' ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10'}`}>
+                      {status === 'done' ? '✓ Queued — check Worker Logs tab' : `✕ ${status}`}
+                    </p>
+                  )}
+
+                  {/* Run button */}
+                  <button
+                    onClick={() => handleLaunch(w.id)}
+                    disabled={isRunning}
+                    className="mt-auto px-4 py-2 rounded-xl text-xs font-black transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ background: tier.border, color: tier.text }}
+                  >
+                    {isRunning ? '⏳ Running...' : `▶ Run ${w.name}`}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </AppShell>
