@@ -3,6 +3,8 @@ import { Cortex } from '../engine/cortex.js';
 import { Voice } from '../engine/voice.js';
 import { SearchService } from '../services/searchService.js';
 import { getDailyCostTotal, getChatMessages, saveChatMessage, clearChatMessages } from '../data/db.js';
+import { isAgentCommand, executeAgentCommand } from '../engine/agentEngine.js';
+import { getCustomAgents } from '../data/agents.js';
 
 /**
  * useMickiiAgent Hook
@@ -53,6 +55,31 @@ export function useMickiiAgent(config = {}) {
     setMessages(prev => [...prev, userMsg]);
     if (persist) saveChatMessage(userMsg);
     setStatus('thinking');
+
+    // Agent command path: /command [context]
+    if (isAgentCommand(userText)) {
+      try {
+        const customAgents = await getCustomAgents().catch(() => []);
+        const result = await executeAgentCommand(userText, customAgents);
+        const agentMsg = {
+          id: `a-${Date.now()}`,
+          role: 'mickii',
+          content: result.content,
+          created_at: Date.now(),
+          agentName: result.agentName,
+          agentIcon: result.agentIcon,
+          command: result.command
+        };
+        setMessages(prev => [...prev, agentMsg]);
+        if (persist) saveChatMessage(agentMsg);
+        Voice.speak(result.content);
+        setStatus('idle');
+      } catch (err) {
+        setMessages(prev => [...prev, { id: `err-${Date.now()}`, role: 'error', content: `Agent Error: ${err.message}` }]);
+        setStatus('error');
+      }
+      return;
+    }
 
     const activeSearches = [];
 

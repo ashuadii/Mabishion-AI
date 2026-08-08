@@ -4,7 +4,7 @@
  * Creates tables if they do not exist. No destructive changes.
  */
 
-export const SCHEMA_VERSION = 24;
+export const SCHEMA_VERSION = 26;
 
 export const CREATE_TABLES_SQL = [
   `CREATE TABLE IF NOT EXISTS clients (
@@ -245,7 +245,46 @@ export const CREATE_TABLES_SQL = [
     revoked_at TEXT,
     notes TEXT,
     FOREIGN KEY (client_id) REFERENCES clients(id)
-  )`
+  )`,
+  `CREATE TABLE IF NOT EXISTS approvals (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    type TEXT NOT NULL DEFAULT 'standard',
+    project_id TEXT,
+    worker_name TEXT,
+    request_data TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    expires_at TEXT,
+    owner_notified INTEGER DEFAULT 0,
+    whatsapp_sent INTEGER DEFAULT 0,
+    owner_notes TEXT,
+    cost_impact INTEGER,
+    compliance_impact TEXT,
+    undo_deadline TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_approvals_status ON approvals(status)`,
+  `CREATE INDEX IF NOT EXISTS idx_approvals_type ON approvals(type)`,
+  `CREATE INDEX IF NOT EXISTS idx_approvals_created ON approvals(created_at)`,
+  `CREATE TABLE IF NOT EXISTS action_ledger (
+    id TEXT PRIMARY KEY,
+    action_type TEXT,
+    decision TEXT,
+    risk_level TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_action_ledger_created ON action_ledger(created_at)`,
+  `CREATE TABLE IF NOT EXISTS agents (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    icon TEXT DEFAULT '🤖',
+    description TEXT,
+    commands TEXT DEFAULT '[]',
+    system_prompt TEXT NOT NULL DEFAULT '',
+    is_builtin INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_agents_builtin ON agents(is_builtin)`
 ];
 
 export async function upgradeDatabase(db) {
@@ -613,6 +652,68 @@ export async function upgradeDatabase(db) {
         )
       `).catch(() => {});
       await db.execute('CREATE INDEX IF NOT EXISTS idx_campaign_metrics_campaign ON campaign_metrics(campaign_id)').catch(() => {});
+    }
+
+    // ── v25: Critical missing tables — approvals + action_ledger ─────────────
+    // These tables were used by approvalEngine.js and approvals.js but were
+    // never added to CREATE_TABLES_SQL, causing fresh installs to fail entirely.
+    // Using CREATE TABLE IF NOT EXISTS — safe on DBs that already have them.
+    if (currentVersion < 25) {
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS approvals (
+          id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          type TEXT NOT NULL DEFAULT 'standard',
+          project_id TEXT,
+          worker_name TEXT,
+          request_data TEXT,
+          status TEXT NOT NULL DEFAULT 'pending',
+          expires_at TEXT,
+          owner_notified INTEGER DEFAULT 0,
+          whatsapp_sent INTEGER DEFAULT 0,
+          owner_notes TEXT,
+          cost_impact INTEGER,
+          compliance_impact TEXT,
+          undo_deadline TEXT,
+          created_at TEXT DEFAULT (datetime('now'))
+        )
+      `).catch(() => {});
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_approvals_status ON approvals(status)').catch(() => {});
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_approvals_type ON approvals(type)').catch(() => {});
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_approvals_created ON approvals(created_at)').catch(() => {});
+
+      // Existing DBs that had approvals but without Tier 1 columns — add them safely
+      await db.execute('ALTER TABLE approvals ADD COLUMN cost_impact INTEGER').catch(() => {});
+      await db.execute('ALTER TABLE approvals ADD COLUMN compliance_impact TEXT').catch(() => {});
+      await db.execute('ALTER TABLE approvals ADD COLUMN undo_deadline TEXT').catch(() => {});
+
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS action_ledger (
+          id TEXT PRIMARY KEY,
+          action_type TEXT,
+          decision TEXT,
+          risk_level TEXT,
+          created_at TEXT DEFAULT (datetime('now'))
+        )
+      `).catch(() => {});
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_action_ledger_created ON action_ledger(created_at)').catch(() => {});
+    }
+
+    // ── v26: agents table for custom AI agents ───────────────────────────────
+    if (currentVersion < 26) {
+      await db.execute(`
+        CREATE TABLE IF NOT EXISTS agents (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          icon TEXT DEFAULT '🤖',
+          description TEXT,
+          commands TEXT DEFAULT '[]',
+          system_prompt TEXT NOT NULL DEFAULT '',
+          is_builtin INTEGER DEFAULT 0,
+          created_at TEXT DEFAULT (datetime('now'))
+        )
+      `).catch(() => {});
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_agents_builtin ON agents(is_builtin)').catch(() => {});
     }
 
     // Insert or update version

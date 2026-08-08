@@ -1,4 +1,4 @@
---- Launching Mabishion AI at Friday 07 August 2026 11:53:12 AM IST ---
+--- Launching Mabishion AI at Saturday 08 August 2026 01:24:55 PM IST ---
 Clearing port 1420...
 Ollama not installed — skipping (cloud LLMs will be used)
 Starting Tauri App...
@@ -12,11 +12,15 @@ Starting Tauri App...
 > vite
 
 
-  VITE v8.1.4  ready in 232 ms
+  VITE v8.1.4  ready in 161 ms
 
   ➜  Local:   http://localhost:1420/
   ➜  Network: use --host to expose
      Running DevCommand (`cargo  run --no-default-features --color always --`)
         Info Watching /home/admin-ubuntu/Desktop/Mabishion-AI/Mabishion Software/src-tauri for changes...
-[1m[92m    Finished[0m `dev` profile [unoptimized + debuginfo] target(s) in 0.81s
+[1m[92m    Finished[0m `dev` profile [unoptimized + debuginfo] target(s) in 0.18s
 [1m[92m     Running[0m `target/debug/mabishion-ai`
+
+** (gst-plugin-scanner:189378): CRITICAL **: 13:25:00.709: _dma_fmt_to_dma_drm_fmts: assertion 'fmt != GST_VIDEO_FORMAT_UNKNOWN' failed
+1:36:25 PM [vite] (client) hmr update /src/index.css, /src/screens/AgentsScreen.jsx, /src/screens/DashboardScreen.jsx, /src/screens/BuildScreen.jsx, /src/components/QuickCommandBar.jsx
+1:37:17 PM [vite] (client) hmr update /src/screens/AgentsScreen.jsx, /src/index.css

@@ -1589,3 +1589,88 @@ Next step: floating 11 workers ko proper trigger dena (UI button ya pipeline/Mic
  • STATUS: ✅ LLM connection is FULLY WORKING in Tauri production build.
  • NOTE: In Vite browser-preview mode only, keys are in-memory (browserPreviewSecrets) and lost on restart. This is expected behavior — real app runs in Tauri shell.
  • Next step: Koi bhi worker Launch tab se run karo — Gemini se pehle connect karega.
+
+[2026-08-08] [Claude Sonnet 4.6] — [SCHEMA v25: Critical missing tables fixed in db_schema_upgrade.js]
+ • File changed: `Mabishion Software/src/data/db_schema_upgrade.js`
+ • SCHEMA_VERSION bumped: 24 → 25
+ • What changed:
+   1. `approvals` table added to `CREATE_TABLES_SQL` — was missing entirely; fresh installs would crash because approvalEngine.js and approvals.js reference this table for EVERY worker approval action
+   2. `action_ledger` table added to `CREATE_TABLES_SQL` — was missing; every APPROVED/REJECTED decision wrote to this table and would fail silently on fresh install
+   3. Both tables include all columns used by current code (id, title, type, project_id, worker_name, request_data, status, expires_at, owner_notified, whatsapp_sent, owner_notes, cost_impact, compliance_impact, undo_deadline, created_at)
+   4. Indexes added for both tables (status, type, created_at)
+   5. v25 migration block added for existing DBs — runs CREATE TABLE IF NOT EXISTS + ALTER TABLE for Tier-1 columns (cost_impact, compliance_impact, undo_deadline) that approvalEngine.js writes via UPDATE
+ • Why changed: Codebase analysis revealed approvals.js line 18 does INSERT INTO approvals and line 31 does INSERT INTO action_ledger — but neither table existed in CREATE_TABLES_SQL or any migration block. Existing production DB works only because it was created before the barrel-export refactor and the tables exist from an older monolith. Fresh install = instant crash.
+ • Build result: ✅ `npm run build` passed in ~1.52s, zero errors
+ • Architectural note: Approval state was already fully SQLite-backed (restart-safe). No in-memory approval state exists. The bug was ONLY the missing CREATE TABLE statements.
+ • Status: Working — Build ✓
+ • Next step: Test full approval flow on fresh DB. Phase 3 items (Circuit breaker for LLM, cron persistence) are next if owner approves.
+
+[2026-08-08] [Claude Sonnet 4.6] — [UI BUG FIX: 5 Playground/Chat bugs fixed in BuildScreen.jsx]
+ • File changed: `Mabishion Software/src/screens/BuildScreen.jsx`
+ • Bug 1 — Image not visible: Added `crossOrigin="anonymous"` + `onError` fallback. When image fails to load, it hides the broken img and shows a clickable "🖼 Open image" link instead. Also added `renderMd()` markdown renderer so Mickii responses no longer show raw `**bold**` or `[link](url)` syntax — these now render as actual formatted HTML.
+ • Bug 2 — Context overflow (message bahar ja raha tha): Added `wordBreak: 'break-word', overflowWrap: 'anywhere'` + `overflow-hidden` to all message bubbles. Long URLs no longer break the layout. Also increased bubble max-width from 70% to 80% for Mickii messages.
+ • Bug 3 — New line / Enter issue: Changed `<input>` to `<textarea>` with `rows={1}` + auto-resize up to 120px. Fixed `onKeyDown`: `Enter` alone = send (with `e.preventDefault()`), `Shift+Enter` = new line. Placeholder updated to explain the shortcut.
+ • Bug 4 — Golden patti (pipeline status bar always visible): Was showing even when idle (`activePipeline && !isProcessing`). Changed condition to `activePipeline && isProcessing` — bar only appears while Mickii is actively processing. Also removed gold color from the bar text (changed to `text-slate-400`) so it's less visually dominant.
+ • Bug 5 — Font too small: Increased message bubble font from `text-[11px]` to `text-[13px]`. Increased textarea input font from `text-[11px]` to `text-[13px]`. Added `renderMd()` which also uses `text-[13px]` for body text.
+ • Build result: ✅ `npm run build` passed in ~1.48s, zero errors
+ • Status: Working — Build ✓
+ • Next step: Restart the Tauri app and test chat — image should render or fall back to link, text should be larger and readable, Shift+Enter should give new line.
+
+[2026-08-08] [Claude Sonnet 4.6] — [FEATURE: 6 AI Agents + Custom Agent creation + /command routing]
+ • Files changed (NEW):
+   - `Mabishion Software/src/data/agents.js` — 6 built-in agent definitions (Marketer, BizDev, Economist, Architect, Automator, Writer) + SQLite CRUD for custom agents (getCustomAgents, saveCustomAgent, deleteCustomAgent, findAgentForCommand)
+   - `Mabishion Software/src/engine/agentEngine.js` — Command router: detects `/command` prefix, finds matching agent by command name, calls executeLlmWithFallback with agent's system prompt, returns structured response
+   - `Mabishion Software/src/screens/AgentsScreen.jsx` — Full agent management UI: built-in agents grid (read-only), custom agents list with delete, "New Agent" form with name/icon/description/system prompt/commands, all-commands reference table
+ • Files changed (MODIFIED):
+   - `Mabishion Software/src/data/db_schema_upgrade.js` — SCHEMA_VERSION bumped 25→26, added `agents` table (id, name, icon, description, commands JSON, system_prompt, is_builtin, created_at) to CREATE_TABLES_SQL + v26 migration block
+   - `Mabishion Software/src/hooks/useMickiiAgent.js` — Added isAgentCommand/executeAgentCommand imports; send() now intercepts messages starting with `/` and routes them through agentEngine instead of Cortex. Non-command messages go through Cortex unchanged (zero regression)
+   - `Mabishion Software/src/App.jsx` — Imported AgentsScreen, added `/agents` route
+   - `Mabishion Software/src/components/Sidebar.jsx` — Added `agents` nav item with `smart_toy` icon before Workers
+ • Build result: ✅ `npm run build` passed in ~1.31s, zero errors
+ • Status: Working — Build ✓
+ • Architecture: Command protocol — /campaign, /swot, /blueprint, /workflow etc. all now route to dedicated agent personas. Custom agents stored in SQLite, created in-app. Zero breaking changes to existing chat flow.
+ • Next step: Open Tauri app → Agents screen to create custom agent → Playground → type `/swot [company name]` to test agent routing.
+
+[2026-08-08] [Claude Sonnet 4.6] — [FIX: AgentsScreen sidebar bug + clickable commands + Developer agent + expanded commands]
+ • Files changed:
+   - `src/screens/AgentsScreen.jsx` — FIXED: Added `AppShell activeNavId="agents"` wrapper (sidebar was disappearing). Added CommandPill component with copy-to-clipboard on click (green flash confirmation). Agent cards now expand on click to show system prompt. All-commands table rows clickable (copy command). Toast notification on copy. "→ Open Playground" shortcut button.
+   - `src/data/agents.js` — ADDED: 7th built-in agent "Developer" (💻) with commands: /bugfix, /debug, /qa, /qc, /test, /review, /code, /analyze, /security. EXPANDED: All 6 original agents got new commands — /strategy, /plan, /refine, /improve (BizDev), /research, /analysis, /analyze, /critique (Economist), /design, /build, /create (Architect), /write, /craft, /improve, /refine, /generate, /create, /critique (Writer), /marketresearch, /strategy, /analyze, /improve (Marketer).
+ • Command coverage (total 7 agents, ~50 commands):
+   - Marketing research → /marketresearch (Marketer), /research (Economist)
+   - Analyses → /analyze, /analysis (Economist)
+   - Criticize → /critique (Economist or Writer)
+   - Refine/Improve → /refine, /improve (Writer or BizDev)
+   - Craft/Write/Generate → /craft, /write, /generate, /create (Writer)
+   - Strategy/Plan → /strategy (BizDev/Marketer), /plan (Automator/BizDev)
+   - Design/Build/Create → /design, /build (Architect)
+   - Bug fix → /bugfix, /debug (Developer)
+   - QA/QC Tests → /qa, /qc, /test (Developer)
+ • Build result: ✅ `npm run build` passed in ~1.33s, zero errors
+ • Status: Working — Build ✓
+
+[2026-08-08] [Claude Sonnet 4.6] — [MAJOR: AI Command Protocol vocabulary import + Worker/Agent architecture decision]
+ • Context: Owner clarified original intent — "AI Suggests, Human Decides" simplification means Agents should REPLACE worker complexity in daily use, not sit alongside it unexplained. Owner also supplied 2 reference PDFs (The_AI_Command_Protocol.pdf, AI_Command_Terminal.pdf) — a 500-command `/command` taxonomy for structured AI output that had NOT been used when the 7 Agents were first built.
+ • Investigation before deletion (critical finding): Initially planned to delete 18 "text-only" workers. Deep inspection of worker source found this was WRONG:
+   - `leadManagerWorker`, `leadGenWorker`, `clientIntakeWorker`, `socialSchedulerWorker` write directly to `leads`, `content_calendar`, `client_onboarding` tables tied to specific record IDs — core to the Leads screen, not pure chat text.
+   - `writerWorker`, `blueprintMakerWorker` persist to their own history tables (`written_content`, `blueprints`) likely read by Project screens.
+   - `src/engine/runtime.js:469` — Cortex's autonomous tool-calling loop can dynamically invoke ANY worker by name; deleting files would break in-flight LLM tool calls unpredictably.
+   - `src/data/approvals.js:40,103` — directly re-invokes `proposal_maker` worker on rejection retry flow.
+   - Conclusion: full worker deletion was a revenue-breaking risk (Leads screen, Project history, Cortex pipeline, approval retry flow) that could not be safely executed blind. Decision course-corrected — reported to owner instead of proceeding blind.
+ • Revised (safe) architecture: Worker files/logic UNTOUCHED (zero deletion, zero regression risk). Sidebar "Workers" renamed to "Tools" (secondary/advanced screen — `src/components/Sidebar.jsx`). Primary day-to-day interface is now the 7 Agents + `/commands` — covers the vast majority of text/reasoning work without ever touching the Tools screen.
+ • Files changed:
+   - `src/data/agents.js` — REWRITTEN: expanded from ~50 to 175 unique `/commands` across the 7 built-in agents, all vocabulary sourced from the AI Command Protocol PDFs: Viral Content Engineering Pipeline (Marketer), Analytical Frameworks + Persona Wheel + Idea Incubation (Business Dev), Risk/Root-Cause/Stress-Testing (Economist), Spatial Mapping + Cognitive Zoom Scale + Technical Schematics (Architect), Sequential Logic + Operator HUD project management (Automator), Copywriter's Calibration Matrix + Teaching personas (Writer), Coding & Debug Terminal + Research Protocol (Developer). Each agent's systemPrompt now explicitly teaches the LLM the relevant PDF framework (e.g. Cognitive Zoom Scale for Architect, Five Whys/Fishbone for Economist).
+   - `src/components/Sidebar.jsx` — `worker-monitor` nav label changed 'Workers' → 'Tools'.
+   - `src/tests/components/Sidebar.test.jsx` — updated assertion to match renamed label.
+ • Build result: ✅ `npm run build` passed in ~1.43s. All 366 tests pass (1 test updated for the rename, no regressions).
+ • Status: Working — Build ✓
+ • Next step: Owner should test a spread of new commands in Playground (e.g. `/fishbone`, `/premortem`, `/mindmap`, `/kanban`, `/socratic`) to confirm output quality matches the PDF's intent. Full worker retirement (the 18-file deletion) remains a future option ONLY after each dependent screen (Leads, Project history, Cortex tool-calling, approval retry) is individually verified safe — not to be attempted in one blind pass.
+
+[2026-08-08] [Claude Sonnet 4.6] — [COURSE CORRECTION: Actual simplification — owner called out that the previous change added complexity instead of removing it]
+ • Owner feedback (verbatim): "tu software ko simplify nhi or bhi zyada complex kar raha hai." Correct — 175 commands, 7 agents, a new screen, and 27 untouched workers is net MORE surface area than before, regardless of internal safety reasoning.
+ • Files changed:
+   - `src/data/agents.js` — REWRITTEN AGAIN: cut from 7 agents / 175 commands down to exactly 5 agents matching the owner's original words ("Marketing, business developer, economist, Automation... transform ideas into architectures"): Marketer, Business Dev, Economist, Architect, Automator. Each agent now has 5-7 curated commands (32 total, not 175) and a 1-2 sentence system prompt, not a paragraph of PDF theory. Writer and Developer as standalone agents removed — /bugfix and /qa folded into Architect (technical scope already covers client-build work) since that value was explicitly requested earlier in the session.
+   - `src/components/Sidebar.jsx` — Removed `worker-monitor` ("Tools") from NAV_ITEMS entirely. The 27-worker subsystem still exists in code (used internally by Cortex and approval retry flow — confirmed unsafe to delete in the prior entry) but the owner no longer sees it in daily navigation. Sidebar now shows 10 items: Dashboard, Playground, Marketing Studio, Leads, Projects, Clients, Money, Agents, Approvals, Settings.
+   - `src/tests/components/Sidebar.test.jsx` — updated assertion from checking for 'Tools' text to checking for 'Agents' text (matches the nav change).
+ • Build result: ✅ `npm run build` passed in ~2.16s. All 366 tests pass (1 test updated, zero regressions).
+ • Status: Working — Build ✓
+ • Principle going forward: simplification means visible surface area goes DOWN — fewer screens in nav, fewer commands shown, fewer named personas — not "add new things carefully while keeping all old things for safety." Safety and simplicity are different axes; owner is explicitly prioritizing the latter.

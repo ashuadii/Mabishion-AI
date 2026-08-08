@@ -57,10 +57,10 @@ describe('Sidebar — Navigation Items', () => {
     expect(screen.getByText('Marketing Studio')).toBeInTheDocument();
   });
 
-  it('renders Money and Workers items', () => {
+  it('renders Money and Agents items', () => {
     render(<Sidebar activeNavId="dashboard" onNavigate={() => {}} />);
     expect(screen.getByText('Money')).toBeInTheDocument();
-    expect(screen.getByText('Workers')).toBeInTheDocument();
+    expect(screen.getByText('Agents')).toBeInTheDocument();
   });
 });
 

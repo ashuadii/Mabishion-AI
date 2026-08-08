@@ -27,6 +27,7 @@ import LoginScreen from './screens/LoginScreen';
 import ProjectDetailScreen from './screens/ProjectDetailScreen';
 import TasksScreen from './screens/TasksScreen';
 import ProductsScreen from './screens/ProductsScreen';
+import AgentsScreen from './screens/AgentsScreen';
 import { BuildProvider } from './context/BuildContext';
 import { ToastProvider } from './components/Toast';
 
@@ -97,6 +98,8 @@ export default function App() {
         <Route path="/documents" element={<DocumentsScreen onNavigate={handleNavigate} />} />
         <Route path="/knowledge" element={<KnowledgeBaseScreen onNavigate={handleNavigate} />} />
         <Route path="/products" element={<ProductsScreen onNavigate={handleNavigate} />} />
+
+        <Route path="/agents" element={<AgentsScreen onNavigate={handleNavigate} />} />
 
         {/* Unknown paths previously rendered a blank page (no catch-all) */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

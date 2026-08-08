@@ -855,32 +855,98 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
     );
   };
 
+  // ─── Simple inline markdown renderer ────────────────────────────────────
+  const renderMd = (text) => {
+    if (!text) return null;
+    const lines = text.split('\n');
+    return lines.map((line, li) => {
+      // Strip image syntax — images handled via msg.images array
+      line = line.replace(/!\[([^\]]*)\]\([^)]+\)/g, '');
+      // Heading lines
+      const h3 = line.match(/^### (.+)/);
+      const h2 = line.match(/^## (.+)/);
+      const h1 = line.match(/^# (.+)/);
+      if (h1) return <div key={li} className="text-sm font-black mt-2 mb-0.5 text-white">{h1[1]}</div>;
+      if (h2) return <div key={li} className="text-[13px] font-bold mt-1.5 mb-0.5 text-white/90">{h2[1]}</div>;
+      if (h3) return <div key={li} className="text-[13px] font-semibold mt-1 text-white/80">{h3[1]}</div>;
+      // Horizontal rule
+      if (/^---+$/.test(line.trim())) return <hr key={li} className="border-white/10 my-2" />;
+      // Parse inline bold + links
+      const parts = [];
+      let rest = line;
+      let key = 0;
+      while (rest.length > 0) {
+        const boldIdx = rest.indexOf('**');
+        const linkMatch = rest.match(/\[([^\]]+)\]\(([^)]+)\)/);
+        const nextBold = boldIdx !== -1 ? boldIdx : Infinity;
+        const nextLink = linkMatch ? rest.indexOf(linkMatch[0]) : Infinity;
+        if (nextBold === Infinity && nextLink === Infinity) {
+          parts.push(rest); break;
+        }
+        if (nextBold <= nextLink) {
+          if (nextBold > 0) parts.push(rest.slice(0, nextBold));
+          const end = rest.indexOf('**', nextBold + 2);
+          if (end === -1) { parts.push(rest); break; }
+          parts.push(<strong key={key++}>{rest.slice(nextBold + 2, end)}</strong>);
+          rest = rest.slice(end + 2);
+        } else {
+          if (nextLink > 0) parts.push(rest.slice(0, nextLink));
+          parts.push(
+            <a key={key++} href={linkMatch[2]} target="_blank" rel="noopener noreferrer"
+              className="underline text-blue-300 hover:text-blue-200 break-all">{linkMatch[1]}</a>
+          );
+          rest = rest.slice(nextLink + linkMatch[0].length);
+        }
+      }
+      // Bullet list item
+      const isBullet = /^[*•\-] /.test(line.trim());
+      if (isBullet) {
+        const content = parts.length ? parts : [line.trim().replace(/^[*•\-] /, '')];
+        return <div key={li} className="flex gap-1.5 text-[13px] leading-relaxed"><span className="shrink-0 mt-0.5 text-slate-400">•</span><span>{content}</span></div>;
+      }
+      if (line.trim() === '') return <div key={li} className="h-1.5" />;
+      return <div key={li} className="text-[13px] leading-relaxed">{parts}</div>;
+    });
+  };
+
   // ─── Render: Build View (Center — active build) ──────────────────────────
   const renderBuildView = () => (
     <div className="flex-1 flex flex-col min-w-0 relative">
       <div className="flex-1 overflow-y-auto px-5 py-3 space-y-2">
         {messages.map((msg, i) => (
           <div key={`chat-${i}`} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[70%] rounded-xl px-3 py-2 text-[11px] leading-relaxed ${
+            <div className={`max-w-[80%] rounded-xl px-3 py-2 text-[13px] leading-relaxed overflow-hidden ${
               msg.role === 'user' ? 'text-white' : 'text-slate-200'
             }`} style={msg.role === 'user' ? {
-              background: C.gold + '12', border: `1px solid ${C.gold}20`
-            } : { background: panelBg, border: panelBorder }}>
+              background: C.gold + '12', border: `1px solid ${C.gold}20`, wordBreak: 'break-word', overflowWrap: 'anywhere'
+            } : { background: panelBg, border: panelBorder, wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
               {msg.role !== 'user' && (
                 <div className="flex items-center gap-1.5 mb-1">
                   <MickiiOrb isThinking={false} />
                   <span className="text-[10px] font-black uppercase" style={{ color: C.gold }}>Mickii</span>
                 </div>
               )}
-              <p className="whitespace-pre-wrap">{msg.content}</p>
+              <div>{msg.role === 'user' ? <span className="whitespace-pre-wrap">{msg.content}</span> : renderMd(msg.content)}</div>
               {Array.isArray(msg.images) && msg.images.length > 0 && (
                 <div className="mt-2 grid grid-cols-2 gap-1.5">
                   {msg.images.map((src, ii) => (
-                    <a key={ii} href={src} target="_blank" rel="noopener noreferrer" title="Open full size">
-                      <img src={src} alt={`Generated ${ii + 1}`} loading="lazy"
-                        className="w-full rounded-lg object-cover"
-                        style={{ border: panelBorder, maxHeight: 220 }} />
-                    </a>
+                    <div key={ii}>
+                      <a href={src} target="_blank" rel="noopener noreferrer" title="Open full size">
+                        <img src={src} alt={`Generated ${ii + 1}`} loading="lazy" crossOrigin="anonymous"
+                          className="w-full rounded-lg object-cover"
+                          style={{ border: panelBorder, maxHeight: 220 }}
+                          onError={e => {
+                            e.target.style.display = 'none';
+                            const fallback = e.target.closest('div')?.querySelector('.img-fallback');
+                            if (fallback) fallback.style.display = 'flex';
+                          }} />
+                      </a>
+                      <a href={src} target="_blank" rel="noopener noreferrer"
+                        className="img-fallback items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] text-blue-300 underline border border-white/10"
+                        style={{ display: 'none' }}>
+                        🖼 Open image
+                      </a>
+                    </div>
                   ))}
                 </div>
               )}
@@ -1154,17 +1220,29 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
             )}
           </div>
 
-          <input
+          <textarea
             ref={textareaRef}
-            className="flex-1 min-w-0 bg-transparent text-[11px] font-medium outline-none text-white placeholder-slate-500"
+            rows={1}
+            className="flex-1 min-w-0 bg-transparent text-[13px] font-medium outline-none text-white placeholder-slate-500 resize-none overflow-hidden leading-relaxed"
+            style={{ maxHeight: 120 }}
             placeholder={
-              pgView === 'build' ? "Chat with Mickii..." :
+              pgView === 'build' ? "Chat with Mickii... (Enter = send, Shift+Enter = new line)" :
               pgView === 'configure' ? "Ask Mickii for help..." :
               "Describe what you want to build..."
             }
             value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSend()}
+            onChange={e => {
+              setInput(e.target.value);
+              // Auto-resize
+              e.target.style.height = 'auto';
+              e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+            }}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
             disabled={isProcessing}
           />
 
@@ -1185,13 +1263,12 @@ export default function BuildScreen({ onNavigate, internalMode = false }) {
             Send
           </button>
         </div>
-        {pgView === 'build' && activePipeline && (
+        {pgView === 'build' && activePipeline && isProcessing && (
           <div className="flex items-center gap-1.5 px-2.5 py-1 border-t border-white/5">
-            <span className={`w-1 h-1 rounded-full ${isProcessing ? 'animate-pulse' : 'bg-slate-600'}`}
-              style={isProcessing ? { backgroundColor: C.gold } : {}} />
-            <span className="text-[10px] font-bold text-slate-500 uppercase">{status}</span>
+            <span className="w-1 h-1 rounded-full animate-pulse" style={{ backgroundColor: C.gold }} />
+            <span className="text-[10px] font-bold text-slate-400 uppercase">{status}</span>
             <span className="text-[10px] text-slate-600">·</span>
-            <span className="text-[10px] font-bold" style={{ color: C.gold }}>{activePipeline.name}</span>
+            <span className="text-[10px] font-bold text-slate-400">{activePipeline.name}</span>
           </div>
         )}
       </div>

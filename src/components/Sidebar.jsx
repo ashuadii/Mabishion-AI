@@ -15,7 +15,7 @@ const NAV_ITEMS = [
   { id: 'projects', label: 'Projects', icon: 'project' },
   { id: 'clients', label: 'Clients', icon: 'contact_page' },
   { id: 'finance', label: 'Money', icon: 'wallet' },
-  { id: 'worker-monitor', label: 'Workers', icon: 'brain' },
+  { id: 'agents', label: 'Agents', icon: 'smart_toy' },
   { id: 'approvals', label: 'Approvals', icon: 'approval', badge: true },
   { id: 'settings', label: 'Settings', icon: 'settings' },
 ];
