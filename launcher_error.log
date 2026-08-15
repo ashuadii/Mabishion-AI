@@ -1,4 +1,4 @@
---- Launching Mabishion AI at Sunday 09 August 2026 08:14:08 PM IST ---
+--- Launching Mabishion AI at Friday 14 August 2026 03:18:04 PM IST ---
 Clearing port 1420...
 Ollama not installed — skipping (cloud LLMs will be used)
 Starting Tauri App...
@@ -12,11 +12,11 @@ Starting Tauri App...
 > vite
 
 
-  VITE v8.1.4  ready in 198 ms
+  VITE v8.1.4  ready in 265 ms
 
   ➜  Local:   http://localhost:1420/
   ➜  Network: use --host to expose
      Running DevCommand (`cargo  run --no-default-features --color always --`)
         Info Watching /home/admin-ubuntu/Desktop/Mabishion-AI/Mabishion Software/src-tauri for changes...
-[1m[92m    Finished[0m `dev` profile [unoptimized + debuginfo] target(s) in 0.69s
+[1m[92m    Finished[0m `dev` profile [unoptimized + debuginfo] target(s) in 0.92s
 [1m[92m     Running[0m `target/debug/mabishion-ai`
